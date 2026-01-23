@@ -1,5 +1,4 @@
 package com.javaweb.controller.admin;
-import com.javaweb.entity.PitchEntity;
 import com.javaweb.model.dto.PitchDTO;
 import com.javaweb.model.response.PitchSearchResponse;
 import com.javaweb.service.impl.PitchService;
@@ -8,7 +7,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-
 import java.util.ArrayList;
 import java.util.List;
 @Transactional

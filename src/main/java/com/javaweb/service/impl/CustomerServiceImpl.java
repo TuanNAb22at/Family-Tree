@@ -1,10 +1,13 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.converter.CustomerConverter;
+import com.javaweb.converter.RentalRecieptConverter;
 import com.javaweb.entity.CustomerEntity;
+import com.javaweb.entity.RentalReceiptEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.model.dto.AssignmentDTO;
 import com.javaweb.model.dto.CustomerDTO;
+import com.javaweb.model.dto.RentalReceiptDTO;
 import com.javaweb.model.request.CustomerCreateRequest;
 import com.javaweb.model.response.CustomerResponse;
 import com.javaweb.model.response.ResponseDTO;
@@ -17,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +34,8 @@ public class CustomerServiceImpl implements CustomerService {
     private UserRepository userRepository;
     @Autowired
     private CustomerUtils customerUtils;
+    @Autowired
+    private RentalRecieptConverter rentalRecieptConverter;
     @Override
     public List<CustomerDTO> findAll(Map<String, Object> conditions) {
         List<CustomerEntity> customerEntityList = customerRepository.findAll(conditions);
@@ -118,6 +124,19 @@ public class CustomerServiceImpl implements CustomerService {
             customers.add(customerConverter.toCustomerResponse(customer));
         }
         return customers;
+    }
+
+    @Override
+    public List<RentalReceiptDTO> findByCustomerIdAndStatus(Long customerId, int status) {
+        CustomerEntity customerEntity = customerRepository.findById(customerId).get();
+        List<RentalReceiptDTO> results = new ArrayList<>();
+        for (RentalReceiptEntity r : customerEntity.getRentalReceipts()){
+            if(r.getStatus() == 0){
+                RentalReceiptDTO rentalReceiptDTO = rentalRecieptConverter.toRentalRecieptDTO(r);
+                results.add(rentalReceiptDTO);
+            }
+        }
+        return results;
     }
 
     @Override

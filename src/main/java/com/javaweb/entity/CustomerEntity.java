@@ -40,4 +40,11 @@ public class CustomerEntity extends BaseEntity{
     )
     private List<UserEntity> userEntities = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "customer",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL
+    )
+    private List<RentalReceiptEntity> rentalReceipts = new ArrayList<>();
+
 }

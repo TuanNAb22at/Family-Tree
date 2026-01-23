@@ -2,6 +2,7 @@ package com.javaweb.service;
 
 import com.javaweb.model.dto.AssignmentDTO;
 import com.javaweb.model.dto.CustomerDTO;
+import com.javaweb.model.dto.RentalReceiptDTO;
 import com.javaweb.model.request.CustomerCreateRequest;
 import com.javaweb.model.response.CustomerResponse;
 import com.javaweb.model.response.ResponseDTO;
@@ -17,4 +18,5 @@ public interface CustomerService {
     ResponseDTO findStaffsByCustomerId(Long id);
     ResponseDTO updateAssignmentTable(AssignmentDTO assignmentDTO);
     List<CustomerResponse> findCustomerByName(String name);
+    List<RentalReceiptDTO> findByCustomerIdAndStatus(Long customerId, int status);
 }

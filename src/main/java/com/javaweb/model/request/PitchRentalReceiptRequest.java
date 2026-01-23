@@ -1,12 +1,13 @@
 package com.javaweb.model.request;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class PitchRentalReceiptRequest {
     private Long idKH;
     private Long idPitch;
-    private Double deposit;
-    private Double totalPrice;
+    private BigDecimal deposit;
+    private BigDecimal totalPrice;
     private String tenKH;
     private String customerPhone;
     private String pitchName;
@@ -31,19 +32,19 @@ public class PitchRentalReceiptRequest {
         this.idPitch = idPitch;
     }
 
-    public Double getDeposit() {
+    public BigDecimal getDeposit() {
         return deposit;
     }
 
-    public void setDeposit(Double deposit) {
+    public void setDeposit(BigDecimal deposit) {
         this.deposit = deposit;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(Double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
     }
 

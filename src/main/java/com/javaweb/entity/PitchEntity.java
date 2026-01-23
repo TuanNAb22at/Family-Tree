@@ -1,6 +1,7 @@
 package com.javaweb.entity;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "pitch")
@@ -11,7 +12,7 @@ public class PitchEntity extends BaseEntity {
     @Column(name = "pitch_name")
     private String pitchName;
     @Column(name = "price")
-    private Double price;
+    private BigDecimal price;
     @Column(name = "pitch_type")
     private String type;
     @Column(name = "description")
@@ -34,12 +35,20 @@ public class PitchEntity extends BaseEntity {
         this.pitchName = pitchName;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigPitchEntity getBigPitch() {
+        return bigPitch;
+    }
+
+    public void setBigPitch(BigPitchEntity bigPitch) {
+        this.bigPitch = bigPitch;
     }
 
     public String getDescription() {

@@ -60,7 +60,7 @@
 
             <ul class="submenu">
                 <li class="">
-                    <a href="">
+                    <a href="/admin/payment-list">
                         <i class="fa-solid fa-money-bill-wave"></i>
                         Thanh toán
                     </a>

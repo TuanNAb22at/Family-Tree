@@ -10,6 +10,7 @@ public class RentalRecieptConverter {
     private ModelMapper modelMapper;
     public RentalReceiptDTO toRentalRecieptDTO(RentalReceiptEntity rentalReceipt) {
         RentalReceiptDTO rentalReceiptDTO = modelMapper.map(rentalReceipt, RentalReceiptDTO.class);
+        rentalReceiptDTO.setTotalPrice(rentalReceipt.getTotalPrice());
         return  rentalReceiptDTO;
     }
     public RentalReceiptEntity toEntity(RentalReceiptDTO rentalReceiptDTO) {

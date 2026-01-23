@@ -77,7 +77,7 @@
                                         </label>
                                         <select name="pitchTypeId"
                                                 class="form-select form-select-lg mt-2"
-                                                required>
+                                        >
                                             <option value="">-- Chọn loại sân --</option>
                                             <c:forEach var="type" items="${pitchTypes}">
                                                 <option value="${type}"
@@ -112,8 +112,8 @@
         </div>
 
         <!-- bảng danh sách -->
-        <div class="row">
-            <div class="col-xs-12">
+        <div class="widget-body" bis_skin_checked="1" style="display: block;">
+            <div class="widget-main" bis_skin_checked="1">
                 <table id="tableList" class="table table-striped table-bordered table-hover "
                        style="margin: 3em 0 1.5em; font-family:'Times New Roman', Times, serif ;">
                     <thead>
@@ -122,6 +122,7 @@
                         <th>Giá thuê (VNĐ)</th>
                         <th>Loại sân</th>
                         <th>Mô tả sân</th>
+                        <th>Thao tác</th>
 
                     </tr>
                     </thead>
@@ -427,11 +428,11 @@
 
     function validateDate() {
         const startInput = document.getElementById("searchStartDate");
-        const endInput   = document.getElementById("searchEndDate");
+        const endInput = document.getElementById("searchEndDate");
 
         const today = new Date().toISOString().split('T')[0];
         const startDate = startInput.value;
-        const endDate   = endInput.value;
+        const endDate = endInput.value;
 
         // 1️⃣ Luôn chặn ngày bắt đầu < hôm nay (KHÔNG set value)
         startInput.min = today;
@@ -460,7 +461,7 @@
         }
         $.ajax({
             type: "GET",
-            url: "/admin/pitch/searchCustomer",
+            url: "/api/pitch/searchCustomer",
             data: {name: name},
             dataType: "json",
             success: function (data) {
@@ -515,7 +516,7 @@
             searchEndDate = today;
         }
 
-// 👉 ĐỔ VÀO MODAL NHẬP THỜI GIAN
+        // ĐỔ VÀO MODAL NHẬP THỜI GIAN
         document.getElementById("startDate").value = searchStartDate;
         document.getElementById("endDate").value = searchEndDate;
 
@@ -539,7 +540,7 @@
         };
 
         $.ajax({
-            url: '/admin/pitch/createBooking',
+            url: '/api/pitch/createBooking',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),
@@ -576,7 +577,7 @@
             return;
         }
         $.ajax({
-            url: '/admin/pitch/confirmbooking',
+            url: '/api/pitch/confirmbooking',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(bookingData),
@@ -595,20 +596,19 @@
         if (!confirm("⚠️ Bạn có chắc chắn muốn xóa sân bóng này không?")) {
             return;
         }
-
         $.ajax({
-            url: '/admin/pitch/delete/' + id,
+            url: '/api/pitch/delete/' + id,
             type: 'DELETE',
-            success: function(result) {
+            success: function (result) {
                 alert("✅ Xóa sân bóng thành công!");
                 location.reload();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("Lỗi:", error);
                 if (xhr.status === 404) {
                     alert("❌ Không tìm thấy sân bóng!");
                 } else {
-                    alert("❌ Có lỗi xảy ra!");
+                    alert("❌ Sân đang có khách sử dụng!");
                 }
             }
         });

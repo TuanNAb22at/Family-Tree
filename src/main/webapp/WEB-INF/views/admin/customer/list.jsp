@@ -113,7 +113,6 @@
                                     </display:column>
                                 </security:authorize>
 
-
                                 <display:column property="fullname" title="Tên khách hàng" headerClass="center"/>
                                 <display:column property="phone" title="Di động" headerClass="center"/>
                                 <display:column property="email" title="Email" headerClass="center"/>

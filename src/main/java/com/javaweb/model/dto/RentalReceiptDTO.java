@@ -1,10 +1,25 @@
 package com.javaweb.model.dto;
 
+import java.math.BigDecimal;
+
 public class RentalReceiptDTO extends AbstractDTO<RentalReceiptDTO>{
+    private Long id;
     private String startDate;
     private String endDate;
-    private Double deposit;
-    private Double totalPrice;
+    private BigDecimal deposit;
+    private BigDecimal sessionRentalPrice;
+    private BigDecimal totalPrice;
+    private Integer status;
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getStartDate() {
         return startDate;
@@ -22,21 +37,35 @@ public class RentalReceiptDTO extends AbstractDTO<RentalReceiptDTO>{
         this.endDate = endDate;
     }
 
-    public Double getDeposit() {
+    public BigDecimal getDeposit() {
         return deposit;
     }
 
-    public void setDeposit(Double deposit) {
+    public void setDeposit(BigDecimal deposit) {
         this.deposit = deposit;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getSessionRentalPrice() {
+        return sessionRentalPrice;
+    }
+
+    public void setSessionRentalPrice(BigDecimal sessionRentalPrice) {
+        this.sessionRentalPrice = sessionRentalPrice;
+    }
+
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(Double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
     }
 
+    public Integer getStatus() {
+        return status;
+    }
 
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
 }

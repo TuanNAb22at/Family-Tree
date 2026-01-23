@@ -93,6 +93,9 @@ public class RentalReceiptSevice implements IRentalReceiptService {
         r.setDeposit(request.getDeposit());
         r.setTotalPrice(request.getTotalPrice());
         r.setSessionRentalPrice(pitchEntity.getPrice());
+        r.setStartDate(startDate.toString());
+        r.setEndDate(endDate.toString());
+        r.setStatus(0);
         rentalReceiptRepository.save(r);
 
         PitchRentalDetailEntity p = new PitchRentalDetailEntity();

@@ -1,5 +1,6 @@
 package com.javaweb.entity;
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
@@ -10,7 +11,7 @@ public class RentalReceiptEntity extends BaseEntity {
     private Long id;
 
     @Column(name = "session_rental_price")
-    private Double sessionRentalPrice;
+    private BigDecimal sessionRentalPrice;
 
     @Column(name = "start_date")
     private String startDate;
@@ -19,10 +20,14 @@ public class RentalReceiptEntity extends BaseEntity {
     private String endDate;
 
     @Column(name = "deposit")
-    private Double deposit;
+    private BigDecimal deposit;
 
     @Column(name = "total_price")
-    private Double totalPrice;
+    private BigDecimal totalPrice;
+
+    @Column(name = "status")
+    private Integer status;
+
 
     @Override
     public Long getId() {
@@ -32,14 +37,6 @@ public class RentalReceiptEntity extends BaseEntity {
     @Override
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Double getSessionRentalPrice() {
-        return sessionRentalPrice;
-    }
-
-    public void setSessionRentalPrice(Double sessionRentalPrice) {
-        this.sessionRentalPrice = sessionRentalPrice;
     }
 
     public String getStartDate() {
@@ -58,34 +55,53 @@ public class RentalReceiptEntity extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public Double getDeposit() {
+    public BigDecimal getDeposit() {
         return deposit;
     }
 
-    public void setDeposit(Double deposit) {
+    public void setDeposit(BigDecimal deposit) {
         this.deposit = deposit;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getSessionRentalPrice() {
+        return sessionRentalPrice;
+    }
+
+    public void setSessionRentalPrice(BigDecimal sessionRentalPrice) {
+        this.sessionRentalPrice = sessionRentalPrice;
+    }
+
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(Double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
     }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_invoice_id")
     private PaymentInvoiceEntity paymentInvoice;
+
     @OneToMany(mappedBy = "rentalReceipt", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UsedItemEntity> usedItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "rentalReceipt", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PitchRentalDetailEntity> pitchRentalDetails = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
     private CustomerEntity customer;
+
 
     public PaymentInvoiceEntity getPaymentInvoice() {
         return paymentInvoice;
@@ -110,6 +126,7 @@ public class RentalReceiptEntity extends BaseEntity {
     public void setPitchRentalDetails(List<PitchRentalDetailEntity> pitchRentalDetails) {
         this.pitchRentalDetails = pitchRentalDetails;
     }
+
 
     public CustomerEntity getCustomer() {
         return customer;
