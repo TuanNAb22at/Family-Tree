@@ -18,10 +18,10 @@ Hệ thống mô phỏng **nghiệp vụ thực tế** của một sân bóng mi
 
 ### Backend
 
-* **Java 8** (`<java.version>1.8</java.version>`)
+* **Java 8** 
 * **Spring Boot**
 * **Spring Data JPA**
-* **Spring Security** (xác thực & phân quyền)
+* **Spring Security** 
 * **Hibernate ORM**
 
 ### Database
@@ -36,9 +36,9 @@ Hệ thống mô phỏng **nghiệp vụ thực tế** của một sân bóng mi
 
   * Controller
   * Service
-  * Repository (JPA)
+  * Repository 
   * Entity
-  * DTO (Data Transfer Object – tránh vòng lặp serialize)
+  * DTO 
 
 ---
 
@@ -228,6 +228,3 @@ Hệ thống mô phỏng **nghiệp vụ thực tế** của một sân bóng mi
 3. Chạy project bằng Spring Boot
 4. Đăng nhập bằng tài khoản mẫu
 
----
-
-> 📌 **Project được xây dựng phục vụ học tập, đồ án và apply CV Fresher/Junior Backend Java (Spring Boot)**
