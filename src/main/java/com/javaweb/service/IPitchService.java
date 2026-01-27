@@ -12,5 +12,6 @@ public interface IPitchService {
     PitchDTO findById(Long id);
     List<PitchSearchResponse> getAvailablePitches(String startDate, String endDate, String pitchTypeId);
     List<PitchSearchResponse> findAvailablePitchesToday();
+    List<String> getAllPitchTypes();
     void deletePitch(Long id);
 }

@@ -1,7 +1,9 @@
 package com.javaweb.repository.custom.impl;
+
 import com.javaweb.entity.PitchEntity;
 import com.javaweb.repository.custom.PitchRepositoryCustom;
 import org.springframework.stereotype.Repository;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
@@ -20,8 +22,10 @@ public class PitchRepositoryImpl implements PitchRepositoryCustom {
                 "   SELECT prd.pitch.id FROM PitchRentalDetailEntity prd " +
                 "   WHERE NOT (prd.endDate < '" + startDate + "' OR prd.stDate > '" + endDate + "')" +
                 ")";
+
         return entityManager.createQuery(sql, PitchEntity.class)
                 .getResultList();
+
     }
 
     public List<PitchEntity> findAvailablePitchesToday() {

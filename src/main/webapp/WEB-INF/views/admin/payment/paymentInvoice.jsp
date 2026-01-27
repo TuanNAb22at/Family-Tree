@@ -114,7 +114,7 @@
                                 <!-- Hành động -->
                                 <div class="text-center">
 
-                                    <form action="/admin/payment/confirm"
+                                    <form action="/admin/payment-confirm"
                                           method="post"
                                           style="display: inline-block;">
 

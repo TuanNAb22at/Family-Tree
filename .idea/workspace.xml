@@ -9,73 +9,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="27cf6c46-4f6e-4b9f-a777-3726e2563105" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/controller/admin/PaymentController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/converter/PaymentInvoiceConverter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/model/dto/PaymentInvoiceDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/repository/PaymentInvoiceRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/IPaymentIvoiceService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/PaymentInvoiceServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/payment/listCustomer.jsp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/payment/listRentalReceipt.jsp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/payment/paymentInvoice.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+    <list default="true" id="6c5b6d0b-2a3d-4a4c-889a-914aaa87089d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/football_mini_db.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/football_mini_db.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/api/admin/CustomerAPI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/api/admin/CustomerAPI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/api/admin/PitchAPI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/api/admin/PitchAPI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/controller/admin/PaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/controller/admin/PaymentController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/controller/admin/PitchController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/controller/admin/PitchController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/converter/RentalRecieptConverter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/converter/RentalRecieptConverter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/CustomerEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/CustomerEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/PaymentInvoiceEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/PaymentInvoiceEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/PitchEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/PitchEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/RentalReceiptEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/entity/RentalReceiptEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/model/dto/CustomerDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/model/dto/CustomerDTO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/model/dto/RentalReceiptDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/model/dto/RentalReceiptDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/model/request/PitchRentalReceiptRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/model/request/PitchRentalReceiptRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/service/CustomerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/CustomerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/CustomerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/CustomerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/repository/custom/impl/PitchRepositoryImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/repository/custom/impl/PitchRepositoryImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/service/IPitchService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/IPitchService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/service/IRentalReceiptService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/IRentalReceiptService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/RentalReceiptSevice.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/RentalReceiptSevice.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/customer/list.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/customer/list.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/pitch/add.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/pitch/add.jsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/payment/paymentInvoice.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/payment/paymentInvoice.jsp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/pitch/list.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/pitch/list.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/common/admin/menu.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/common/admin/menu.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/javaweb/api/admin/PitchAPI.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/javaweb/api/admin/PitchAPI.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/javaweb/controller/admin/PitchController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/javaweb/controller/admin/PitchController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/javaweb/model/request/PitchRentalReceiptRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/javaweb/model/request/PitchRentalReceiptRequest.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/javaweb/service/impl/RentalReceiptSevice.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/javaweb/service/impl/RentalReceiptSevice.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/api/admin/CustomerAPI.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/api/admin/CustomerAPI.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/api/admin/PitchAPI.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/api/admin/PitchAPI.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/controller/admin/PitchController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/controller/admin/PitchController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/converter/RentalRecieptConverter.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/converter/RentalRecieptConverter.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/CustomerEntity.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/CustomerEntity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/PaymentInvoiceEntity.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/PaymentInvoiceEntity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/PitchEntity.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/PitchEntity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/RentalReceiptEntity.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/entity/RentalReceiptEntity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/model/dto/CustomerDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/model/dto/CustomerDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/model/dto/RentalReceiptDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/model/dto/RentalReceiptDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/model/request/PitchRentalReceiptRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/model/request/PitchRentalReceiptRequest.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/service/CustomerService.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/service/CustomerService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/service/impl/CustomerServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/service/impl/CustomerServiceImpl.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/service/impl/RentalReceiptSevice.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/classes/com/javaweb/service/impl/RentalReceiptSevice.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/views/admin/customer/list.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/views/admin/customer/list.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/views/admin/pitch/add.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/views/admin/pitch/add.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/views/admin/pitch/list.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/WEB-INF/views/admin/pitch/list.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/spring-boot-1.0/common/admin/menu.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/target/spring-boot-1.0/common/admin/menu.jsp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Jsp File" />
-        <option value="Class" />
-        <option value="Interface" />
-      </list>
-    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -91,7 +42,7 @@
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 3
 }</component>
-  <component name="ProjectId" id="38ZjcFjpaZ9V4gx6Q3LcRCMdPYo" />
+  <component name="ProjectId" id="38f2iATjservUjGn85ZqP07I7BO" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -100,12 +51,13 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "Tomcat Server.Tomcat 8.5.34.executor": "Run",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "project.structure.last.edited": "Artifacts",
+    "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
     "vue.rearranger.settings.migration": "true"
@@ -135,7 +87,7 @@
         </artifact>
       </deployment>
       <server-settings>
-        <option name="BASE_DIRECTORY_NAME" value="e890b8c4-de81-43f6-80fb-30b4b8696026" />
+        <option name="BASE_DIRECTORY_NAME" value="1fba8611-7301-4509-9299-5a71297e2949" />
       </server-settings>
       <predefined_log_file enabled="true" id="Tomcat" />
       <predefined_log_file enabled="true" id="Tomcat Catalina" />
@@ -143,7 +95,7 @@
       <predefined_log_file id="Tomcat Host Manager" />
       <predefined_log_file id="Tomcat Localhost Access" />
       <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="63505" />
+        <option name="DEBUG_PORT" value="58585" />
       </RunnerSettings>
       <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
         <option name="USE_ENV_VARIABLES" value="true" />
@@ -223,17 +175,14 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="27cf6c46-4f6e-4b9f-a777-3726e2563105" name="Changes" comment="" />
-      <created>1769014065264</created>
+      <changelist id="6c5b6d0b-2a3d-4a4c-889a-914aaa87089d" name="Changes" comment="" />
+      <created>1769176429414</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1769014065264</updated>
-      <workItem from="1769014067057" duration="7300000" />
-      <workItem from="1769024869616" duration="836000" />
-      <workItem from="1769140321112" duration="3712000" />
-      <workItem from="1769144376383" duration="1365000" />
-      <workItem from="1769173263940" duration="2067000" />
-      <workItem from="1769175353760" duration="718000" />
+      <updated>1769176429414</updated>
+      <workItem from="1769176431064" duration="206000" />
+      <workItem from="1769407854120" duration="530000" />
+      <workItem from="1769549842202" duration="3884000" />
     </task>
     <servers />
   </component>
@@ -241,10 +190,28 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <pin-to-top-manager>
-      <pinned-members>
-        <PinnedItemInfo parentTag="com.javaweb.entity.CustomerEntity_$$_jvst2ac_7" memberName="handler" />
-      </pinned-members>
-    </pin-to-top-manager>
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/javaweb/api/admin/PitchAPI.java</url>
+          <line>35</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/CustomerServiceImpl.java</url>
+          <line>135</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-method">
+          <url>file://$PROJECT_DIR$/src/main/java/com/javaweb/service/impl/CustomerServiceImpl.java</url>
+          <line>129</line>
+          <properties class="com.javaweb.service.impl.CustomerServiceImpl" method="findByCustomerIdAndStatus">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

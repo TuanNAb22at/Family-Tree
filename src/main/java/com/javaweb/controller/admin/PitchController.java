@@ -1,6 +1,7 @@
 package com.javaweb.controller.admin;
 import com.javaweb.model.dto.PitchDTO;
 import com.javaweb.model.response.PitchSearchResponse;
+import com.javaweb.service.IPitchService;
 import com.javaweb.service.impl.PitchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,7 +14,7 @@ import java.util.List;
 @Controller(value = "PitchControllerOfAdmin")
 public class PitchController {
     @Autowired
-    private PitchService pitchService;
+    private IPitchService pitchService;
 
     @RequestMapping(value = "/admin/pitchs-list",method = RequestMethod.GET)
     public ModelAndView getListPitchs( @RequestParam(name = "startDate",required = false) String startDateStr,

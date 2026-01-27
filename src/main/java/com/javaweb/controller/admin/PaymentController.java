@@ -52,7 +52,7 @@ public class PaymentController {
         return mav;
     }
 
-    @PostMapping("/admin/payment/confirm")
+    @PostMapping("/admin/payment-confirm")
     public ModelAndView confirmPayment(
             @RequestParam Long customerId,
             @RequestParam List<Long> receiptIds) {

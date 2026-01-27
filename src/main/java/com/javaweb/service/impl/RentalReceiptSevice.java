@@ -10,6 +10,7 @@ import com.javaweb.model.dto.PitchDTO;
 import com.javaweb.model.request.BookingRequest;
 import com.javaweb.model.request.PitchRentalReceiptRequest;
 import com.javaweb.model.response.RentalReceiptResponse;
+import com.javaweb.model.response.ResponseDTO;
 import com.javaweb.repository.CustomerRepository;
 import com.javaweb.repository.PitchRentalDetailRepository;
 import com.javaweb.repository.PitchRepository;
@@ -42,7 +43,7 @@ public class RentalReceiptSevice implements IRentalReceiptService {
     private PitchRentalDetailRepository pitchRentalDetailRepository;
 
     @Override
-    public List<RentalReceiptResponse> createBooking(BookingRequest request) {
+    public RentalReceiptResponse createBooking(BookingRequest request) {
 
         Long pitchId = request.getPitchId();
         Long customerId = request.getCustomerId();
@@ -72,14 +73,13 @@ public class RentalReceiptSevice implements IRentalReceiptService {
         rentalReceiptResponse.setCustomerPhone(customerDTO.getPhone());
         rentalReceiptResponse.setNgayBD(startDate);
         rentalReceiptResponse.setNgayKT(endDate);
-        List<RentalReceiptResponse> RentalReceiptResponses = new ArrayList<>();
-        RentalReceiptResponses.add(rentalReceiptResponse);
-        return RentalReceiptResponses;
+
+        return rentalReceiptResponse;
     }
 
     @Override
-    public List<PitchRentalReceiptRequest> saveBooKing(PitchRentalReceiptRequest request) {
-        List<PitchRentalReceiptRequest> pitchRentalReceiptRequests =  new ArrayList<>();
+    public ResponseDTO saveBooKing(PitchRentalReceiptRequest request) {
+        ResponseDTO responseDTO = new ResponseDTO();
         Long pitchId = request.getIdPitch();
         Long customerId = request.getIdKH();
         LocalDate startDate = request.getNgayBD();
@@ -104,8 +104,8 @@ public class RentalReceiptSevice implements IRentalReceiptService {
         p.setStDate(startDate.toString());
         p.setEndDate(endDate.toString());
         pitchRentalDetailRepository.save(p);
-
-        return pitchRentalReceiptRequests;
+        responseDTO.setMessage("save suscess");
+        return responseDTO;
 
     }
 }

@@ -546,8 +546,7 @@
             data: JSON.stringify(data),
             success: function (response) {
                 $('#timeModal').modal('hide');
-                showBookingSummary(response[0]);
-                console.log(response[0])
+                showBookingSummary(response);
             },
             error: function (xhr) {
                 alert("Lỗi khi tạo phiếu đặt sân: " + xhr.responseText);

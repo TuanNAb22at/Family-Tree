@@ -9,6 +9,7 @@ public class RentalReceiptDTO extends AbstractDTO<RentalReceiptDTO>{
     private BigDecimal deposit;
     private BigDecimal sessionRentalPrice;
     private BigDecimal totalPrice;
+    private String pitchName;
     private Integer status;
 
     @Override
@@ -67,5 +68,13 @@ public class RentalReceiptDTO extends AbstractDTO<RentalReceiptDTO>{
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public String getPitchName() {
+        return pitchName;
+    }
+
+    public void setPitchName(String pitchName) {
+        this.pitchName = pitchName;
     }
 }

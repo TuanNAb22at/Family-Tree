@@ -3,6 +3,7 @@ import com.javaweb.model.request.BookingRequest;
 import com.javaweb.model.request.PitchRentalReceiptRequest;
 import com.javaweb.model.response.CustomerResponse;
 import com.javaweb.model.response.RentalReceiptResponse;
+import com.javaweb.model.response.ResponseDTO;
 import com.javaweb.service.CustomerService;
 import com.javaweb.service.IPitchService;
 import com.javaweb.service.IRentalReceiptService;
@@ -31,17 +32,16 @@ public class PitchAPI {
 
     @PostMapping("/createBooking")
     @ResponseBody
-    public List<RentalReceiptResponse> createBooking(@RequestBody BookingRequest request) {
+    public RentalReceiptResponse createBooking(@RequestBody BookingRequest request) {
         return rentalReceiptService.createBooking(request);
     }
 
     @PostMapping("/confirmbooking")
-    public List<PitchRentalReceiptRequest> saveBooKing(@RequestBody PitchRentalReceiptRequest request) {
+    public ResponseDTO saveBooKing(@RequestBody PitchRentalReceiptRequest request) {
         return rentalReceiptService.saveBooKing(request);
     }
 
     @DeleteMapping("/delete/{id}")
-    @ResponseBody
     public void deletePitch(@PathVariable Long id) {
         pitchService.deletePitch(id);
     }
