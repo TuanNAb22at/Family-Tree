@@ -114,7 +114,7 @@ Hệ thống mô phỏng **nghiệp vụ thực tế** của một sân bóng mi
     * Khung giờ thuê trong tuần
     * Tổng số buổi
     * Tổng tiền dự kiến
-    * **Tiền đặt cọc (tối thiểu 10%)**
+    * Tiền đặt cọc 
 12. NV xác nhận → hệ thống:
 
     * In phiếu đặt sân
@@ -138,8 +138,8 @@ Hệ thống mô phỏng **nghiệp vụ thực tế** của một sân bóng mi
 
    * Thông tin khách hàng
    * Thông tin thuê sân
-   * Các buổi thuê (có thể phát sinh / đổi lịch)
-   * Bảng danh sách **đồ ăn – nước uống phát sinh** theo từng buổi
+   * Các buổi thuê 
+   
 9. Nếu KH khiếu nại:
 
    * NV chỉnh sửa số lượng / mặt hàng
