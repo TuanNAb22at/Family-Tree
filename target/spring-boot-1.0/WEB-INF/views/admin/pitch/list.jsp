@@ -1,8 +1,95 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@include file="/common/taglib.jsp" %>
 <html>
 <head>
     <title>Danh sách sân bóng</title>
+    <style>
+        .booking-receipt-modal .modal-content {
+            border-radius: 16px;
+            border: 1px solid rgba(31, 143, 91, 0.18);
+            background: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
+            font-family: "Times New Roman", Times, serif;
+            font-size: 16px;
+            line-height: 1.6;
+            box-shadow: 0 18px 36px rgba(31, 37, 50, 0.12);
+        }
+
+        .booking-receipt-modal .modal-header {
+            background: linear-gradient(135deg, #1f8f5b 0%, #0e6a41 100%);
+            color: #fff;
+            padding: 16px 22px;
+            border-bottom: none;
+            position: relative;
+        }
+
+        .booking-receipt-modal .modal-title {
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            font-size: 18px;
+        }
+
+        .booking-receipt-modal .modal-header .close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 28px;
+            line-height: 1;
+            opacity: 1;
+            color: #fff;
+        }
+
+        .booking-receipt-modal .section-title {
+            font-weight: 700;
+            color: #0e6a41;
+            font-size: 17px;
+            letter-spacing: 0.3px;
+        }
+
+        .booking-receipt-modal .info-card {
+            background: #fff;
+            border: 1px solid #e4e9f2;
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        .booking-receipt-modal .info-table td {
+            padding: 6px 8px;
+        }
+
+        .booking-receipt-modal .divider {
+            border-top: 1px dashed #d8e0ea;
+            margin: 12px 0;
+        }
+
+        .booking-receipt-modal .cost-table thead th {
+            background: #f1f6f3;
+        }
+
+        .booking-receipt-modal .total-amount {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .booking-receipt-modal .modal-footer {
+            background: #f7faf8;
+            border-top: 1px solid #e7edf2;
+        }
+
+        .booking-receipt-modal .btn-confirm {
+            background: linear-gradient(135deg, #1f8f5b 0%, #0e6a41 100%);
+            border: none;
+            color: #fff;
+            border-radius: 999px;
+            padding: 8px 20px;
+            font-weight: 700;
+        }
+
+        .booking-receipt-modal .btn-cancel {
+            border-radius: 999px;
+            padding: 8px 18px;
+            font-weight: 700;
+        }
+    </style>
 </head>
 <body>
 
@@ -71,23 +158,27 @@
                                         </div>
                                     </div>
 
-                                    <div class="mb-2">
-                                        <label class="bigger-120">
-                                            Loại sân
-                                        </label>
-                                        <select name="pitchTypeId"
-                                                class="form-select form-select-lg mt-2"
-                                        >
-                                            <option value="">-- Chọn loại sân --</option>
-                                            <c:forEach var="type" items="${pitchTypes}">
-                                                <option value="${type}"
-                                                        <c:if test="${type eq param.pitchTypeId}">
-                                                            selected
-                                                        </c:if>>
-                                                        ${type}
-                                                </option>
-                                            </c:forEach>
-                                        </select>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group" style="margin-top: 12px;">
+                                                <label class="bigger-120" for="pitchTypeId"
+                                                       style="display: inline-block; margin-right: 8px;">
+                                                    Loại sân
+                                                </label>
+                                                <select id="pitchTypeId"
+                                                        name="pitchTypeId"
+                                                        class="form-control input-lg"
+                                                        style="display: inline-block; width: auto; vertical-align: middle;">
+                                                    <option value="">-- Chọn loại sân --</option>
+                                                    <c:forEach var="type" items="${pitchTypes}">
+                                                        <option value="${type}"
+                                                                <c:if test="${type eq param.pitchTypeId}">selected</c:if>>
+                                                                ${type}
+                                                        </option>
+                                                    </c:forEach>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="text-center">
@@ -187,7 +278,8 @@
             <!-- BODY -->
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="customerName" class="bigger-120">
+                    <label for="customerName" class="bigger-120"
+                           style="display: inline-block; margin-right: 8px; margin-bottom: 0;">
                         Tên khách hàng
                     </label>
                     <input type="text"
@@ -272,33 +364,19 @@
 
 
 <!-- PHIẾU ĐẶT SÂN -->
-<div class="modal fade" id="bookingReceiptModal" tabindex="-1" role="dialog">
+<div class="modal fade booking-receipt-modal" id="bookingReceiptModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg"
-             style="
-                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                 border-radius: 12px;
-                 font-size: 16px;
-                 line-height: 1.6;
-             ">
+        <div class="modal-content shadow-lg">
             <!-- Header -->
-            <div class="modal-header d-flex align-items-center justify-content-between text-white"
-                 style="background: linear-gradient(90deg, #2ecc71, #27ae60); padding: 14px 20px;">
-                <h5 class="modal-title fw-semibold mb-0"
-                    style="letter-spacing: 0.4px; font-size: 18px">
+            <div class="modal-header d-flex align-items-center justify-content-between">
+                <h5 class="modal-title mb-0">
                     <i class="fa fa-file-text-o mr-2"></i> PHIẾU ĐẶT SÂN
                 </h5>
                 <button type="button"
-                        class="close text-white position-absolute"
+                        class="close"
                         data-dismiss="modal"
                         aria-label="Close"
-                        style="
-                top: 8px;
-                right: 12px;
-                font-size: 28px;
-                line-height: 1;
-                opacity: 1;
-            ">
+                        style="position: absolute; top: 8px; right: 12px;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -307,13 +385,11 @@
             <div class="modal-body px-4 py-3">
 
                 <!-- Thông tin khách hàng -->
-                <div class="mb-4">
-                    <h6 class="fw-semibold text-success mb-2"
-                        style="font-size: 17px; letter-spacing: 0.3px">
+                <div class="mb-4 info-card">
+                    <h6 class="section-title mb-2">
                         <i class="fa fa-user mr-2"></i> Thông tin khách hàng
                     </h6>
-                    <table class="table table-sm table-borderless mb-0"
-                           style="font-size: 16px">
+                    <table class="table table-sm table-borderless mb-0 info-table">
                         <tr>
                             <td width="30%" class="text-muted">Họ và tên</td>
                             <td class="fw-medium" id="tenKH"></td>
@@ -323,16 +399,14 @@
                     </table>
                 </div>
 
-                <hr>
+                <div class="divider"></div>
 
                 <!-- Thông tin sân -->
-                <div class="mb-4">
-                    <h6 class="fw-semibold text-success mb-2"
-                        style="font-size: 17px">
+                <div class="mb-4 info-card">
+                    <h6 class="section-title mb-2">
                         <i class="fa fa-futbol-o mr-2"></i> Thông tin sân
                     </h6>
-                    <table class="table table-sm table-borderless mb-0"
-                           style="font-size: 16px">
+                    <table class="table table-sm table-borderless mb-0 info-table">
                         <tr>
                             <td width="30%" class="text-muted">Tên sân</td>
                             <td class="fw-medium" id="pitchName"></td>
@@ -342,16 +416,14 @@
                     </table>
                 </div>
 
-                <hr>
+                <div class="divider"></div>
 
                 <!-- Thời gian -->
-                <div class="mb-4">
-                    <h6 class="fw-semibold text-success mb-2"
-                        style="font-size: 17px">
+                <div class="mb-4 info-card">
+                    <h6 class="section-title mb-2">
                         <i class="fa fa-calendar mr-2"></i> Thời gian đặt
                     </h6>
-                    <table class="table table-sm table-borderless mb-0"
-                           style="font-size: 16px">
+                    <table class="table table-sm table-borderless mb-0 info-table">
                         <tr>
                             <td width="30%" class="text-muted">Ngày bắt đầu</td>
                             <td class="fw-medium" id="ngayBD"></td>
@@ -367,16 +439,14 @@
                     </table>
                 </div>
 
-                <hr>
+                <div class="divider"></div>
 
                 <!-- Chi phí -->
-                <div>
-                    <h6 class="fw-semibold text-success mb-2"
-                        style="font-size: 17px">
+                <div class="info-card">
+                    <h6 class="section-title mb-2">
                         <i class="fa fa-money mr-2"></i> Chi phí
                     </h6>
-                    <table class="table table-bordered text-center mb-0"
-                           style="font-size: 16px">
+                    <table class="table table-bordered text-center mb-0 cost-table">
                         <thead class="thead-light">
                         <tr>
                             <th class="fw-semibold">Tổng tiền (VNĐ)</th>
@@ -385,12 +455,8 @@
                         </thead>
                         <tbody>
                         <tr>
-                            <td class="fw-bold text-danger"
-                                style="font-size: 20px"
-                                id="totalPrice"></td>
-                            <td class="fw-bold text-success"
-                                style="font-size: 20px"
-                                id="deposit"></td>
+                            <td class="fw-bold text-danger total-amount" id="totalPrice"></td>
+                            <td class="fw-bold text-success total-amount" id="deposit"></td>
                         </tr>
                         </tbody>
                     </table>
@@ -399,14 +465,12 @@
             </div>
 
             <!-- Footer -->
-            <div class="modal-footer bg-light">
-                <button class="btn btn-outline-secondary px-4 fw-medium"
-                        style="font-size: 15px"
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary btn-cancel"
                         data-dismiss="modal">
                     ❌ Hủy
                 </button>
-                <button class="btn btn-success px-4 fw-semibold"
-                        style="font-size: 15px"
+                <button class="btn btn-confirm"
                         onclick="confirmBooking()">
                     ✅ Xác nhận đặt sân
                 </button>
@@ -503,6 +567,7 @@
             }
         });
     }
+
 
     function selectCustomer(idKH, idSan) {
         selectedCustomerID = idKH;
