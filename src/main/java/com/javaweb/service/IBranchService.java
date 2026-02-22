@@ -1,4 +1,7 @@
 package com.javaweb.service;
 
-public interface IBranch {
+import com.javaweb.model.dto.BranchDTO;
+
+public interface IBranchService {
+    BranchDTO createBranch(BranchDTO branchDTO);
 }

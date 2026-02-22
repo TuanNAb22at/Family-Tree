@@ -39,77 +39,6 @@
         </div>
     </div>
 
-    <!-- Quản lý sân bóng -->
-    <ul class="nav nav-list">
-        <li class="">
-            <a href="#" class="dropdown-toggle" style="padding: 10px">
-                <i class="fa fa-futbol"></i>
-                <span class="menu-text">Quản Lý Sân Bóng</span>
-            </a>
-            <b class="arrow"></b>
-
-            <ul class="submenu">
-                <li class="">
-                    <a href="/admin/pitchs-list">
-                        <i class="fa-solid fa-calendar-check"></i>
-                        Đặt Sân
-                    </a>
-                    <b class="arrow"></b>
-                </li>
-            </ul>
-
-            <ul class="submenu">
-                <li class="">
-                    <a href="/admin/payment-list">
-                        <i class="fa-solid fa-money-bill-wave"></i>
-                        Thanh toán
-                    </a>
-                    <b class="arrow"></b>
-                </li>
-            </ul>
-
-            <security:authorize access="hasRole('MANAGER')">
-                <ul class="submenu">
-                    <li class="">
-                        <a href="/admin/user-list">
-                            <i class="fa-solid fa-chart-column"></i>
-                            Xem báo cáo thống kê
-                        </a>
-                        <b class="arrow"></b>
-                    </li>
-                </ul>
-            </security:authorize>
-        </li>
-    </ul>
-
-    <!-- Quản lý mặt hàng -->
-    <ul class="nav nav-list">
-        <li class="">
-            <a href="#" class="dropdown-toggle" style="padding: 10px">
-            <i class="fa-solid fa-tags" style="font-size: 20px"></i>
-                <span class="menu-text">Quản Lý Mặt Hàng</span>
-            </a>
-            <b class="arrow"></b>
-
-            <ul class="submenu">
-                <li class="">
-                    <a href="">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                        Danh sách mặt hàng
-                    </a>
-                    <b class="arrow"></b>
-                </li>
-
-                <li class="">
-                    <a href="">
-                        <i class="fa-solid fa-box-open"></i>
-                        Nhập hàng
-                    </a>
-                    <b class="arrow"></b>
-                </li>
-            </ul>
-        </li>
-    </ul>
 
     <!-- Quản lý tài khoản -->
     <security:authorize access="hasRole('MANAGER')">
@@ -134,26 +63,7 @@
         </ul>
     </security:authorize>
 
-    <!-- Quản lý khách hàng -->
-    <ul class="nav nav-list">
-        <li class="">
-            <a href="#" class="dropdown-toggle" style="padding: 10px">
-                <i class="fa-solid fa-person" style="font-size: 20px"></i>
-                <span class="menu-text">Quản Lý Khách Hàng</span>
-            </a>
-            <b class="arrow"></b>
 
-            <ul class="submenu">
-                <li class="">
-                    <a href="/admin/customer-list">
-                        <i class="fa-solid fa-people-group"></i>
-                        Danh sách khách hàng
-                    </a>
-                    <b class="arrow"></b>
-                </li>
-            </ul>
-        </li>
-    </ul>
 
     <!-- Sidebar Collapse -->
     <div class="sidebar-toggle sidebar-collapse">

@@ -9,7 +9,7 @@
             <a href="#" class="navbar-brand">
                 <i class="fa-solid fa-futbol"></i>
                 <small>
-                    Trang quản trị
+                    Cây gia phả
                 </small>
             </a>
         </div>

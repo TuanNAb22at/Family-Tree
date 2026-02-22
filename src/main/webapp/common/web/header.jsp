@@ -20,8 +20,7 @@
 						</div>
 						<div class="nav-item p-2">
 							<a href='<c:url value='/gioi-thieu'/>'>
-								<%--<span>Giới thiệu sân bóng</span>--%>
-								<span style="color: var(--primary-color);">Giới thiệu sân bóng</span>
+								<span style="color: var(--primary-color);">Giới thiệu hệ thống </span>
 							</a>
 						</div>
 						<div class="nav-item p-2">

@@ -1,4 +1,8 @@
 package com.javaweb.repository;
 
-public interface BranchRepository {
+import com.javaweb.entity.BranchEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface BranchRepository extends JpaRepository<BranchEntity,Long> {
+
 }

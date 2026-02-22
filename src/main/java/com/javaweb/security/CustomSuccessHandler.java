@@ -59,7 +59,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private boolean isStaff(List<String> roles) {
-        if (roles.contains(SystemConstant.STAFF_ROLE)) {
+        if (roles.contains(SystemConstant.EDITOR_ROLE)) {
             return true;
         }
         return false;
