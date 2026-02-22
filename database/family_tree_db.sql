@@ -90,6 +90,9 @@ CREATE TABLE `person` (
     `father_id` bigint(20) DEFAULT NULL,
     `mother_id` bigint(20) DEFAULT NULL,
 
+    -- NEW: spouse relation
+    `spouse_id` bigint(20) DEFAULT NULL,
+
     `createddate` datetime DEFAULT NULL,
     `modifieddate` datetime DEFAULT NULL,
     `createdby` varchar(255) DEFAULT NULL,
@@ -102,6 +105,10 @@ CREATE TABLE `person` (
     KEY `fk_person_father` (`father_id`),
     KEY `fk_person_mother` (`mother_id`),
 
+    -- NEW: spouse indexes
+    KEY `fk_person_spouse` (`spouse_id`),
+    UNIQUE KEY `uk_person_spouse` (`spouse_id`),
+
     CONSTRAINT `fk_person_branch`
         FOREIGN KEY (`branch_id`) REFERENCES `branch` (`id`),
 
@@ -111,6 +118,11 @@ CREATE TABLE `person` (
 
     CONSTRAINT `fk_person_mother`
         FOREIGN KEY (`mother_id`) REFERENCES `person` (`id`)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+
+    -- NEW: spouse FK
+    CONSTRAINT `fk_person_spouse`
+        FOREIGN KEY (`spouse_id`) REFERENCES `person` (`id`)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
