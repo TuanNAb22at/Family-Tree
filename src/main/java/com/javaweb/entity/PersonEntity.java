@@ -58,4 +58,9 @@ public class PersonEntity extends BaseEntity {
     // 1 Person - n Media
     @OneToMany(mappedBy = "person", fetch = FetchType.LAZY)
     private List<MediaEntity> medias = new ArrayList<>();
+
+    // self reference: spouse
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "spouse_id")
+    private PersonEntity spouse;
 }
