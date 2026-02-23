@@ -373,6 +373,8 @@
     }
 </style>
 
+<% boolean canManageMember = request.isUserInRole("MANAGER") || request.isUserInRole("EDITOR"); %>
+
 <div id="ftApp" class="bg-light">
     <div class="container-fluid py-3" style="padding-top: 0 !important;">
         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -415,9 +417,11 @@
                     <ul id="generationMenu" class="dropdown-menu dropdown-menu-end"></ul>
                 </div>
 
-                <button id="btnCreateFirst" class="btn btn-dark d-flex align-items-center gap-2">
-                    <i class="bi bi-person-plus"></i> Tạo thành viên đầu tiên
-                </button>
+                <% if (canManageMember) { %>
+                    <button id="btnCreateFirst" class="btn btn-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-person-plus"></i> Tạo thành viên đầu tiên
+                    </button>
+                <% } %>
             </div>
 
             <!-- CONTENT -->
@@ -612,6 +616,7 @@
         // Nếu muốn truyền branchId từ server side:
         // const BRANCH_ID = "<%= request.getAttribute("branchId") %>";
         let BRANCH_ID = 1;
+        const canManageMember = <%= canManageMember %>;
 
         // Dropdown minimal toggle (không phụ thuộc BS5)
         (function () {
@@ -1144,14 +1149,17 @@
             const encodedDod = encodeURIComponent(person.dod || '');
             const hasSpouse = !!person.spouseId;
 
-            let menuItems = ''
-                + '<button type="button" class="btn-blue" data-action="edit-member"><i class="bi bi-pencil"></i> Sửa thông tin</button>'
-                + '<button type="button" class="btn-red" data-action="delete-member"><i class="bi bi-trash"></i> Xóa</button>';
-            if (gender === 'male' && !hasSpouse) {
-                menuItems = '<button type="button" class="btn-amber" data-action="add-spouse"><i class="bi bi-heart"></i> Thêm vợ</button>' + menuItems;
-            }
-            if (gender === 'male') {
-                menuItems = '<button type="button" class="btn-emerald" data-action="add-child"><i class="bi bi-person-plus"></i> Thêm con</button>' + menuItems;
+            let menuItems = '';
+            if (canManageMember) {
+                menuItems = ''
+                    + '<button type="button" class="btn-blue" data-action="edit-member"><i class="bi bi-pencil"></i> Sửa thông tin</button>'
+                    + '<button type="button" class="btn-red" data-action="delete-member"><i class="bi bi-trash"></i> Xóa</button>';
+                if (gender === 'male' && !hasSpouse) {
+                    menuItems = '<button type="button" class="btn-amber" data-action="add-spouse"><i class="bi bi-heart"></i> Thêm vợ</button>' + menuItems;
+                }
+                if (gender === 'male') {
+                    menuItems = '<button type="button" class="btn-emerald" data-action="add-child"><i class="bi bi-person-plus"></i> Thêm con</button>' + menuItems;
+                }
             }
 
             return '' +
@@ -1167,7 +1175,7 @@
                         '</div>' +
                     '</div>' +
                     '<span class="badge-gen">G' + generation + '</span>' +
-                    '<div class="card-menu">' + menuItems + '<span class="menu-caret"></span></div>' +
+                    (canManageMember ? ('<div class="card-menu">' + menuItems + '<span class="menu-caret"></span></div>') : '') +
                 '</div>';
         }
 

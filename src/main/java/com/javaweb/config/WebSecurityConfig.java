@@ -45,7 +45,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                         .antMatchers
                                 (
-                                        "/admin/building-edit/**", "/admin/user-edit/**", "/admin/user-list","/admin/customer-edit/**"
+                                         "/admin/user-edit/**", "/admin/user-list"
                                 )
                         .hasRole("MANAGER")
                         .antMatchers(

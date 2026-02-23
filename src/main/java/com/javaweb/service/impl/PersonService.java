@@ -150,11 +150,7 @@ public class PersonService implements IPersonService {
         personRepository.delete(person);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public PersonDTO findRootPerson() {
-        return findRootPersonByBranchId(1L);
-    }
+
 
     @Override
     @Transactional(readOnly = true)
