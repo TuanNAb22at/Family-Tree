@@ -84,6 +84,7 @@ CREATE TABLE `person` (
     `user_id` bigint(20) DEFAULT NULL,
     `fullname` varchar(255) NOT NULL,
     `gender` varchar(20) DEFAULT NULL,
+    `avatar` longtext DEFAULT NULL,
     `dob` date DEFAULT NULL,
     `dod` date DEFAULT NULL,
     `generation` int(11) DEFAULT NULL,

@@ -4,6 +4,7 @@ import com.javaweb.security.CustomSuccessHandler;
 import com.javaweb.service.impl.CustomUserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -47,7 +48,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                         "/admin/building-edit/**", "/admin/user-edit/**", "/admin/user-list","/admin/customer-edit/**"
                                 )
                         .hasRole("MANAGER")
+                        .antMatchers(
+                                "/admin/assets/**",
+                                "/admin/js/**",
+                                "/admin/css/**",
+                                "/admin/font/**",
+                                "/admin/font-awesome/**",
+                                "/admin/paging/**",
+                                "/admin/sweetalert/**"
+                        ).permitAll()
+                        .antMatchers("/admin/home").hasAnyRole("MANAGER","EDITOR","USER")
+                        .antMatchers("/admin/familytree", "/admin/familytree/**").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/**").hasAnyRole("MANAGER","EDITOR")
+                        .antMatchers(HttpMethod.POST, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.PUT, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.DELETE, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers("/login", "/resource/**", "/trang-chu", "/api/**").permitAll()
                         .and()
                         .formLogin().loginPage("/login").usernameParameter("j_username").passwordParameter("j_password").permitAll()

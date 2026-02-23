@@ -20,4 +20,5 @@ public class BranchConverter {
         BranchEntity branchEntity = modelMapper.map(branchDTO,BranchEntity.class);
         return branchEntity;
     }
+
 }

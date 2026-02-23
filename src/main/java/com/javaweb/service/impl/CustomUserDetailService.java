@@ -30,7 +30,13 @@ public class CustomUserDetailService implements UserDetailsService {
         }
         List<GrantedAuthority> authorities = new ArrayList<>();
         for(RoleDTO role: userDTO.getRoles()){
-            authorities.add(new SimpleGrantedAuthority("ROLE_"+role.getCode()));
+            String roleCode = role.getCode();
+            if (roleCode == null || roleCode.trim().isEmpty()) {
+                continue;
+            }
+            String normalized = roleCode.trim().toUpperCase();
+            String authority = normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
+            authorities.add(new SimpleGrantedAuthority(authority));
         }
         MyUserDetail myUserDetail =
                 new MyUserDetail(name,userDTO.getPassword(),true,true,true,true,authorities);

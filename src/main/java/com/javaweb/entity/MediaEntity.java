@@ -14,7 +14,7 @@ public class MediaEntity extends BaseEntity {
     @Column(name = "file_url", nullable = false, length = 500)
     private String fileUrl;
 
-    @Column(name = "media_type", nullable = false, length = 50)
+    @Column(name = "media_type", length = 50)
     private String mediaType;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,6 +26,6 @@ public class MediaEntity extends BaseEntity {
     private BranchEntity branch;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploader_id", nullable = false)
+    @JoinColumn(name = "uploader_id")
     private UserEntity uploader;
 }

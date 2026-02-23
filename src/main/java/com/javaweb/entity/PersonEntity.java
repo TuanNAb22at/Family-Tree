@@ -18,7 +18,6 @@ public class PersonEntity extends BaseEntity {
     @JoinColumn(name = "branch_id", nullable = false)
     private BranchEntity branch;
 
-
     @Column(name = "user_id")
     private Long userId;
 
@@ -27,6 +26,9 @@ public class PersonEntity extends BaseEntity {
 
     @Column(name = "gender")
     private String gender;
+
+    @Column(name = "avatar", columnDefinition = "LONGTEXT")
+    private String avatar;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
