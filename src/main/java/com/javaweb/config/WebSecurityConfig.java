@@ -1,0 +1,96 @@
+package com.javaweb.config;
+
+import com.javaweb.security.CustomSuccessHandler;
+import com.javaweb.service.impl.CustomUserDetailService;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return new CustomUserDetailService();
+    }
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService());
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) {
+        auth.authenticationProvider(authenticationProvider());
+    }
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+                http
+                        .csrf()
+                        .disable()
+                        .authorizeRequests()
+
+                        .antMatchers
+                                (
+                                        "/admin/building-edit/**", "/admin/user-edit/**", "/admin/user-list","/admin/customer-edit/**"
+                                )
+                        .hasRole("MANAGER")
+                        .antMatchers(
+                                "/admin/assets/**",
+                                "/admin/js/**",
+                                "/admin/css/**",
+                                "/admin/font/**",
+                                "/admin/font-awesome/**",
+                                "/admin/paging/**",
+                                "/admin/sweetalert/**"
+                        ).permitAll()
+                        .antMatchers("/admin/home").hasAnyRole("MANAGER","EDITOR","USER")
+                        .antMatchers("/admin/familytree", "/admin/familytree/**").hasAnyRole("MANAGER","EDITOR","USER")
+                        .antMatchers("/admin/livestream", "/admin/livestream/**").hasAnyRole("MANAGER","EDITOR","USER")
+                        .antMatchers("/admin/**").hasAnyRole("MANAGER","EDITOR")
+                        .antMatchers(HttpMethod.POST, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.PUT, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.DELETE, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers("/api/livestream/**").authenticated()
+                        .antMatchers("/watch").authenticated()
+                        .antMatchers("/ws/**").authenticated()
+                        .antMatchers("/login", "/resource/**", "/trang-chu", "/api/**").permitAll()
+                        .and()
+                        .formLogin().loginPage("/login").usernameParameter("j_username").passwordParameter("j_password").permitAll()
+                        .loginProcessingUrl("/j_spring_security_check")
+                        .successHandler(myAuthenticationSuccessHandler())
+                        .failureUrl("/login?incorrectAccount").and()
+                        .logout().logoutUrl("/logout").deleteCookies("JSESSIONID")
+                        .and().exceptionHandling()
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                new AntPathRequestMatcher("/api/**")
+                        )
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                new AntPathRequestMatcher("/watch")
+                        )
+                        .accessDeniedPage("/access-denied").and()
+                        .sessionManagement().maximumSessions(1).expiredUrl("/login?sessionTimeout");
+    }
+    @Bean
+    public AuthenticationSuccessHandler myAuthenticationSuccessHandler(){
+        return new CustomSuccessHandler();
+    }
+}
