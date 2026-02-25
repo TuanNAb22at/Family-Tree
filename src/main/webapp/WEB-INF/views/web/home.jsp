@@ -1,191 +1,123 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@include file="/common/taglib.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+         pageEncoding="UTF-8" %>
+<%@include file="/common/taglib.jsp" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>Gia Phả Online - Lưu giữ di sản dòng họ</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ</title>
 </head>
+
 <body>
+<div class="page-wrapper">
+    <div class="">
+        <section class="vh-100 gradient-custom form-register">
+            <div class="container">
+                <div class="row d-flex justify-content-center align-items-center h-100">
+                    <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                        <div class="card text-white" style="border-radius: 1rem; background-color: #35bf76;">
+                            <div class="card-body p-2 px-5 text-center">
+                                <div class="md-5 md-4 mt-4 pb-2">
+                                    <h2 class="fw-bold mb-2 text-uppercase">Create an account</h2>
+                                    <p class="text-white-50 mb-2">Please enter your Information</p>
 
-    <!-- ============================================ -->
-    <!-- HERO SECTION                                 -->
-    <!-- ============================================ -->
-    <section class="gpo-hero">
-        <div class="container text-center">
-            <h1 class="gpo-hero-title">
-                Lưu giữ <span class="gpo-text-primary">Di sản</span> Dòng họ cho Muôn đời
-            </h1>
-            <p class="gpo-hero-subtitle mx-auto">
-                Nền tảng số hóa gia phả an toàn, chuyên nghiệp &mdash; xây dựng cây phả hệ,
-                chia sẻ kỷ niệm và kết nối cội nguồn.
-            </p>
-            <div class="d-flex justify-content-center gap-3 mb-5">
-                <a href="/login" class="btn btn-gpo btn-lg">
-                    Bắt đầu ngay <i class="fa-solid fa-arrow-right ms-2"></i>
-                </a>
-                <a href="#features" class="btn btn-outline-gpo btn-lg">
-                    Tìm hiểu thêm
-                </a>
-            </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <div class="form-outline">
+                                                <label class="form-label" for="form3Example1m">First name</label>
+                                                <input type="text" id="form3Example1m"
+                                                       class="form-control form-control-lg"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="form-outline">
+                                                <label class="form-label" for="form3Example1n">Last name</label>
+                                                <input type="text" id="form3Example1n"
+                                                       class="form-control form-control-lg"/>
+                                            </div>
+                                        </div>
+                                    </div>
 
-            <%-- Thống kê nhanh --%>
-            <div class="row justify-content-center gpo-stats">
-                <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">2,845</div>
-                    <div class="gpo-stat-label">Thành viên</div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">142</div>
-                    <div class="gpo-stat-label">Chi nhánh</div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">8,302</div>
-                    <div class="gpo-stat-label">Tư liệu</div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">315</div>
-                    <div class="gpo-stat-label">Đang hoạt động</div>
-                </div>
-            </div>
-        </div>
-    </section>
+                                    <div class="d-md-flex justify-content-start align-items-center mb-4 py-2">
+                                        <h6 class="mb-0 me-4">Gender: </h6>
 
-    <!-- ============================================ -->
-    <!-- FEATURES SECTION                             -->
-    <!-- ============================================ -->
-    <section id="features" class="gpo-features">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="gpo-section-title">Mọi thứ bạn cần để quản lý Gia phả</h2>
-                <p class="gpo-section-subtitle mx-auto">
-                    Được xây dựng chuyên biệt cho các dòng họ Việt Nam với đầy đủ công cụ
-                    hiện đại và bảo mật.
-                </p>
-            </div>
+                                        <div class="form-check form-check-inline mb-0 me-4">
+                                            <input class="form-check-input" type="radio" name="inlineRadioOptions"
+                                                   id="femaleGender" value="option1"/>
+                                            <label class="form-check-label" for="femaleGender">Female</label>
+                                        </div>
 
-            <div class="row g-4">
-                <%-- Tính năng 1: Cây gia phả --%>
-                <div class="col-md-6 col-lg-4">
-                    <div class="gpo-feature-card">
-                        <div class="gpo-feature-icon">
-                            <i class="fa-solid fa-sitemap"></i>
-                        </div>
-                        <h3>Cây Gia phả</h3>
-                        <p>Xây dựng và trực quan hóa cây phả hệ nhiều đời với
-                           giao diện kéo thả trực quan.</p>
-                    </div>
-                </div>
+                                        <div class="form-check form-check-inline mb-0 me-4">
+                                            <input class="form-check-input" type="radio" name="inlineRadioOptions"
+                                                   id="maleGender" value="option2"/>
+                                            <label class="form-check-label" for="maleGender">Male</label>
+                                        </div>
 
-                <%-- Tính năng 2: Thư viện ảnh/video --%>
-                <div class="col-md-6 col-lg-4">
-                    <div class="gpo-feature-card">
-                        <div class="gpo-feature-icon">
-                            <i class="fa-solid fa-photo-film"></i>
-                        </div>
-                        <h3>Thư viện Tư liệu</h3>
-                        <p>Lưu trữ và sắp xếp ảnh, video, tài liệu gia đình
-                           trong thư viện media an toàn.</p>
-                    </div>
-                </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="inlineRadioOptions"
+                                                   id="otherGender" value="option3"/>
+                                            <label class="form-check-label" for="otherGender">Other</label>
+                                        </div>
+                                    </div>
 
-                <%-- Tính năng 3: Phát trực tuyến --%>
-                <div class="col-md-6 col-lg-4">
-                    <div class="gpo-feature-card">
-                        <div class="gpo-feature-icon">
-                            <i class="fa-solid fa-video"></i>
-                        </div>
-                        <h3>Phát trực tuyến</h3>
-                        <p>Livestream các buổi lễ, giỗ, họp mặt dòng họ
-                           với tính năng trò chuyện tích hợp.</p>
-                    </div>
-                </div>
+                                    <div class="form-outline form-white mb-2">
+                                        <label class="form-label" for="typePasswordX">Username</label>
+                                        <input type="email" id="typePasswordX" class="form-control form-control-lg"/>
+                                    </div>
 
-                <%-- Tính năng 4: Phân quyền --%>
-                <div class="col-md-6 col-lg-4">
-                    <div class="gpo-feature-card">
-                        <div class="gpo-feature-icon">
-                            <i class="fa-solid fa-shield-halved"></i>
-                        </div>
-                        <h3>Phân quyền truy cập</h3>
-                        <p>Kiểm soát ai được xem, chỉnh sửa hay quản lý dữ liệu
-                           gia phả với hệ thống phân quyền chi tiết.</p>
-                    </div>
-                </div>
+                                    <div class="form-outline form-white mb-2">
+                                        <label class="form-label" for="typeEmailX">Password</label>
+                                        <input type="email" id="typeEmailX" class="form-control form-control-lg"/>
+                                    </div>
 
-                <%-- Tính năng 5: Mô hình dữ liệu nhiều đời --%>
-                <div class="col-md-6 col-lg-4">
-                    <div class="gpo-feature-card">
-                        <div class="gpo-feature-icon">
-                            <i class="fa-solid fa-database"></i>
-                        </div>
-                        <h3>Dữ liệu nhiều đời</h3>
-                        <p>Theo dõi quan hệ huyết thống qua nhiều thế hệ với
-                           mô hình dữ liệu gia phả chuyên sâu.</p>
-                    </div>
-                </div>
+                                    <div class="form-outline form-white mb-2">
+                                        <label class="form-label" for="typeEmailX">Repeat your password</label>
+                                        <input type="email" id="typeEmailX" class="form-control form-control-lg"/>
+                                    </div>
 
-                <%-- Tính năng 6: Bảo mật --%>
-                <div class="col-md-6 col-lg-4">
-                    <div class="gpo-feature-card">
-                        <div class="gpo-feature-icon">
-                            <i class="fa-solid fa-lock"></i>
-                        </div>
-                        <h3>An toàn &amp; Bảo mật</h3>
-                        <p>Dữ liệu được mã hóa, nhật ký hoạt động được ghi lại
-                           đầy đủ phục vụ kiểm soát an toàn thông tin.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+                                    <div class="form-check d-flex justify-content-center mb-2">
+                                        <input class="form-check-input me-2" type="checkbox" value=""
+                                               id="form2Example3cg"/>
+                                        <label class="form-check-label">
+                                            I agree all statements in <a href="#!" class="text-body"><u
+                                                style="color: white ;">Terms of
+                                            service</u></a>
+                                        </label>
+                                    </div>
 
-    <!-- ============================================ -->
-    <!-- ABOUT SECTION                                -->
-    <!-- ============================================ -->
-    <section id="about" class="gpo-about">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-4 mb-lg-0">
-                    <h2 class="gpo-section-title text-start">Vì sao chọn Gia Phả Online?</h2>
-                    <p class="text-muted">
-                        Gia phả là di sản tinh thần quý giá của mỗi dòng họ. Chúng tôi số hóa
-                        truyền thống ấy bằng công nghệ hiện đại, giúp mọi thế hệ dễ dàng
-                        tra cứu, cập nhật và lưu truyền.
-                    </p>
-                    <ul class="gpo-check-list">
-                        <li><i class="fa-solid fa-check"></i> Quản lý hồ sơ nhân khẩu theo chi nhánh</li>
-                        <li><i class="fa-solid fa-check"></i> Ghi nhật ký mọi thay đổi phục vụ truy vết</li>
-                        <li><i class="fa-solid fa-check"></i> Hỗ trợ 4 vai trò: Admin, Editor, Member, Guest</li>
-                        <li><i class="fa-solid fa-check"></i> Tích hợp livestream sự kiện dòng họ</li>
-                    </ul>
-                </div>
-                <div class="col-lg-6">
-                    <div class="gpo-about-visual">
-                        <div class="gpo-about-card">
-                            <i class="fa-solid fa-users fa-3x mb-3 text-success"></i>
-                            <h4>Kết nối Cội nguồn</h4>
-                            <p>Gắn kết các thành viên trong gia tộc dù ở bất kỳ đâu.</p>
+
+                                    <button class="btn btn-outline-light btn-lg px-5" type="submit">Register</button>
+
+                                    <div class="d-flex justify-content-center text-center mt-2 pt-1">
+                                        <a href="#!" class="login-extension text-white"><i
+                                                class="fab fa-facebook-f fa-lg"></i></a>
+                                        <a href="#!" class="login-extension text-white"><i
+                                                class="fab fa-twitter fa-lg mx-4 px-2"></i></a>
+                                        <a href="#!" class="login-extension text-white"><i
+                                                class="fab fa-google fa-lg"></i></a>
+                                    </div>
+                                    <p class="text-center text-muted mt-2 mb-0">Have already an account? <a href="#!"
+                                                                                                            class="fw-bold text-body"><u
+                                            style="color: white ;">Login here</u></a></p>
+
+                                    </form>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- CONTACT / CTA SECTION                        -->
-    <!-- ============================================ -->
-    <section id="contact" class="gpo-cta">
-        <div class="container text-center">
-            <h2 class="gpo-section-title text-white">Sẵn sàng số hóa Gia phả?</h2>
-            <p class="text-white-50 mx-auto mb-4" style="max-width: 600px;">
-                Bắt đầu xây dựng cây gia phả số cho dòng họ bạn ngay hôm nay.
-                Miễn phí và dễ sử dụng.
-            </p>
-            <a href="/login" class="btn btn-light btn-lg">
-                Đăng nhập để bắt đầu <i class="fa-solid fa-arrow-right ms-2"></i>
-            </a>
-        </div>
-    </section>
-
+        </section>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+                integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+                integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+                crossorigin="anonymous"></script>
 </body>
+
 </html>

@@ -11,9 +11,12 @@ import org.springframework.web.servlet.ModelAndView;
 
 @Controller(value = "FamilytreeControllerOfAdmin")
 public class FamilytreeController {
+    @Autowired
+    private IPersonService iPersonService;
     @RequestMapping(value = "/admin/familytree", method = RequestMethod.GET)
     public ModelAndView familytreePage() {
         ModelAndView mav = new ModelAndView("admin/family-tree/familytree");
+//        PersonDTO root = iPersonService.findRootPerson();
         return mav;
     }
 }

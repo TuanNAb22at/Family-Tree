@@ -27,4 +27,6 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
 
     @Query("select p from PersonEntity p where p.branch.id = :branchId and (p.father.id = :parentId or p.mother.id = :parentId) order by p.id asc")
     List<PersonEntity> findChildrenByParentIdAndBranchId(@Param("parentId") Long parentId, @Param("branchId") Long branchId);
+
+    Optional<PersonEntity> findByUserId(Long userId);
 }

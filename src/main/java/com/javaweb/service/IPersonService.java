@@ -4,6 +4,7 @@ import com.javaweb.model.dto.PersonDTO;
 
 public interface IPersonService {
     void createPerson(PersonDTO personDTO);
+    PersonDTO findRootPerson();
     PersonDTO findRootPersonByBranchId(Long branchId);
     PersonDTO addSpouse(Long personId, PersonDTO spouseDTO);
     PersonDTO addChild(Long personId, PersonDTO childDTO);

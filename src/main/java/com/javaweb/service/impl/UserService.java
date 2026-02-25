@@ -137,39 +137,6 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public UserDTO register(String userName, String password, String confirmPassword) throws MyException {
-        if (StringUtils.isBlank(userName) || StringUtils.isBlank(password) || StringUtils.isBlank(confirmPassword)) {
-            throw new MyException("register_required_fields");
-        }
-        String normalizedUserName = userName.trim();
-        if (!password.equals(confirmPassword)) {
-            throw new MyException("register_confirm_password_not_match");
-        }
-        if (userRepository.findOneByUserName(normalizedUserName) != null) {
-            throw new MyException("register_username_existed");
-        }
-        RoleEntity role = roleRepository.findAll().stream()
-                .filter(item -> item.getCode() != null)
-                .filter(item -> {
-                    String normalized = item.getCode().trim().toUpperCase();
-                    return SystemConstant.USER_ROLE.equals(normalized) || "USER".equals(normalized);
-                })
-                .findFirst()
-                .orElse(null);
-        if (role == null) {
-            throw new MyException("register_role_not_found");
-        }
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUserName(normalizedUserName);
-        userEntity.setFullName(normalizedUserName);
-        userEntity.setStatus(1);
-        userEntity.setPassword(passwordEncoder.encode(password));
-        userEntity.setRoles(Stream.of(role).collect(Collectors.toList()));
-        return userConverter.convertToDto(userRepository.save(userEntity));
-    }
-
-    @Override
-    @Transactional
     public UserDTO update(Long id, UserDTO updateUser) {
         RoleEntity role = roleRepository.findOneByCode(updateUser.getRoleCode());
         UserEntity oldUser = userRepository.findById(id).get();

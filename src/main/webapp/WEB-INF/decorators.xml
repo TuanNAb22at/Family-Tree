@@ -12,13 +12,12 @@
     <decorator name="web" page="web.jsp">
        <pattern>/*</pattern>
     </decorator>
-
+    
     <decorator name="admin" page="admin.jsp">
        <pattern>/admin*</pattern>
     </decorator>
 
     <decorator name="login" page="login.jsp">
         <pattern>/login</pattern>
-        <pattern>/dang-ky</pattern>
     </decorator>
 </decorators>

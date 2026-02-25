@@ -1,13 +1,11 @@
 package com.javaweb.config;
 
 import com.javaweb.security.CustomSuccessHandler;
-import com.javaweb.security.CustomAuthenticationFailureHandler;
-import com.javaweb.security.CustomLogoutSuccessHandler;
 import com.javaweb.service.impl.CustomUserDetailService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,20 +13,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-
-    @Autowired
-    private CustomSuccessHandler customSuccessHandler;
-
-    @Autowired
-    private CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
-
-    @Autowired
-    private CustomLogoutSuccessHandler customLogoutSuccessHandler;
-
     @Bean
     public UserDetailsService userDetailsService() {
         return new CustomUserDetailService();
@@ -57,7 +48,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                         .antMatchers
                                 (
-                                         "/admin/user-edit/**", "/admin/user-list"
+                                        "/admin/building-edit/**", "/admin/user-edit/**", "/admin/user-list","/admin/customer-edit/**"
                                 )
                         .hasRole("MANAGER")
                         .antMatchers(
@@ -71,20 +62,35 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         ).permitAll()
                         .antMatchers("/admin/home").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/familytree", "/admin/familytree/**").hasAnyRole("MANAGER","EDITOR","USER")
-                        .antMatchers("/admin/profile-*", "/admin/profile-password").hasAnyRole("MANAGER","EDITOR","USER")
-                        .antMatchers("/admin/security-audit").hasRole("MANAGER")
+                        .antMatchers("/admin/livestream", "/admin/livestream/**").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/**").hasAnyRole("MANAGER","EDITOR")
                         .antMatchers(HttpMethod.POST, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.PUT, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.DELETE, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
-                        .antMatchers("/login", "/dang-ky", "/resource/**", "/trang-chu", "/api/**").permitAll()
+                        .antMatchers("/api/livestream/**").authenticated()
+                        .antMatchers("/watch").authenticated()
+                        .antMatchers("/ws/**").authenticated()
+                        .antMatchers("/login", "/resource/**", "/trang-chu", "/api/**").permitAll()
                         .and()
                         .formLogin().loginPage("/login").usernameParameter("j_username").passwordParameter("j_password").permitAll()
                         .loginProcessingUrl("/j_spring_security_check")
-                        .successHandler(customSuccessHandler)
-                        .failureHandler(customAuthenticationFailureHandler).and()
-                        .logout().logoutUrl("/logout").logoutSuccessHandler(customLogoutSuccessHandler).deleteCookies("JSESSIONID")
-                        .and().exceptionHandling().accessDeniedPage("/access-denied").and()
+                        .successHandler(myAuthenticationSuccessHandler())
+                        .failureUrl("/login?incorrectAccount").and()
+                        .logout().logoutUrl("/logout").deleteCookies("JSESSIONID")
+                        .and().exceptionHandling()
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                new AntPathRequestMatcher("/api/**")
+                        )
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                new AntPathRequestMatcher("/watch")
+                        )
+                        .accessDeniedPage("/access-denied").and()
                         .sessionManagement().maximumSessions(1).expiredUrl("/login?sessionTimeout");
+    }
+    @Bean
+    public AuthenticationSuccessHandler myAuthenticationSuccessHandler(){
+        return new CustomSuccessHandler();
     }
 }
