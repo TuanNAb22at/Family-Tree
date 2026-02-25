@@ -1,35 +1,35 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="/common/taglib.jsp" %>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-	  integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-	  crossorigin="anonymous" referrerpolicy="no-referrer" />
-
 <!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="UTF-8">
-		<title>Trang chủ</title>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><dec:title default="Gia Phả Online" /></title>
 
-			<!-- Bootstrap core CSS -->
-		<link href="web/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+        <!-- Bootstrap 5 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-		<!-- Custom styles for this template -->
-		<link href="web/css/small-business.css" rel="stylesheet" type="text/css">
+        <!-- Font Awesome 6 -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-		<link rel="stylesheet" href="web/css/web-style.css" type="text/css">
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-	</head>
-	<body>
-		<!-- Navigation -->
-		<%@ include file="/common/web/header.jsp" %>
+        <!-- Custom CSS cho trang web công khai -->
+        <link rel="stylesheet" href="<c:url value='/css/landing-style.css'/>" type="text/css">
+    </head>
+    <body>
+        <!-- Header -->
+        <%@ include file="/common/web/header.jsp" %>
 
-		<dec:body/>
+        <!-- Nội dung trang (SiteMesh inject vào đây) -->
+        <dec:body/>
 
-		<!-- Footer -->
-		<%@ include file="/common/web/footer.jsp" %>
+        <!-- Footer -->
+        <%@ include file="/common/web/footer.jsp" %>
 
-		<!-- Bootstrap core JavaScript -->
-		<script src="web/vendor/jquery/jquery.min.js"></script>
-		<script src="web/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-	</body>
+        <!-- Bootstrap 5 JS Bundle -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>

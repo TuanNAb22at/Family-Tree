@@ -55,7 +55,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                 "/admin/font/**",
                                 "/admin/font-awesome/**",
                                 "/admin/paging/**",
-                                "/admin/sweetalert/**"
+                                "/admin/sweetalert/**",
+                                "/css/**"
                         ).permitAll()
                         .antMatchers("/admin/home").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/familytree", "/admin/familytree/**").hasAnyRole("MANAGER","EDITOR","USER")
@@ -63,7 +64,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(HttpMethod.POST, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.PUT, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.DELETE, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
-                        .antMatchers("/login", "/resource/**", "/trang-chu", "/api/**").permitAll()
+                        .antMatchers("/login", "/dang-ky", "/resource/**", "/trang-chu", "/api/**",
+                                "/web/**", "/css/**").permitAll()
                         .and()
                         .formLogin().loginPage("/login").usernameParameter("j_username").passwordParameter("j_password").permitAll()
                         .loginProcessingUrl("/j_spring_security_check")
