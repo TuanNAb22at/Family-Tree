@@ -1,65 +1,57 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="com.javaweb.security.utils.SecurityUtils" %>
-<%@ taglib prefix="select" uri="http://www.springframework.org/tags/form" %>
 <%@include file="/common/taglib.jsp" %>
-<nav class="navbar-expand-lg navbar-dark fixed-top">
-		<div class="row navbar">
-			<div class="col-12 col-md-3">
-				<div class="logo">
-					<a href="">
-					</a>
-				</div>
-			</div>
-			<div class="col-12 col-md-6">
-				<div class="item-menu">
-					<div class="nav nav1">
-						<div class="nav-item p-2">
-							<a class="nav-item-link" href="/trang-chu">
-								<span style="color: var(--primary-color);">Trang chủ</span>
-							</a>
-						</div>
-						<div class="nav-item p-2">
-							<a href='<c:url value='/gioi-thieu'/>'>
-								<span style="color: var(--primary-color);">Giới thiệu hệ thống </span>
-							</a>
-						</div>
-						<div class="nav-item p-2">
-							<%--<a class="nav-item-link" href="./Duan.html">--%>
-							<a href='<c:url value='/san-pham'/>'>
-								<%--<span>Sản phẩm</span>--%>
-								<span style="color: var(--primary-color);">Sản phẩm</span>
-							</a>
-						</div>
-						<div class="nav-item p-2">
-							<a href='<c:url value='/tin-tuc'/>'>
-								<%--<span>Tin tức</span>--%>
-								<span style="color: var(--primary-color);">Tin tức</span>
-							</a>
-						</div>
-						<div class="nav-item p-2">
-							<a href='<c:url value='/lien-he'/>'>
-								<%--<span>Liên hệ</span>--%>
-									<span style="color: var(--primary-color);">Liên hệ</span>
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="collapse navbar-collapse" id="navbarResponsive">
-				<ul class="navbar-nav ml-auto">
-					<security:authorize access = "isAnonymous()">
-						<li class><a class="nav-link" href="<c:url value='/login'/>">Đăng nhập</a></li>
-						<li class="nav-item"><a class="nav-link" href="<c:url value='/register'/>">Đăng ký</a></li>
-					</security:authorize>
-					<security:authorize access = "isAuthenticated()">
-						<li class="nav-item"><a class="nav-link" href="/admin/home"> Hello <%=SecurityUtils.getPrincipal().getUsername()%></a></li>
-						<li class="nav-item">
-							<a class="nav-link" href="<c:url value='/logout'/>">
-								<i class="fa-solid fa-right-from-bracket" style="line-height: 22px"></i>
-							</a>
-						</li>
-					</security:authorize>
-				</ul>
-			</div>
-		</div>
-</nav>
+
+<header class="gpo-header fixed-top">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <%-- Logo --%>
+            <a class="navbar-brand d-flex align-items-center" href="/trang-chu">
+                <svg class="gpo-logo-icon" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <span class="gpo-logo-text ms-2">Gia Phả Online</span>
+            </a>
+
+            <%-- Nút toggle cho mobile --%>
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#webNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <%-- Menu chính --%>
+            <div class="collapse navbar-collapse" id="webNavbar">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Tính năng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">Giới thiệu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Liên hệ</a>
+                    </li>
+                </ul>
+
+                <%-- Nút đăng nhập / thông tin user --%>
+                <div class="d-flex align-items-center gap-3">
+                    <security:authorize access="isAnonymous()">
+                        <a href="<c:url value='/login'/>" class="btn btn-outline-gpo btn-sm">Đăng nhập</a>
+                        <a href="/dang-ky" class="btn btn-gpo btn-sm">Đăng ký</a>
+                    </security:authorize>
+
+                    <security:authorize access="isAuthenticated()">
+                        <a href="/admin/home" class="btn btn-outline-gpo btn-sm">
+                            <i class="fa-solid fa-user me-1"></i>
+                            <%=SecurityUtils.getPrincipal().getUsername()%>
+                        </a>
+                        <a href="<c:url value='/logout'/>" class="btn btn-gpo btn-sm">
+                            <i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất
+                        </a>
+                    </security:authorize>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>

@@ -55,6 +55,11 @@ public class HomeController {
         return mav;
     }
 
+    @GetMapping("/dang-ky")
+    public ModelAndView register() {
+        return new ModelAndView("register");
+    }
+
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public ModelAndView login() {
         ModelAndView mav = new ModelAndView("login");

@@ -3,75 +3,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Đăng ký</title>
 </head>
 <body>
-<div class="container" style="height: 100vh">
-    <div class="login-form">
-        <div class="main-div">
-            <c:if test="${param.register_required_fields != null}">
-                <div class="alert alert-danger">Vui lòng nhập đầy đủ thông tin.</div>
-            </c:if>
-            <c:if test="${param.register_confirm_password_not_match != null}">
-                <div class="alert alert-danger">Mật khẩu xác thực không khớp.</div>
-            </c:if>
-            <c:if test="${param.register_username_existed != null}">
-                <div class="alert alert-danger">Tài khoản đã tồn tại.</div>
-            </c:if>
-            <c:if test="${param.register_role_not_found != null}">
-                <div class="alert alert-danger">Không tìm thấy role mặc định ROLE_USER.</div>
-            </c:if>
-            <c:if test="${param.register_fail != null}">
-                <div class="alert alert-danger">Đăng ký thất bại.</div>
-            </c:if>
 
-            <div class="container-fluid" style="padding-top: 100px">
-                <section>
-                    <div class="row d-flex justify-content-center align-items-center">
-                        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                            <div class="card text-white shadow-lg"
-                                 style="border-radius: 1rem; background: linear-gradient(135deg, #2193b0, #6dd5ed);">
-                                <div class="card-body p-5">
-                                    <div class="text-center mb-4">
-                                        <h2 class="fw-bold mb-2 text-uppercase">Sign Up</h2>
-                                        <p class="text-white-50 mb-5">Tạo tài khoản mới</p>
-                                    </div>
-
-                                    <form action="<c:url value='/register'/>" method="post">
-                                        <div class="form-outline form-white mb-4">
-                                            <label class="form-label" for="userName">Tài khoản</label>
-                                            <input type="text" class="form-control" id="userName" name="userName" placeholder="Nhập tài khoản">
-                                        </div>
-
-                                        <div class="form-outline form-white mb-4">
-                                            <label class="form-label" for="password">Mật khẩu</label>
-                                            <input type="password" class="form-control" id="password" name="password" placeholder="Nhập mật khẩu">
-                                        </div>
-
-                                        <div class="form-outline form-white mb-4">
-                                            <label class="form-label" for="confirmPassword">Mật khẩu xác thực</label>
-                                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu">
-                                        </div>
-
-                                        <button type="submit" class="btn btn-light btn-lg w-100" style="color:#2193b0; font-weight:600;">
-                                            Đăng ký
-                                        </button>
-                                    </form>
-
-                                    <div class="text-center mt-4">
-                                        <p class="mb-0 text-white-50">
-                                            Đã có tài khoản? <a href="<c:url value='/login'/>" class="text-white fw-bold">Đăng nhập</a>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
+<div class="gpo-auth-card" style="max-width: 520px;">
+    <div class="text-center mb-4">
+        <h2>Tạo tài khoản</h2>
+        <p class="subtitle">Đăng ký để tham gia hệ thống Gia Phả Online</p>
     </div>
+
+    <c:if test="${not empty messageResponse}">
+        <div class="gpo-alert alert alert-${alert}">
+            <i class="fa-solid fa-circle-info me-1"></i> ${messageResponse}
+        </div>
+    </c:if>
+
+    <form action="#" id="formRegister" method="post">
+        <div class="mb-3">
+            <label class="gpo-form-label" for="fullname">Họ và tên</label>
+            <input type="text" class="form-control gpo-form-control"
+                   id="fullname" name="fullname" placeholder="Nguyễn Văn A" maxlength="100" required>
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="regUsername">Tên đăng nhập</label>
+            <input type="text" class="form-control gpo-form-control"
+                   id="regUsername" name="username" placeholder="nguyenvana" maxlength="50" required>
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="email">Email</label>
+            <input type="email" class="form-control gpo-form-control"
+                   id="email" name="email" placeholder="email@example.com" maxlength="100">
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="phone">Số điện thoại</label>
+            <input type="tel" class="form-control gpo-form-control"
+                   id="phone" name="phone" placeholder="0912 345 678" maxlength="20">
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="regPassword">Mật khẩu</label>
+            <input type="password" class="form-control gpo-form-control"
+                   id="regPassword" name="password" placeholder="Tối thiểu 6 ký tự" required>
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="confirmPassword">Xác nhận mật khẩu</label>
+            <input type="password" class="form-control gpo-form-control"
+                   id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+        </div>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+            <label class="form-check-label" for="agreeTerms" style="font-size:0.85rem;color:#64748b;">
+                Tôi đồng ý với <a href="#" class="gpo-link">Điều khoản sử dụng</a>
+                và <a href="#" class="gpo-link">Chính sách bảo mật</a>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-gpo-primary">Đăng ký</button>
+    </form>
+
+    <div class="gpo-divider"><span>hoặc</span></div>
+
+    <div class="d-flex justify-content-center gap-3 mb-4">
+        <a href="#" class="btn btn-outline-secondary btn-sm px-3"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="btn btn-outline-secondary btn-sm px-3"><i class="fab fa-google"></i></a>
+        <a href="#" class="btn btn-outline-secondary btn-sm px-3"><i class="fab fa-twitter"></i></a>
+    </div>
+
+    <p class="text-center mb-0" style="font-size:0.9rem;color:#64748b;">
+        Đã có tài khoản? <a href="/login" class="gpo-link">Đăng nhập</a>
+    </p>
 </div>
+
 </body>
 </html>

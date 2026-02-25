@@ -77,7 +77,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(HttpMethod.POST, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.PUT, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.DELETE, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
-                        .antMatchers("/login", "/register", "/resource/**", "/trang-chu", "/api/**").permitAll()
+                        .antMatchers("/login", "/dang-ky", "/resource/**", "/trang-chu", "/api/**").permitAll()
                         .and()
                         .formLogin().loginPage("/login").usernameParameter("j_username").passwordParameter("j_password").permitAll()
                         .loginProcessingUrl("/j_spring_security_check")
