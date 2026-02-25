@@ -13,13 +13,32 @@
         <p class="subtitle">Đăng ký để tham gia hệ thống Gia Phả Online</p>
     </div>
 
-    <c:if test="${not empty messageResponse}">
-        <div class="gpo-alert alert alert-${alert}">
-            <i class="fa-solid fa-circle-info me-1"></i> ${messageResponse}
+    <c:if test="${param.register_required_fields != null}">
+        <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            Vui long nhap day du ten dang nhap, mat khau va xac nhan mat khau.
+        </div>
+    </c:if>
+    <c:if test="${param.register_confirm_password_not_match != null}">
+        <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            Mat khau xac nhan khong khop.
+        </div>
+    </c:if>
+    <c:if test="${param.register_username_existed != null}">
+        <div class="gpo-alert alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            Ten dang nhap da ton tai.
+        </div>
+    </c:if>
+    <c:if test="${param.register_role_not_found != null || param.register_fail != null}">
+        <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            Dang ky that bai. Vui long thu lai sau.
         </div>
     </c:if>
 
-    <form action="#" id="formRegister" method="post">
+    <form action="/dang-ky" id="formRegister" method="post">
         <div class="mb-3">
             <label class="gpo-form-label" for="fullname">Họ và tên</label>
             <input type="text" class="form-control gpo-form-control"
@@ -28,7 +47,7 @@
         <div class="mb-3">
             <label class="gpo-form-label" for="regUsername">Tên đăng nhập</label>
             <input type="text" class="form-control gpo-form-control"
-                   id="regUsername" name="username" placeholder="nguyenvana" maxlength="50" required>
+                   id="regUsername" name="userName" placeholder="nguyenvana" maxlength="50" required>
         </div>
         <div class="mb-3">
             <label class="gpo-form-label" for="email">Email</label>

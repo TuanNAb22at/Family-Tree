@@ -71,7 +71,7 @@ public class HomeController {
         return new ModelAndView("register");
     }
 
-    @PostMapping(value = "/register")
+    @PostMapping(value = {"/register", "/dang-ky"})
     public ModelAndView register(@RequestParam("userName") String userName,
                                  @RequestParam("password") String password,
                                  @RequestParam("confirmPassword") String confirmPassword) {
