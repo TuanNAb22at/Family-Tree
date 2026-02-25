@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="/common/taglib.jsp"%>
 <!DOCTYPE html>
 <html>
@@ -15,26 +15,30 @@
 
     <c:if test="${param.register_required_fields != null}">
         <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
             Vui lòng nhập đầy đủ tên đăng nhập, mật khẩu và xác nhận mật khẩu.
         </div>
     </c:if>
     <c:if test="${param.register_confirm_password_not_match != null}">
         <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
             Xác nhận mật khẩu không khớp.
         </div>
     </c:if>
     <c:if test="${param.register_username_existed != null}">
-        <div class="gpo-alert alert alert-danger">
+        <div class="gpo-alert alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
             Tên đăng nhập đã tồn tại.
         </div>
     </c:if>
     <c:if test="${param.register_role_not_found != null || param.register_fail != null}">
         <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
             Đăng ký thất bại, vui lòng thử lại.
         </div>
     </c:if>
 
-    <form action="/register" id="formRegister" method="post">
+    <form action="/dang-ky" id="formRegister" method="post">
         <div class="mb-3">
             <label class="gpo-form-label" for="fullname">Họ và tên</label>
             <input type="text" class="form-control gpo-form-control"
