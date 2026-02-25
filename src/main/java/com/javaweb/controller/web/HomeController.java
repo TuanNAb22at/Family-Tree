@@ -55,10 +55,6 @@ public class HomeController {
         return mav;
     }
 
-    @GetMapping("/dang-ky")
-    public ModelAndView register() {
-        return new ModelAndView("register");
-    }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public ModelAndView login() {
@@ -66,12 +62,12 @@ public class HomeController {
         return mav;
     }
 
-    @GetMapping(value = "/register")
+    @GetMapping(value = {"/register", "/dang-ky"})
     public ModelAndView registerPage() {
         return new ModelAndView("register");
     }
 
-    @PostMapping(value = "/register")
+    @PostMapping(value = {"/register", "/dang-ky"})
     public ModelAndView register(@RequestParam("userName") String userName,
                                  @RequestParam("password") String password,
                                  @RequestParam("confirmPassword") String confirmPassword) {
