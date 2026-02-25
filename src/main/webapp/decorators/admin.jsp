@@ -3,7 +3,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title><dec:title default="Trang chủ" /></title>
+	<meta charset="UTF-8">
+	<title><dec:title default="Trang ch&#7911;" /></title>
 
 	<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="font-awesome/4.5.0/css/font-awesome.min.css" />
@@ -69,12 +70,12 @@
 	<script type="text/javascript">
         function showAlertBeforeDelete(callback) {
             swal({
-                title: "Xác nhận xóa",
-                text: "Bạn có chắc chắn xóa những dòng đã chọn",
+                title: "Xác nhận xóa",
+                text: "Bạn có chắc chắn xóa những dòng đã chọn",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: "Xác nhận",
-                cancelButtonText: "Hủy bỏ",
+                confirmButtonText: "Xác nhận",
+                cancelButtonText: "Hủy bỏ",
                 confirmButtonClass: "btn btn-success",
                 cancelButtonClass: "btn btn-danger"
             }).then(function (res) {

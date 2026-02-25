@@ -1,10 +1,16 @@
 package com.javaweb.controller.web;
+import com.javaweb.exception.MyException;
 import com.javaweb.model.request.BuildingSearchRequest;
+import com.javaweb.service.IUserService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
@@ -14,6 +20,9 @@ import javax.servlet.http.HttpSession;
 
 @Controller(value = "homeControllerOfWeb")
 public class HomeController {
+
+    @Autowired
+    private IUserService userService;
 
     @RequestMapping(value = "/trang-chu", method = RequestMethod.GET)
     public ModelAndView homePage(BuildingSearchRequest buildingSearchRequest, HttpServletRequest request) {
@@ -50,6 +59,26 @@ public class HomeController {
     public ModelAndView login() {
         ModelAndView mav = new ModelAndView("login");
         return mav;
+    }
+
+    @GetMapping(value = "/register")
+    public ModelAndView registerPage() {
+        return new ModelAndView("register");
+    }
+
+    @PostMapping(value = "/register")
+    public ModelAndView register(@RequestParam("userName") String userName,
+                                 @RequestParam("password") String password,
+                                 @RequestParam("confirmPassword") String confirmPassword) {
+        try {
+            userService.register(userName, password, confirmPassword);
+            return new ModelAndView("redirect:/login?registerSuccess");
+        } catch (MyException exception) {
+            String message = StringUtils.defaultIfBlank(exception.getMessage(), "register_fail");
+            return new ModelAndView("redirect:/register?" + message);
+        } catch (Exception exception) {
+            return new ModelAndView("redirect:/register?register_fail");
+        }
     }
 
     @RequestMapping(value = "/access-denied", method = RequestMethod.GET)

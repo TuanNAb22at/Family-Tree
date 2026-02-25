@@ -19,6 +19,9 @@
 				<c:if test="${param.sessionTimeout != null}">
 					<div class="alert alert-danger">Session Timeout</div>
 				</c:if>
+				<c:if test="${param.registerSuccess != null}">
+					<div class="alert alert-success">Đăng ký thành công. Vui lòng đăng nhập.</div>
+				</c:if>
 
 				<div class="container-fluid" style="padding-top: 100px">
 					<section>
@@ -60,7 +63,7 @@
 
 										<div class="text-center mt-4">
 											<p class="mb-0 text-white-50">
-												Don't have an account? <a href="#!" class="text-white fw-bold">Sign Up</a>
+												Don't have an account? <a href="<c:url value='/register'/>" class="text-white fw-bold">Sign Up</a>
 											</p>
 										</div>
 									</div>

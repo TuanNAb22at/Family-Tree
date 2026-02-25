@@ -19,5 +19,6 @@
 
     <decorator name="login" page="login.jsp">
         <pattern>/login</pattern>
+        <pattern>/register</pattern>
     </decorator>
 </decorators>

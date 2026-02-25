@@ -1,5 +1,6 @@
-﻿﻿﻿﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿﻿﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
+<title>Cây gia phả</title>
 <!-- Icons (Bootstrap Icons) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
 
@@ -28,7 +29,19 @@
     #ftApp .bg-light{background:#f8fafc!important}
     #ftApp .text-uppercase{text-transform:uppercase!important}
 
-    #ftApp .container-fluid{width:100%;padding-left:12px;padding-right:12px;margin:0 auto}
+    #ftApp {
+        margin-top: -8px;
+    }
+    #ftApp .container-fluid{
+        width:100%;
+        padding-left:12px;
+        padding-right:12px;
+        padding-top:0 !important;
+        margin:0 auto;
+    }
+    #ftApp .breadcrumb{
+        margin-bottom:0;
+    }
 
     /* ===== Buttons ===== */
     #ftApp .btn{
@@ -78,6 +91,35 @@
     #ftApp .dropdown-toggle::after{
         content:"";display:inline-block;margin-left:.35rem;vertical-align:middle;
         border-top:.35em solid;border-right:.35em solid transparent;border-left:.35em solid transparent;
+    }
+    #ftApp .filter-chip{
+        border-radius: 999px;
+        padding: .35rem .6rem;
+        min-height: 34px;
+        gap: .4rem !important;
+        font-size: 13px;
+        background: rgba(255,255,255,.94);
+        box-shadow: 0 2px 8px rgba(15,23,42,.06);
+    }
+    #ftApp .filter-chip .bi{
+        font-size: 13px;
+    }
+    #ftApp .filter-chip span{
+        white-space: nowrap;
+    }
+    #ftApp #branchMenu,
+    #ftApp #generationMenu{
+        min-width: max-content;
+        width: max-content;
+        max-width: min(320px, calc(100vw - 32px));
+        white-space: nowrap;
+        padding: .3rem;
+    }
+    #ftApp #branchMenu .dropdown-item,
+    #ftApp #generationMenu .dropdown-item{
+        padding: .4rem .65rem;
+        font-size: 13px;
+        border-radius: .45rem;
     }
 
     /* ===== Modal (minimal) ===== */
@@ -376,13 +418,17 @@
 <% boolean canManageMember = request.isUserInRole("MANAGER") || request.isUserInRole("EDITOR"); %>
 
 <div id="ftApp" class="bg-light">
-    <div class="container-fluid py-3" style="padding-top: 0 !important;">
+    <div class="container-fluid py-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="d-flex align-items-center gap-2">
-                <a class="text-decoration-none text-secondary" href="#">App</a>
-                <span class="text-secondary">›</span>
-                <span class="fw-semibold">Family Tree</span>
-            </div>
+            <ul class="breadcrumb">
+                <li>
+                    <i class="ace-icon fa fa-home home-icon"></i>
+                    <a href="/admin/home">Trang chủ</a>
+                </li>
+                <li class="active">
+                        Family Tree
+                </li>
+            </ul>
             <div class="d-flex align-items-center gap-2">
                 <button class="btn btn-outline-secondary"><i class="bi bi-bell"></i></button>
                 <button class="btn btn-outline-secondary"><i class="bi bi-gear"></i></button>
@@ -402,7 +448,7 @@
             <!-- RIGHT TOOLBAR -->
             <div class="ft-toolbar-right">
                 <div class="dropdown" id="branchDropdown">
-                    <button class="btn btn-white border dropdown-toggle d-flex align-items-center gap-2" type="button">
+                    <button class="btn btn-white border dropdown-toggle d-flex align-items-center gap-2 filter-chip" type="button">
                         <i class="bi bi-diagram-3" style="color:#16a34a"></i>
                         <span id="activeBranchLabel">Tất cả các chi</span>
                     </button>
@@ -410,7 +456,7 @@
                 </div>
 
                 <div class="dropdown" id="generationDropdown">
-                    <button class="btn btn-white border dropdown-toggle d-flex align-items-center gap-2" type="button">
+                    <button class="btn btn-white border dropdown-toggle d-flex align-items-center gap-2 filter-chip" type="button">
                         <i class="bi bi-funnel" style="color:#2563eb"></i>
                         <span id="activeGenerationLabel">Tất cả đời</span>
                     </button>

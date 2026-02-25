@@ -15,6 +15,7 @@ public interface IUserService {
     UserDTO findOneByUserName(String userName);
     UserDTO findUserById(long id);
     UserDTO insert(UserDTO userDTO);
+    UserDTO register(String userName, String password, String confirmPassword) throws MyException;
     UserDTO update(Long id, UserDTO userDTO);
     void updatePassword(long id, PasswordDTO userDTO) throws MyException;
     UserDTO resetPassword(long id);

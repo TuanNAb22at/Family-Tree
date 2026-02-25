@@ -5,6 +5,7 @@
       <map>
         <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/family-tree/familytree.jsp" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/family-tree" />
         <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/home.jsp" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin" />
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/user/list.jsp" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/views/admin/user" />
       </map>
     </option>
   </component>
