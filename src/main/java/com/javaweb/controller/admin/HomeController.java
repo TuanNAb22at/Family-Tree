@@ -14,6 +14,6 @@ public class HomeController {
 	}
     @GetMapping("/admin/media")
     public ModelAndView mediaList() {
-        return new ModelAndView("admin/media/list");
+        return new ModelAndView("admin/media/media");
     }
 }
