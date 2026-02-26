@@ -40,6 +40,11 @@ public class PersonService implements IPersonService {
     }
 
     @Override
+    public long countPersons() {
+        return personRepository.count();
+    }
+
+    @Override
     @Transactional
     public PersonDTO addSpouse(Long personId, PersonDTO spouseDTO) {
         if (spouseDTO.getFullName() == null || spouseDTO.getFullName().trim().isEmpty()) {

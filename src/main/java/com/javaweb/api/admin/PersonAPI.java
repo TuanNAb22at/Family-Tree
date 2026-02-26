@@ -25,6 +25,11 @@ public class PersonAPI {
         return ResponseEntity.ok(personDTO);
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> countPersons() {
+        return ResponseEntity.ok(iPersonService.countPersons());
+    }
+
     @GetMapping("/root")
     public ResponseEntity<PersonDTO> getRootPerson(
             @RequestParam(value = "branchId", defaultValue = "1") Long branchId

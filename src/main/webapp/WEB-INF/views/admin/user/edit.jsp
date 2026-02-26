@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="formUrl" value="/api/user"/>
 <html>
@@ -16,7 +16,7 @@
             </script>
             <ul class="breadcrumb">
                 <li>
-                    <i class="ace-icon fa fa-home home-icon"></i>
+                    <i class="ace-icon fa-solid fa-house-chimney home-icon"></i>
                     <a href="<c:url value='/admin/home'/>">Trang ch&#7911;</a>
                 </li>
                 <li class="active">Chỉnh sửa người dùng</li>
