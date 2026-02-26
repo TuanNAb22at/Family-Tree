@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="/common/taglib.jsp"%>
 <c:url var="homeUrl" value="/admin/home"/>
 <c:url var="familyTreeUrl" value="/admin/familytree"/>
@@ -10,7 +10,7 @@
         <div class="breadcrumbs" id="breadcrumbs">
             <ul class="breadcrumb">
                 <li>
-                    <i class="ace-icon fa fa-home home-icon"></i>
+                    <i class="ace-icon fa-solid fa-house-chimney home-icon"></i>
                     <a href="${homeUrl}">Trang chủ</a>
                 </li>
             </ul>
@@ -23,13 +23,13 @@
                 </div>
                 <div class="col-xs-12 col-sm-5 text-right home-actions">
                     <a class="btn btn-success" href="${livestreamUrl}">
-                        <i class="fa fa-video-camera"></i> Phát trực tiếp
+                        <i class="fa-solid fa-tower-broadcast"></i> Phát trực tiếp
                     </a>
                     <a class="btn btn-primary" href="${familyTreeUrl}">
-                        <i class="fa fa-sitemap"></i> Cây gia phả
+                        <i class="fa-solid fa-diagram-project"></i> Cây gia phả
                     </a>
                     <a class="btn btn-info" href="${mediaUrl}">
-                        <i class="fa fa-picture-o"></i> Media
+                        <i class="fa-solid fa-photo-film"></i> Media
                     </a>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                 <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="widget-box home-stat-card">
                         <div class="widget-body"><div class="widget-main">
-                            <span class="stat-icon"><i class="fa fa-users"></i></span>
+                            <span class="stat-icon"><i class="fa-solid fa-users"></i></span>
                             <h4>Tổng thành viên</h4>
                             <h2>${empty totalMembers ? 0 : totalMembers}</h2>
                             <p class="text-success"><strong>${empty membersGrowth ? '0%' : membersGrowth}</strong> so với tháng trước</p>
@@ -48,7 +48,7 @@
                 <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="widget-box home-stat-card">
                         <div class="widget-body"><div class="widget-main">
-                            <span class="stat-icon"><i class="fa fa-code-fork"></i></span>
+                            <span class="stat-icon"><i class="fa-solid fa-code-branch"></i></span>
                             <h4>Số nhánh gia đình</h4>
                             <h2>${empty totalBranches ? 0 : totalBranches}</h2>
                             <p class="text-success"><strong>${empty branchesGrowth ? '0%' : branchesGrowth}</strong> so với tháng trước</p>
@@ -58,7 +58,7 @@
                 <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="widget-box home-stat-card">
                         <div class="widget-body"><div class="widget-main">
-                            <span class="stat-icon"><i class="fa fa-picture-o"></i></span>
+                            <span class="stat-icon"><i class="fa-solid fa-photo-film"></i></span>
                             <h4>Tệp phương tiện</h4>
                             <h2>${empty totalMediaFiles ? 0 : totalMediaFiles}</h2>
                             <p class="text-success"><strong>${empty mediaGrowth ? '0%' : mediaGrowth}</strong> so với tháng trước</p>
@@ -68,7 +68,7 @@
                 <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="widget-box home-stat-card">
                         <div class="widget-body"><div class="widget-main">
-                            <span class="stat-icon"><i class="fa fa-line-chart"></i></span>
+                            <span class="stat-icon"><i class="fa-solid fa-chart-line"></i></span>
                             <h4>Người dùng hoạt động</h4>
                             <h2>${empty activeUsers ? 0 : activeUsers}</h2>
                             <p class="text-success"><strong>${empty activeUsersGrowth ? '0%' : activeUsersGrowth}</strong> so với tháng trước</p>

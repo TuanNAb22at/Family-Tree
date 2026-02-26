@@ -1,7 +1,7 @@
 package com.javaweb.controller.admin;
 
-import com.javaweb.entity.ActivityLogEntity;
-import com.javaweb.repository.ActivityLogRepository;
+import com.javaweb.entity.BaseEntity;
+import com.javaweb.entity.PersonEntity;
 import com.javaweb.repository.BranchRepository;
 import com.javaweb.repository.MediaRepository;
 import com.javaweb.repository.PersonRepository;
@@ -35,9 +35,6 @@ public class HomeController {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ActivityLogRepository activityLogRepository;
 
     @RequestMapping(value = "/admin/home", method = RequestMethod.GET)
     public ModelAndView homePage() {
@@ -95,13 +92,16 @@ public class HomeController {
         return result;
     }
 
+    // Home activity now focuses on genealogy actions only (new people added)
     private List<HomeActivity> buildRecentActivities(int limit) {
         List<HomeActivity> result = new ArrayList<>();
-        List<ActivityLogEntity> logs = activityLogRepository.findRecentWithUser(PageRequest.of(0, limit));
-        for (ActivityLogEntity log : logs) {
-            String actor = log.getUser() != null ? log.getUser().getFullName() : "Hệ thống";
-            String action = StringUtils.defaultIfBlank(log.getDescription(), log.getAction());
-            String timeAgo = toRelativeTime(log.getTimestamp());
+        List<PersonEntity> recentPersons = personRepository.findRecentCreated(PageRequest.of(0, limit));
+        for (PersonEntity person : recentPersons) {
+            String actor = "Gia pha";
+            String branchName = person.getBranch() != null ? person.getBranch().getName() : "Chua co chi";
+            String personName = StringUtils.defaultIfBlank(person.getFullName(), "Thanh vien moi");
+            String action = "Them moi thanh vien: " + personName + " (Chi: " + branchName + ")";
+            String timeAgo = toRelativeTime(person.getCreatedDate());
             result.add(new HomeActivity(actor, timeAgo, action));
         }
         return result;
@@ -109,23 +109,23 @@ public class HomeController {
 
     private String toRelativeTime(Date time) {
         if (time == null) {
-            return "vừa xong";
+            return "vua xong";
         }
         long diffMillis = Math.max(0L, System.currentTimeMillis() - time.getTime());
         long minutes = diffMillis / (60 * 1000);
-        if (minutes < 1) return "vừa xong";
-        if (minutes < 60) return minutes + " phút trước";
+        if (minutes < 1) return "vua xong";
+        if (minutes < 60) return minutes + " phut truoc";
         long hours = minutes / 60;
-        if (hours < 24) return hours + " giờ trước";
+        if (hours < 24) return hours + " gio truoc";
         long days = hours / 24;
-        return days + " ngày trước";
+        return days + " ngay truoc";
     }
 
     private Date atStartOfMonth(LocalDate date) {
         return Date.from(date.withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    private long countByCreatedDate(List<? extends com.javaweb.entity.BaseEntity> list, Date from, Date to) {
+    private long countByCreatedDate(List<? extends BaseEntity> list, Date from, Date to) {
         return list.stream()
                 .filter(item -> item.getCreatedDate() != null)
                 .filter(item -> !item.getCreatedDate().before(from) && item.getCreatedDate().before(to))

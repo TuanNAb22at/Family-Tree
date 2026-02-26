@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="formUrl" value="/admin/user-list"/>
 <c:url var="formAjax" value="/api/user"/>
@@ -22,7 +22,7 @@
 
                 <ul class="breadcrumb">
                     <li>
-                        <i class="ace-icon fa fa-home home-icon"></i>
+                        <i class="ace-icon fa-solid fa-house-chimney home-icon"></i>
                         <a href="<c:url value='/admin/home'/>">Trang chủ</a>
                     </li>
                     <li class="active">Quản lý tài khoản</li>
