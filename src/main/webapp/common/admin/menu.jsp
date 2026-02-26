@@ -87,6 +87,13 @@
             </a>
             <b class="arrow"></b>
         </li>
+        <li class="">
+            <a href="/admin/media">
+                <i class="fa fa-photo"></i>
+                <span class="menu-text">Media</span>
+            </a>
+            <b class="arrow"></b>
+        </li>
     </ul>
 
     <div class="sidebar-toggle sidebar-collapse">
