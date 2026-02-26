@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="homeUrl" value="/admin/home"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -429,7 +429,7 @@
             <ul class="breadcrumb">
                 <li>
                     <i class="ace-icon fa fa-home home-icon"></i>
-                    <a href="${homeUrl}">App</a>
+                    <a href="${homeUrl}">Trang ch&#7911;</a>
                 </li>
                 <li class="active">Live Stream</li>
             </ul>
@@ -1195,3 +1195,4 @@
 </script>
 </body>
 </html>
+

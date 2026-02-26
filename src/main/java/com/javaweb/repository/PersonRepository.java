@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Date;
 
 public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
     Optional<PersonEntity>
@@ -29,4 +30,6 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
     List<PersonEntity> findChildrenByParentIdAndBranchId(@Param("parentId") Long parentId, @Param("branchId") Long branchId);
 
     Optional<PersonEntity> findByUserId(Long userId);
+
+    long countByCreatedDateBetween(Date from, Date to);
 }

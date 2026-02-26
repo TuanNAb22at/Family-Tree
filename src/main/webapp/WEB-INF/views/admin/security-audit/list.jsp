@@ -4,7 +4,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Security Audit</title>
+    <title>Bảo mật &amp; Kiểm toán</title>
 </head>
 <body>
 <div class="main-content">
@@ -15,53 +15,58 @@
                     <i class="ace-icon fa fa-home home-icon"></i>
                     <a href="<c:url value='/admin/home'/>">Trang chủ</a>
                 </li>
-                <li class="active">Security Audit</li>
+                <li class="active">Bảo mật &amp; Kiểm toán</li>
             </ul>
         </div>
 
-        <div class="page-content">
+        <div class="page-content security-audit-page">
             <div class="row">
                 <div class="col-xs-12">
-                    <h4 class="header blue lighter smaller">Tổng quan 7 ngày gần nhất</h4>
+                    <h3 class="audit-title">Bảo mật &amp; Kiểm toán</h3>
+                    <p class="audit-subtitle">Tổng quan hoạt động trong 7 ngày gần nhất</p>
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row audit-stats-row">
                 <div class="col-sm-3">
-                    <div class="widget-box">
+                    <div class="widget-box audit-stat-card">
                         <div class="widget-body">
                             <div class="widget-main">
-                                <div class="bigger-125"><strong>${dashboard.totalEvents7Days}</strong></div>
+                                <span class="audit-stat-icon"><i class="fa fa-list-alt"></i></span>
+                                <div class="bigger-150"><strong>${dashboard.totalEvents7Days}</strong></div>
                                 <div>Tổng sự kiện</div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-3">
-                    <div class="widget-box">
+                    <div class="widget-box audit-stat-card">
                         <div class="widget-body">
                             <div class="widget-main">
-                                <div class="bigger-125 text-success"><strong>${dashboard.loginSuccess7Days}</strong></div>
+                                <span class="audit-stat-icon"><i class="fa fa-check-circle"></i></span>
+                                <div class="bigger-150 text-success"><strong>${dashboard.loginSuccess7Days}</strong></div>
                                 <div>Đăng nhập thành công</div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-3">
-                    <div class="widget-box">
+                    <div class="widget-box audit-stat-card">
                         <div class="widget-body">
                             <div class="widget-main">
-                                <div class="bigger-125 text-danger"><strong>${dashboard.loginFailed7Days}</strong></div>
+                                <span class="audit-stat-icon"><i class="fa fa-times-circle"></i></span>
+                                <div class="bigger-150 text-danger"><strong>${dashboard.loginFailed7Days}</strong></div>
                                 <div>Đăng nhập thất bại</div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-3">
-                    <div class="widget-box">
+                    <div class="widget-box audit-stat-card">
                         <div class="widget-body">
                             <div class="widget-main">
-                                <div class="bigger-125"><strong>${dashboard.successRate}%</strong></div>
+                                <span class="audit-stat-icon"><i class="fa fa-pie-chart"></i></span>
+                                <div class="bigger-150"><strong>${dashboard.successRate}%</strong></div>
                                 <div>Tỷ lệ thành công</div>
                             </div>
                         </div>
@@ -71,13 +76,13 @@
 
             <div class="row">
                 <div class="col-xs-12">
-                    <div class="widget-box">
+                    <div class="widget-box audit-log-panel">
                         <div class="widget-header">
                             <h4 class="widget-title">Nhật ký gần đây</h4>
                         </div>
                         <div class="widget-body">
                             <div class="widget-main no-padding">
-                                <table class="table table-striped table-bordered table-hover">
+                                <table class="table table-striped table-bordered table-hover audit-log-table">
                                     <thead>
                                     <tr>
                                         <th>Thời gian</th>

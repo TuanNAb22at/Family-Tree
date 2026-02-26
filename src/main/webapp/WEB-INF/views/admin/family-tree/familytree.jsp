@@ -1,5 +1,6 @@
 ﻿﻿﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-
+<%@include file="/common/taglib.jsp"%>
+<c:url var="homeUrl" value="/admin/home"/>
 <title>Cây gia phả</title>
 <!-- Icons (Bootstrap Icons) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
@@ -28,9 +29,29 @@
     #ftApp .small{font-size:12px!important}
     #ftApp .bg-light{background:#f8fafc!important}
     #ftApp .text-uppercase{text-transform:uppercase!important}
+    .ft-breadcrumb-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .ft-breadcrumb-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .ft-breadcrumb-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 8px;
+    }
 
     #ftApp {
-        margin-top: -8px;
+        margin-top: 0;
     }
     #ftApp .container-fluid{
         width:100%;
@@ -417,24 +438,25 @@
 
 <% boolean canManageMember = request.isUserInRole("MANAGER") || request.isUserInRole("EDITOR"); %>
 
-<div id="ftApp" class="bg-light">
-    <div class="container-fluid py-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="breadcrumbs" id="breadcrumbs">
+            <script type="text/javascript">
+                try { ace.settings.check('breadcrumbs', 'fixed') } catch (e) {}
+            </script>
             <ul class="breadcrumb">
                 <li>
                     <i class="ace-icon fa fa-home home-icon"></i>
-                    <a href="/admin/home">Trang chủ</a>
+                    <a href="${homeUrl}">Trang chủ</a>
                 </li>
-                <li class="active">
-                        Family Tree
-                </li>
+                <li class="active">Cây gia phả</li>
             </ul>
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-outline-secondary"><i class="bi bi-bell"></i></button>
-                <button class="btn btn-outline-secondary"><i class="bi bi-gear"></i></button>
-            </div>
         </div>
 
+
+        <div class="page-content family-tree-page">
+<div id="ftApp" class="bg-light">
+    <div class="container-fluid">
         <div class="ft-canvas">
             <!-- LEFT TOOLBAR (Zoom) -->
             <div class="ft-toolbar-left">
@@ -1471,8 +1493,13 @@
         setupPersonCardActions();
         loadBranches();
         loadRootPerson();
-    </script>
+</script>
 
 
 </div>
+        </div>
+    </div>
+</div>
+
+
 
