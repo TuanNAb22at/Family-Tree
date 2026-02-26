@@ -1,9 +1,9 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="formUrl" value="/api/user"/>
 <html>
 <head>
-    <title>Chỉnh sửa người dùng</title>
+    <title>Ch&#7881;nh s&#7917;a ng&#432;&#7901;i d&#249;ng</title>
 </head>
 <body>
 <div class="main-content">
@@ -18,12 +18,12 @@
             <ul class="breadcrumb">
                 <li>
                     <i class="ace-icon fa fa-home home-icon"></i>
-                    <a href="#">Trang chủ</a>
+                    <a href="<c:url value='/admin/home'/>">Trang ch&#7911;</a>
                 </li>
-                <li class="active">Chỉnh sửa người dùng</li>
+                <li class="active">Ch&#7881;nh s&#7917;a ng&#432;&#7901;i d&#249;ng</li>
             </ul><!-- /.breadcrumb -->
         </div>
-        <div class="page-content">
+        <div class="page-content user-mgmt-page user-form-page">
             <div class="row">
                 <div class="col-xs-12">
                     <c:if test="${not empty messageResponse}">
@@ -40,7 +40,7 @@
                         <div class="form-group">
                             <label class="col-sm-3 control-label no-padding-right">
                                 <%--<spring:message code="label.username"/>--%>
-                                    Tên đăng nhập
+                                    T&#234;n &#273;&#259;ng nh&#7853;p
                             </label>
                             <div class="col-sm-9">
                                 <form:input path="userName" id="userName" cssClass="form-control" disabled="true"/>
@@ -50,7 +50,7 @@
                         <div class="form-group">
                             <label class="col-sm-3 control-label no-padding-right">
                                 <%--<spring:message code="label.fullname"/>--%>
-                                    Tên đầy đủ
+                                    T&#234;n &#273;&#7847;y &#273;&#7911;
                             </label>
                             <div class="col-sm-9">
                                 <form:input path="fullName" id="fullName" cssClass="form-control"/>
@@ -60,7 +60,7 @@
                         <div class="col-sm-12">
                                 <label class="col-sm-3 control-label no-padding-right message-info"></label>
                                 <input type="button" class="btn btn-white btn-warning btn-bold"
-                                       value="Cập nhật người dùng" id="btnUpdateUser"/>
+                                       value="C&#7853;p nh&#7853;t ng&#432;&#7901;i d&#249;ng" id="btnUpdateUser"/>
                         </div>
                         <!--Btn-->
                         <form:hidden path="id" id="userId"/>
@@ -100,3 +100,4 @@
 </div>
 </body>
 </html>
+

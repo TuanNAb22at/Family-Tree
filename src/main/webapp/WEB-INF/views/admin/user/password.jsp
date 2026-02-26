@@ -1,9 +1,9 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="changePasswordURL" value="/api/user/change-password"/>
 <html>
 <head>
-    <title>Đổi mật khẩu</title>
+    <title>&#272;&#7893;i m&#7853;t kh&#7849;u</title>
 </head>
 <body>
 <div class="main-content">
@@ -18,12 +18,12 @@
             <ul class="breadcrumb">
                 <li>
                     <i class="ace-icon fa fa-home home-icon"></i>
-                    <a href="#">Trang chủ</a>
+                    <a href="<c:url value='/admin/home'/>">Trang ch&#7911;</a>
                 </li>
-                <li class="active">Đổi mật khẩu</li>
+                <li class="active">&#272;&#7893;i m&#7853;t kh&#7849;u</li>
             </ul><!-- /.breadcrumb -->
         </div>
-        <div class="page-content">
+        <div class="page-content user-mgmt-page user-form-page">
             <div class="row">
                 <div class="col-xs-12">
                     <c:if test="${not empty messageResponse}">
@@ -40,7 +40,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label no-padding-right">
                                     <%--<spring:message code="label.password.old"/>--%>
-                                        Mật khẩu cũ
+                                        M&#7853;t kh&#7849;u c&#361;
                                 </label>
                                 <div class="col-sm-9">
                                     <input type="password" class="form-control" id="oldPassword" name="oldPassword"/>
@@ -50,7 +50,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label no-padding-right">
                                     <%--<spring:message code="label.password.new"/>--%>
-                                        Mật khẩu mới
+                                        M&#7853;t kh&#7849;u m&#7899;i
                                 </label>
                                 <div class="col-sm-9">
                                     <input type="password" class="form-control" id="newPassword" name="newPassword"/>
@@ -60,7 +60,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label no-padding-right">
                                     <%--<spring:message code="label.password.repeat"/>--%>
-                                        Nhập lại mật khẩu mới
+                                        Nh&#7853;p l&#7841;i m&#7853;t kh&#7849;u m&#7899;i
                                 </label>
                                 <div class="col-sm-9">
                                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"/>
@@ -69,7 +69,7 @@
                             <!--Btn-->
                             <div class="col-sm-12">
                                 <label class="col-sm-3 control-label no-padding-right message-info"></label>
-                                <input type="button" class="btn btn-white btn-warning btn-bold" value="Đổi mật khẩu" id="btnChangePassword"/>
+                                <input type="button" class="btn btn-white btn-warning btn-bold" value="&#272;&#7893;i m&#7853;t kh&#7849;u" id="btnChangePassword"/>
                             </div>
                             <!--Btn-->
                             <input type="hidden" value="${model.id}" id="userId"/>
@@ -96,12 +96,12 @@
                     confirmPassword: "required"
                 },
                 messages: {
-                    oldPassword: "Không bỏ trống",
+                    oldPassword: "Kh&#244;ng b&#7887; tr&#7889;ng",
                     newPassword: {
-                        required: "Không bỏ trống",
-                        minlength: "Mật khẩu tối thiểu 6 kí tự"
+                        required: "Kh&#244;ng b&#7887; tr&#7889;ng",
+                        minlength: "M&#7853;t kh&#7849;u t&#7889;i thi&#7875;u 6 k&#253; t&#7921;"
                     },
-                    confirmPassword: "Không bỏ trống"
+                    confirmPassword: "Kh&#244;ng b&#7887; tr&#7889;ng"
                 },
                 submitHandler: function(form) {
                     var formData = $('#formChangePassword').serializeArray();
@@ -137,3 +137,4 @@
 </div>
 </body>
 </html>
+
