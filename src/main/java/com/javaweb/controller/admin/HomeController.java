@@ -1,6 +1,5 @@
 package com.javaweb.controller.admin;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
@@ -12,8 +11,4 @@ public class HomeController {
 		ModelAndView mav = new ModelAndView("admin/home");
 		return mav;
 	}
-    @GetMapping("/admin/media")
-    public ModelAndView mediaList() {
-        return new ModelAndView("admin/media/media");
-    }
 }
