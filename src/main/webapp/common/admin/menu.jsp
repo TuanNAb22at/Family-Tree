@@ -80,6 +80,13 @@
             </a>
             <b class="arrow"></b>
         </li>
+        <li class="">
+            <a href="/admin/livestream">
+                <i class="menu-icon ace-icon fa fa-video-camera"></i>
+                <span class="menu-text">Livestream</span>
+            </a>
+            <b class="arrow"></b>
+        </li>
     </ul>
 
     <div class="sidebar-toggle sidebar-collapse">
@@ -88,3 +95,7 @@
            data-icon2="ace-icon fa fa-angle-double-right"></i>
     </div>
 </div>
+
+
+
+
