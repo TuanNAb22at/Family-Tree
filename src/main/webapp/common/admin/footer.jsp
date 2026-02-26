@@ -6,7 +6,7 @@
 	<div class="footer-inner">
 		<div class="footer-content">
 						<span class="bigger-120">
-							<b>TuanNAB22DCAT268
+							<b>Nhóm 1
 							</b>
 						</span>
 		</div>

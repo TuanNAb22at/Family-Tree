@@ -3,7 +3,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title><dec:title default="Trang chủ" /></title>
+	<meta charset="UTF-8">
+	<title><dec:title default="Trang ch&#7911;" /></title>
 
 	<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="font-awesome/4.5.0/css/font-awesome.min.css" />
@@ -12,6 +13,7 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 	<link rel="stylesheet" href="assets/css/style.css">
+	<link rel="stylesheet" href="assets/css/admin-modern.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 		  integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
 		  crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -22,10 +24,7 @@
 	<script type='text/javascript' src="assets/sweetalert2/sweetalert2.min.js"></script>
 	<link rel="stylesheet" href="assets/sweetalert2/sweetalert2.min.css">
 </head>
-<body class="no-skin">
-	<!-- header -->
-    <%@ include file="/common/admin/header.jsp" %>
-    <!-- header -->
+<body class="no-skin admin-modern">
 	
 	<div class="main-container" id="main-container">
 		<script type="text/javascript">
@@ -69,12 +68,12 @@
 	<script type="text/javascript">
         function showAlertBeforeDelete(callback) {
             swal({
-                title: "Xác nhận xóa",
-                text: "Bạn có chắc chắn xóa những dòng đã chọn",
+                title: "Xác nhận xóa",
+                text: "Bạn có chắc chắn xóa những dòng đã chọn",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: "Xác nhận",
-                cancelButtonText: "Hủy bỏ",
+                confirmButtonText: "Xác nhận",
+                cancelButtonText: "Hủy bỏ",
                 confirmButtonClass: "btn btn-success",
                 cancelButtonClass: "btn btn-danger"
             }).then(function (res) {
@@ -85,6 +84,22 @@
                 }
             });
         }
+
+        $(function () {
+            $('.main-content-inner .breadcrumbs').each(function () {
+                var $crumb = $(this);
+                if ($crumb.find('.breadcrumb').length === 0 || $crumb.find('.crumb-quick-icons').length > 0) {
+                    return;
+                }
+                $crumb.addClass('has-quick-icons');
+                var html = ''
+                    + '<div class="crumb-quick-icons">'
+                    + '  <a href="#" class="crumb-icon-btn has-dot" aria-label="Thông báo" title="Thông báo"><i class="fa fa-bell-o"></i></a>'
+                    + '  <a href="#" class="crumb-icon-btn" aria-label="Cài đặt" title="Cài đặt"><i class="fa fa-cog"></i></a>'
+                    + '</div>';
+                $crumb.append(html);
+            });
+        });
 	</script>
 </body>
 </html>

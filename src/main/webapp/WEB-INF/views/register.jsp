@@ -19,7 +19,7 @@
         </div>
     </c:if>
 
-    <form action="#" id="formRegister" method="post">
+    <form action="<c:url value='/register' />" id="formRegister" method="post">
         <div class="mb-3">
             <label class="gpo-form-label" for="fullname">Họ và tên</label>
             <input type="text" class="form-control gpo-form-control"
@@ -28,7 +28,7 @@
         <div class="mb-3">
             <label class="gpo-form-label" for="regUsername">Tên đăng nhập</label>
             <input type="text" class="form-control gpo-form-control"
-                   id="regUsername" name="username" placeholder="nguyenvana" maxlength="50" required>
+                   id="regUsername" name="userName" placeholder="nguyenvana" maxlength="50" required>
         </div>
         <div class="mb-3">
             <label class="gpo-form-label" for="email">Email</label>

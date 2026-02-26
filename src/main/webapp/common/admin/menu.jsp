@@ -1,113 +1,81 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="/common/taglib.jsp" %>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<%@ page import="com.javaweb.security.utils.SecurityUtils" %>
+<%
+    String uri = request.getRequestURI();
+    boolean homeActive = uri.contains("/admin/home");
+    boolean familyActive = uri.contains("/admin/familytree");
+    boolean mediaActive = uri.contains("/admin/media");
+    boolean liveActive = uri.contains("/admin/livestream");
+    boolean userActive = uri.contains("/admin/user");
+    boolean auditActive = uri.contains("/admin/security-audit");
+%>
 
-<div id="sidebar" class="sidebar responsive ace-save-state" style="">
-    <script type="text/javascript">
-        try {
-            ace.settings.loadState('sidebar')
-        } catch (e) {}
-    </script>
+<aside class="app-sidebar">
+    <div class="app-brand">
+        <div class="brand-icon"><i class="fa fa-users"></i></div>
+        <div class="brand-text">Gia ph&#7843; Online</div>
+    </div>
 
-    <!-- Sidebar Shortcuts -->
-    <div class="sidebar-shortcuts">
-        <div class="sidebar-shortcuts-large">
-            <a href="/trang-chu">
-                <button class="btn btn-success" style="text-align: center; width: 41px; line-height: 24px; padding: 0; border-width: 4px;" title="Trang chủ">
-                    <i class="fa-solid fa-house" style="color: #fff;"></i>
-                </button>
+    <nav class="app-nav">
+        <a class="app-nav-item <%= homeActive ? "active" : "" %>" href="/admin/home">
+            <i class="fa fa-dashboard"></i>
+            <span>Trang chủ</span>
+        </a>
+        <a class="app-nav-item <%= familyActive ? "active" : "" %>" href="/admin/familytree">
+            <i class="fa fa-sitemap"></i>
+            <span>Cây gia phả</span>
+        </a>
+        <a class="app-nav-item <%= mediaActive ? "active" : "" %>" href="/admin/media">
+            <i class="fa fa-picture-o"></i>
+            <span>Thư viện Media</span>
+        </a>
+        <a class="app-nav-item <%= liveActive ? "active" : "" %>" href="/admin/livestream">
+            <i class="fa fa-video-camera"></i>
+            <span>Phát trực tiếp</span>
+        </a>
+
+        <security:authorize access="hasRole('MANAGER')">
+            <a class="app-nav-item <%= userActive ? "active" : "" %>" href="/admin/user-list">
+                <i class="fa fa-user"></i>
+                <span>Quản lý người dùng</span>
+                <span class="role-badge">QUẢN TRỊ</span>
             </a>
+            <a class="app-nav-item <%= auditActive ? "active" : "" %>" href="/admin/security-audit">
+                <i class="fa fa-shield"></i>
+                <span>Bảo mật &amp; Kiểm toán</span>
+                <span class="role-badge">QUẢN TRỊ</span>
+            </a>
+        </security:authorize>
+    </nav>
 
-            <button class="btn btn-info">
-                <i class="ace-icon fa fa-pencil"></i>
-            </button>
-
-            <button class="btn btn-warning">
-                <i class="ace-icon fa fa-users"></i>
-            </button>
-
-            <button class="btn btn-danger">
-                <i class="ace-icon fa fa-cogs"></i>
-            </button>
+    <div class="app-sidebar-bottom">
+        <div class="dropdown dropup app-user-dropdown">
+            <a data-toggle="dropdown" href="#" class="dropdown-toggle app-user-box">
+                <div class="avatar"><i class="fa fa-user-circle"></i></div>
+                <div class="meta">
+                    <div class="name"><%=SecurityUtils.getPrincipal().getFullName()%></div>
+                    <div class="role">Quản trị viên</div>
+                </div>
+            </a>
+            <ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+                <li>
+                    <a href="/admin/profile-<%=SecurityUtils.getPrincipal().getUsername()%>">
+                        <i class="ace-icon fa fa-user"></i>
+                        Thông tin tài khoản
+                    </a>
+                </li>
+                <li>
+                    <a href="<c:url value='/admin/profile-password'/>">
+                        <i class="ace-icon fa fa-key"></i>
+                        Đổi mật khẩu
+                    </a>
+                </li>
+            </ul>
         </div>
-
-        <div class="sidebar-shortcuts-mini">
-            <span class="btn btn-success"></span>
-            <span class="btn btn-info"></span>
-            <span class="btn btn-warning"></span>
-            <span class="btn btn-danger"></span>
-        </div>
+        <a class="sign-out" href="<c:url value='/logout'/>">
+            <i class="fa fa-sign-out"></i> Đăng xuất
+        </a>
     </div>
+</aside>
 
-
-    <!-- Quản lý tài khoản -->
-    <security:authorize access="hasRole('MANAGER')">
-        <ul class="nav nav-list">
-            <li class="">
-                <a href="#" class="dropdown-toggle" style="padding: 10px">
-                    <i class="fa-solid fa-user" style="font-size: 18px"></i>
-                    <span class="menu-text">Quản Lý Tài Khoản</span>
-                </a>
-                <b class="arrow"></b>
-
-                <ul class="submenu">
-                    <li class="">
-                        <a href="/admin/user-list">
-                            <i class="fa-solid fa-users"></i>
-                            Danh sách tài khoản
-                        </a>
-                        <b class="arrow"></b>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </security:authorize>
-
-        <ul class="nav nav-list">
-            <li class="">
-                <a href="#" class="dropdown-toggle" style="padding: 10px">
-                    <i class="fa-solid fa-user" style="font-size: 18px"></i>
-                    <span class="menu-text">Quản Lý Gia Phả</span>
-                </a>
-                <b class="arrow"></b>
-
-                <ul class="submenu">
-                    <li class="">
-                        <a href="/admin/familytree">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-network flex-shrink-0 h-5 w-5 mr-3"><rect x="16" y="16" width="6" height="6" rx="1"></rect><rect x="2" y="16" width="6" height="6" rx="1"></rect><rect x="9" y="2" width="6" height="6" rx="1"></rect><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"></path><path d="M12 12V8"></path></svg>
-                            Cây gia phả
-                        </a>
-                        <b class="arrow"></b>
-                    </li>
-                </ul>
-            </li>
-
-
-            <li class="">
-                <a href="#" class="dropdown-toggle" style="padding: 10px">
-                    <i class="fa-solid fa-user" style="font-size: 18px"></i>
-                    <span class="menu-text">Livestream</span>
-                </a>
-                <b class="arrow"></b>
-
-                <ul class="submenu">
-                    <li class="">
-                        <a href="/admin/livestream">
-                            <i class="fa-solid fa-video"></i>
-                            Livestream
-                        </a>
-                        <b class="arrow"></b>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-
-
-
-    <!-- Sidebar Collapse -->
-    <div class="sidebar-toggle sidebar-collapse">
-        <i class="ace-icon fa fa-angle-double-left ace-save-state"
-           data-icon1="ace-icon fa fa-angle-double-left"
-           data-icon2="ace-icon fa fa-angle-double-right"></i>
-    </div>
-</div>

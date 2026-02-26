@@ -3,74 +3,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Đăng nhập</title>
+    <title>Đăng nhập</title>
 </head>
 <body>
-	<div class="container" style="height: 100vh">
-		<div class="login-form">
-			<div class="main-div">
-				<c:if test="${param.incorrectAccount != null}">
-					<div class="alert alert-danger">Username or password incorrect</div>
-				</c:if>
-				<c:if test="${param.accessDenied != null}">
-					<div class="alert alert-danger">You Not authorize</div>
-				</c:if>
-				<c:if test="${param.sessionTimeout != null}">
-					<div class="alert alert-danger">Session Timeout</div>
-				</c:if>
 
-				<div class="container-fluid" style="padding-top: 100px">
-					<section>
-						<div class="row d-flex justify-content-center align-items-center">
-							<div class="col-12 col-md-8 col-lg-6 col-xl-5">
-								<div class="card text-white shadow-lg"
-								     style="border-radius: 1rem; background: linear-gradient(135deg, #2193b0, #6dd5ed);">
-									<div class="card-body p-5">
-										<div class="text-center mb-4">
-											<h2 class="fw-bold mb-2 text-uppercase">Login</h2>
-											<p class="text-white-50 mb-5">Please enter your login and password!</p>
-										</div>
+<div class="gpo-auth-card">
+    <div class="text-center mb-4">
+        <h2>Đăng nhập</h2>
+        <p class="subtitle">Nhập tài khoản để truy cập hệ thống Gia Phả</p>
+    </div>
 
-										<form action="j_spring_security_check" id="formLogin" method="post">
-											<div class="form-outline form-white mb-4">
-												<label class="form-label" for="userName">Username</label>
-												<input type="text" class="form-control" id="userName" name="j_username" placeholder="Tên đăng nhập">
-											</div>
+    <c:if test="${param.incorrectAccount != null}">
+        <div class="gpo-alert alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            Tên đăng nhập hoặc mật khẩu không đúng.
+        </div>
+    </c:if>
+    <c:if test="${param.accessDenied != null}">
+        <div class="gpo-alert alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            Bạn không có quyền truy cập trang này.
+        </div>
+    </c:if>
+    <c:if test="${param.sessionTimeout != null}">
+        <div class="gpo-alert alert alert-info">
+            <i class="fa-solid fa-clock me-1"></i>
+            Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.
+        </div>
+    </c:if>
 
-											<div class="form-outline form-white mb-4">
-												<label class="form-label" for="password">Password</label>
-												<input type="password" class="form-control" id="password" name="j_password" placeholder="Mật khẩu">
-											</div>
+    <form action="j_spring_security_check" id="formLogin" method="post">
+        <div class="mb-3">
+            <label class="gpo-form-label" for="userName">Tên đăng nhập</label>
+            <input type="text" class="form-control gpo-form-control"
+                   id="userName" name="j_username" placeholder="Nhập tên đăng nhập" required>
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="password">Mật khẩu</label>
+            <input type="password" class="form-control gpo-form-control"
+                   id="password" name="j_password" placeholder="Nhập mật khẩu" required>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe">
+                <label class="form-check-label" for="rememberMe" style="font-size:0.85rem;color:#64748b;">
+                    Ghi nhớ đăng nhập
+                </label>
+            </div>
+            <a href="#" class="gpo-link">Quên mật khẩu?</a>
+        </div>
+        <button type="submit" class="btn btn-gpo-primary">Đăng nhập</button>
+    </form>
 
-											<p class="small mb-2 pb-lg-2 text-center">
-												<a class="text-white-50" href="#!">Forgot password?</a>
-											</p>
+    <div class="gpo-divider"><span>hoặc</span></div>
 
-											<button type="submit" class="btn btn-light btn-lg w-100" style="color:#2193b0; font-weight:600;">
-												Đăng nhập
-											</button>
-										</form>
+    <div class="d-flex justify-content-center gap-3 mb-4">
+        <a href="#" class="btn btn-outline-secondary btn-sm px-3"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="btn btn-outline-secondary btn-sm px-3"><i class="fab fa-google"></i></a>
+        <a href="#" class="btn btn-outline-secondary btn-sm px-3"><i class="fab fa-twitter"></i></a>
+    </div>
 
-										<div class="d-flex justify-content-center text-center mt-3 pt-2">
-											<a href="#!" class="text-white mx-2"><i class="fab fa-facebook-f fa-lg"></i></a>
-											<a href="#!" class="text-white mx-2"><i class="fab fa-twitter fa-lg"></i></a>
-											<a href="#!" class="text-white mx-2"><i class="fab fa-google fa-lg"></i></a>
-										</div>
+    <p class="text-center mb-0" style="font-size:0.9rem;color:#64748b;">
+        Chưa có tài khoản? <a href="/dang-ky" class="gpo-link">Đăng ký ngay</a>
+    </p>
+</div>
 
-										<div class="text-center mt-4">
-											<p class="mb-0 text-white-50">
-												Don't have an account? <a href="#!" class="text-white fw-bold">Sign Up</a>
-											</p>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</section>
-				</div>
-			</div>
-		</div>
-	</div>
 </body>
 </html>
