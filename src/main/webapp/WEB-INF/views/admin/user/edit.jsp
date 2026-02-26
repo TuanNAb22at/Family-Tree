@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="formUrl" value="/api/user"/>
 <html>
@@ -17,12 +17,12 @@
             <ul class="breadcrumb">
                 <li>
                     <i class="ace-icon fa fa-home home-icon"></i>
-                    <a href="#">Trang chủ</a>
+                    <a href="<c:url value='/admin/home'/>">Trang ch&#7911;</a>
                 </li>
                 <li class="active">Chỉnh sửa người dùng</li>
             </ul><!-- /.breadcrumb -->
         </div>
-        <div class="page-content">
+        <div class="page-content user-mgmt-page user-form-page">
             <div class="row">
                 <div class="col-xs-12">
                     <c:if test="${not empty messageResponse}">
@@ -179,3 +179,4 @@
 </script>
 </body>
 </html>
+

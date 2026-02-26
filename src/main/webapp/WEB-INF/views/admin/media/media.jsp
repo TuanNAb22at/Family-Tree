@@ -1,10 +1,10 @@
-﻿﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿﻿﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="/common/taglib.jsp"%>
-
+<c:url var="homeUrl" value="/admin/home"/>
 
 <!-- Icons (Bootstrap Icons) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
-
+<title>Media</title>
 <style>
     /* Keep layout stable across components */
     #mediaApp, #mediaApp * { box-sizing: border-box; }
@@ -22,18 +22,22 @@
                         .media-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #fff; border-radius: 0.75rem; border: 1px solid #e7e5e4; overflow: hidden; }
                         .media-sidebar { width: auto; min-width: 0; background: #fff; border-radius: 0.75rem; border: 1px solid #e7e5e4; display: flex; flex-direction: column; overflow: hidden; }
 
-                        .media-toolbar { padding: 0.75rem 1rem; border-bottom: 1px solid #e7e5e4; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
-                        .media-toolbar h2 { font-size: 1.42rem; font-weight: 700; color: #1e293b; margin: 0 1rem 0 0; }
-                        .media-search { position: relative; }
-                        .media-search input { padding: 0.62rem 0.84rem 0.62rem 2.25rem; border: 1px solid #e7e5e4; border-radius: 0.5rem; font-size: 1rem; width: 250px; background: #fafaf9; }
+                        .media-toolbar { padding: 0.75rem 1rem; border-bottom: 1px solid #e7e5e4; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; }
+                        .media-toolbar-left { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+                        .media-toolbar h2 { font-size: 1.42rem; font-weight: 700; color: #1e293b; margin: 0; white-space: nowrap; }
+                        .media-search { position: relative; width: 100%; max-width: 420px; }
+                        .media-search input { padding: 0.62rem 0.84rem 0.62rem 2.25rem; border: 1px solid #e7e5e4; border-radius: 0.5rem; font-size: 16px; width: 100%; min-width: 0; background: #fafaf9; }
+                        .media-search input::placeholder { font-size: 16px; color: #94a3b8; }
                         .media-search input:focus { outline: none; border-color: #047857; box-shadow: 0 0 0 3px rgba(4,120,87,0.1); }
                         .media-search i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; }
-                        .media-toolbar .btn-group { display: flex; gap: 0.5rem; align-items: center; }
-                        .media-filter-select { padding: 0.56rem 0.72rem; border: 1px solid #e7e5e4; border-radius: 0.5rem; background: #fff; color: #334155; font-size: 0.95rem; min-width: 170px; }
+                        .media-toolbar .btn-group { display: flex; gap: 0.5rem; align-items: center; justify-self: end; flex-wrap: nowrap; }
+                        .media-filter-select { padding: 0.56rem 0.72rem; border: 1px solid #e7e5e4; border-radius: 0.5rem; background: #fff; color: #334155; font-size: 14px; width: 220px; min-width: 220px; max-width: 220px; }
+                        .media-filter-select option { font-size: 14px; }
+                        .media-toolbar .btn-group .btn-media-primary { flex: 0 0 auto; }
 
                         .btn-media-outline { display: flex; align-items: center; gap: 0.4rem; padding: 0.58rem 0.9rem; border: 1px solid #e7e5e4; border-radius: 0.5rem; background: #fff; color: #64748b; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
                         .btn-media-outline:hover { border-color: #047857; color: #047857; background: #f0fdf4; }
-                        .btn-media-primary { display: flex; align-items: center; gap: 0.4rem; padding: 0.58rem 1.1rem; border: none; border-radius: 0.5rem; background: #047857; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+                        .btn-media-primary { display: flex; align-items: center; gap: 0.4rem; padding: 0.58rem 1.1rem; border: none; border-radius: 0.5rem; background: #047857; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
                         .btn-media-primary:hover { background: #065f46; box-shadow: 0 2px 8px rgba(4,120,87,0.25); }
 
                         .media-upload-zone { margin: 0.75rem 1rem; border: 2px dashed #d6d3d1; border-radius: 0.75rem; padding: 1.25rem; text-align: center; background: #fafaf9; transition: all 0.2s; cursor: pointer; }
@@ -84,11 +88,64 @@
                         .permission-note { margin: 0; padding: 0.15rem 0; border-radius: 0; font-size: 0.92rem; line-height: 1.45; border: none; background: transparent; color: #334155; }
                         .permission-note.can-edit { color: #065f46; }
                         .permission-note.read-only { color: #334155; }
+                        /* Make sidebar/action text larger and consistent */
+                        .sidebar-section h4,
+                        .sidebar-field,
+                        .sidebar-field .label,
+                        .sidebar-field .value,
+                        .permission-note,
+                        .sidebar-section .btn-media-outline,
+                        .sidebar-section .btn-media-primary {
+                            font-size: 16px !important;
+                        }
+                        .sidebar-section .tag {
+                            font-size: 16px !important;
+                        }
+                        .sidebar-section h4 {
+                            font-family: "Segoe UI", Tahoma, Arial, sans-serif !important;
+                            font-weight: 700 !important;
+                            text-transform: none !important;
+                            letter-spacing: normal !important;
+                        }
 
                         @media (max-width: 1280px) {
                             .media-page { grid-template-columns: 1fr; }
                             .media-sidebar { width: 100%; min-width: 0; }
                             .media-grid { max-height: 460px; }
+                        }
+                        @media (max-width: 1024px) {
+                            .media-toolbar {
+                                grid-template-columns: 1fr;
+                            }
+                            .media-toolbar .btn-group {
+                                justify-self: start;
+                                width: 100%;
+                            }
+                        }
+                        @media (max-width: 860px) {
+                            .media-toolbar-left {
+                                min-width: 100%;
+                                flex-wrap: wrap;
+                            }
+                            .media-search {
+                                width: 100%;
+                                max-width: none;
+                            }
+                            .media-search input {
+                                width: 100%;
+                                min-width: 0;
+                            }
+                            .media-toolbar .btn-group {
+                                width: 100%;
+                                justify-content: flex-start;
+                                flex-wrap: wrap;
+                            }
+                            .media-filter-select {
+                                flex: 1 1 220px;
+                                min-width: 0;
+                                width: auto;
+                                max-width: none;
+                            }
                         }
 
                         .app-dialog-backdrop {
@@ -193,12 +250,28 @@
                         }
                     </style>
 
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="breadcrumbs" id="breadcrumbs">
+            <script type="text/javascript">
+                try { ace.settings.check('breadcrumbs', 'fixed') } catch (e) {}
+            </script>
+            <ul class="breadcrumb">
+                <li>
+                    <i class="ace-icon fa fa-home home-icon"></i>
+                    <a href="${homeUrl}">Trang chủ</a>
+                </li>
+                <li class="active">Media</li>
+            </ul>
+        </div>
+        <div class="page-content media-admin-page">
+            <div id="mediaApp">
                     <!-- ========== MEDIA PAGE ========== -->
                     <div class="media-page">
 
                         <div class="media-main">
                             <div class="media-toolbar">
-                                <div style="display:flex; align-items:center;">
+                                <div class="media-toolbar-left">
                                     <h2>Th&#432; vi&#7879;n Media</h2>
                                     <div class="media-search">
                                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -394,6 +467,11 @@
         <div class="app-dialog-actions">
             <button type="button" class="btn-dialog-cancel" id="appDialogCancel">Hủy</button>
             <button type="button" class="btn-dialog-ok" id="appDialogOk">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
+            </div>
         </div>
     </div>
 </div>
