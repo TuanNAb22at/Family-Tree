@@ -14,20 +14,45 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/api/person")
 public class PersonAPI {
     @Autowired
     IPersonService iPersonService;
     @PostMapping
-    public ResponseEntity<PersonDTO> createPerson(@RequestBody PersonDTO personDTO) {
-        iPersonService.createPerson(personDTO);
-        return ResponseEntity.ok(personDTO);
+    public ResponseEntity<?> createPerson(@RequestBody PersonDTO personDTO) {
+        try {
+            iPersonService.createPerson(personDTO);
+            return ResponseEntity.ok(personDTO);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
     }
 
     @GetMapping("/count")
     public ResponseEntity<Long> countPersons() {
         return ResponseEntity.ok(iPersonService.countPersons());
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<PersonDTO>> findAvailablePersons(
+            @RequestParam(value = "branchId") Long branchId,
+            @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "dob", required = false) String dob
+    ) {
+        LocalDate dobValue = null;
+        try {
+            if (dob != null && !dob.trim().isEmpty()) {
+                dobValue = LocalDate.parse(dob.trim());
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(iPersonService.findAttachablePersonsByBranchId(branchId, fullName, gender, dobValue));
     }
 
     @GetMapping("/root")
@@ -39,27 +64,39 @@ public class PersonAPI {
     }
 
     @PostMapping("/{id}/spouse")
-    public ResponseEntity<PersonDTO> addSpouse(
+    public ResponseEntity<?> addSpouse(
             @PathVariable("id") Long personId,
             @RequestBody PersonDTO spouseDTO
     ) {
-        return ResponseEntity.ok(iPersonService.addSpouse(personId, spouseDTO));
+        try {
+            return ResponseEntity.ok(iPersonService.addSpouse(personId, spouseDTO));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
     }
 
     @PostMapping("/{id}/child")
-    public ResponseEntity<PersonDTO> addChild(
+    public ResponseEntity<?> addChild(
             @PathVariable("id") Long personId,
             @RequestBody PersonDTO childDTO
     ) {
-        return ResponseEntity.ok(iPersonService.addChild(personId, childDTO));
+        try {
+            return ResponseEntity.ok(iPersonService.addChild(personId, childDTO));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PersonDTO> updatePerson(
+    public ResponseEntity<?> updatePerson(
             @PathVariable("id") Long personId,
             @RequestBody PersonDTO personDTO
     ) {
-        return ResponseEntity.ok(iPersonService.updatePerson(personId, personDTO));
+        try {
+            return ResponseEntity.ok(iPersonService.updatePerson(personId, personDTO));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

@@ -2,11 +2,13 @@ package com.javaweb.service.impl;
 
 import com.javaweb.constant.SystemConstant;
 import com.javaweb.converter.UserConverter;
+import com.javaweb.entity.PersonEntity;
 import com.javaweb.model.dto.PasswordDTO;
 import com.javaweb.model.dto.UserDTO;
 import com.javaweb.entity.RoleEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.exception.MyException;
+import com.javaweb.repository.PersonRepository;
 import com.javaweb.repository.RoleRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.IUserService;
@@ -18,10 +20,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +44,8 @@ public class UserService implements IUserService {
     @Autowired
     private UserConverter userConverter;
 
+    @Autowired
+    private PersonRepository personRepository;
 
     @Override
     public UserDTO findOneByUserNameAndStatus(String name, int status) {
@@ -132,21 +138,29 @@ public class UserService implements IUserService {
         userEntity.setRoles(Stream.of(role).collect(Collectors.toList()));
         userEntity.setStatus(1);
         userEntity.setPassword(passwordEncoder.encode(SystemConstant.PASSWORD_DEFAULT));
-        return userConverter.convertToDto(userRepository.save(userEntity));
+        UserEntity savedUser = userRepository.save(userEntity);
+        ensureUserMappedToPerson(savedUser, null, null, null);
+        return userConverter.convertToDto(savedUser);
     }
 
     @Override
     @Transactional
-    public UserDTO register(String userName, String password, String confirmPassword) throws MyException {
-        if (StringUtils.isBlank(userName) || StringUtils.isBlank(password) || StringUtils.isBlank(confirmPassword)) {
+    public UserDTO register(String fullName, String userName, String gender, LocalDate dob, String email, String phone, String password, String confirmPassword) throws MyException {
+        if (StringUtils.isBlank(fullName) || StringUtils.isBlank(userName) || StringUtils.isBlank(password)
+                || StringUtils.isBlank(confirmPassword) || dob == null) {
             throw new MyException("register_required_fields");
         }
+        String normalizedFullName = fullName.trim();
         String normalizedUserName = userName.trim();
         if (!password.equals(confirmPassword)) {
             throw new MyException("register_confirm_password_not_match");
         }
         if (userRepository.findOneByUserName(normalizedUserName) != null) {
             throw new MyException("register_username_existed");
+        }
+        String normalizedGender = StringUtils.trimToEmpty(gender).toLowerCase();
+        if (!"male".equals(normalizedGender) && !"female".equals(normalizedGender) && !"other".equals(normalizedGender)) {
+            throw new MyException("register_gender_invalid");
         }
         RoleEntity role = roleRepository.findAll().stream()
                 .filter(item -> item.getCode() != null)
@@ -161,11 +175,15 @@ public class UserService implements IUserService {
         }
         UserEntity userEntity = new UserEntity();
         userEntity.setUserName(normalizedUserName);
-        userEntity.setFullName(normalizedUserName);
+        userEntity.setFullName(normalizedFullName);
+        userEntity.setEmail(StringUtils.trimToNull(email));
+        userEntity.setPhone(StringUtils.trimToNull(phone));
         userEntity.setStatus(1);
         userEntity.setPassword(passwordEncoder.encode(password));
         userEntity.setRoles(Stream.of(role).collect(Collectors.toList()));
-        return userConverter.convertToDto(userRepository.save(userEntity));
+        UserEntity savedUser = userRepository.save(userEntity);
+        ensureUserMappedToPerson(savedUser, normalizedFullName, normalizedGender, dob);
+        return userConverter.convertToDto(savedUser);
     }
 
     @Override
@@ -178,7 +196,9 @@ public class UserService implements IUserService {
         userEntity.setStatus(oldUser.getStatus());
         userEntity.setRoles(Stream.of(role).collect(Collectors.toList()));
         userEntity.setPassword(oldUser.getPassword());
-        return userConverter.convertToDto(userRepository.save(userEntity));
+        UserEntity savedUser = userRepository.save(userEntity);
+        ensureUserMappedToPerson(savedUser, null, null, null);
+        return userConverter.convertToDto(savedUser);
     }
 
     @Override
@@ -218,5 +238,30 @@ public class UserService implements IUserService {
             userEntity.setStatus(0);
             userRepository.save(userEntity);
         }
+    }
+
+    private void ensureUserMappedToPerson(UserEntity user, String personFullName, String personGender, LocalDate personDob) {
+        if (user == null || user.getId() == null) {
+            return;
+        }
+        Optional<PersonEntity> existed = personRepository.findByUserId(user.getId());
+        if (existed.isPresent()) {
+            return;
+        }
+
+        PersonEntity person = new PersonEntity();
+        person.setUserId(user.getId());
+        person.setFullName(StringUtils.isNotBlank(personFullName)
+                ? personFullName.trim()
+                : (user.getFullName() != null && !user.getFullName().trim().isEmpty()
+                    ? user.getFullName().trim()
+                    : user.getUserName()));
+        if (StringUtils.isNotBlank(personGender)) {
+            person.setGender(personGender.trim().toLowerCase());
+        }
+        if (personDob != null) {
+            person.setDob(java.sql.Date.valueOf(personDob));
+        }
+        personRepository.save(person);
     }
 }

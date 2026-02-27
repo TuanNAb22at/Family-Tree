@@ -2,6 +2,7 @@ package com.javaweb.controller.web;
 import com.javaweb.exception.MyException;
 import com.javaweb.model.request.BuildingSearchRequest;
 import com.javaweb.service.IUserService;
+import com.javaweb.utils.MessageUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -13,16 +14,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.Map;
+import java.time.LocalDate;
 
 @Controller(value = "homeControllerOfWeb")
 public class HomeController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private MessageUtils messageUtils;
 
     @RequestMapping(value = "/trang-chu", method = RequestMethod.GET)
     public ModelAndView homePage(BuildingSearchRequest buildingSearchRequest, HttpServletRequest request) {
@@ -56,8 +63,9 @@ public class HomeController {
     }
 
     @GetMapping("/dang-ky")
-    public ModelAndView register() {
-        return new ModelAndView("register");
+    public ModelAndView register(@RequestParam(value = "message", required = false) String message,
+                                 HttpServletRequest request) {
+        return buildRegisterModelAndView(message, request);
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
@@ -67,22 +75,31 @@ public class HomeController {
     }
 
     @GetMapping(value = "/register")
-    public ModelAndView registerPage() {
-        return new ModelAndView("register");
+    public ModelAndView registerPage(@RequestParam(value = "message", required = false) String message,
+                                     HttpServletRequest request) {
+        return buildRegisterModelAndView(message, request);
     }
 
     @PostMapping(value = "/register")
-    public ModelAndView register(@RequestParam("userName") String userName,
+    public ModelAndView register(@RequestParam("fullName") String fullName,
+                                 @RequestParam("userName") String userName,
+                                 @RequestParam("gender") String gender,
+                                 @RequestParam("dob") String dob,
+                                 @RequestParam(value = "email", required = false) String email,
+                                 @RequestParam(value = "phone", required = false) String phone,
                                  @RequestParam("password") String password,
-                                 @RequestParam("confirmPassword") String confirmPassword) {
+                                 @RequestParam("confirmPassword") String confirmPassword,
+                                 RedirectAttributes redirectAttributes) {
         try {
-            userService.register(userName, password, confirmPassword);
-            return new ModelAndView("redirect:/login?registerSuccess");
+            LocalDate dobValue = StringUtils.isBlank(dob) ? null : LocalDate.parse(dob.trim());
+            userService.register(fullName, userName, gender, dobValue, email, phone, password, confirmPassword);
+            redirectAttributes.addFlashAttribute("registerSuccessMessage", "Dang ky thanh cong. Vui long dang nhap.");
+            return new ModelAndView("redirect:/login");
         } catch (MyException exception) {
             String message = StringUtils.defaultIfBlank(exception.getMessage(), "register_fail");
-            return new ModelAndView("redirect:/register?" + message);
+            return new ModelAndView("redirect:/register?message=" + message);
         } catch (Exception exception) {
-            return new ModelAndView("redirect:/register?register_fail");
+            return new ModelAndView("redirect:/register?message=register_fail");
         }
     }
 
@@ -98,5 +115,24 @@ public class HomeController {
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
         return new ModelAndView("redirect:/trang-chu");
+    }
+
+    private ModelAndView buildRegisterModelAndView(String message, HttpServletRequest request) {
+        ModelAndView mav = new ModelAndView("register");
+        String normalizedMessage = StringUtils.trimToEmpty(message);
+        if (StringUtils.isBlank(normalizedMessage)) {
+            if (request.getParameter("register_required_fields") != null) normalizedMessage = "register_required_fields";
+            else if (request.getParameter("register_confirm_password_not_match") != null) normalizedMessage = "register_confirm_password_not_match";
+            else if (request.getParameter("register_username_existed") != null) normalizedMessage = "register_username_existed";
+            else if (request.getParameter("register_gender_invalid") != null) normalizedMessage = "register_gender_invalid";
+            else if (request.getParameter("register_role_not_found") != null) normalizedMessage = "register_role_not_found";
+            else if (request.getParameter("register_fail") != null) normalizedMessage = "register_fail";
+        }
+        if (StringUtils.isNotBlank(normalizedMessage)) {
+            Map<String, String> messageMap = messageUtils.getMessage(normalizedMessage);
+            mav.addObject("alert", messageMap.get("alert"));
+            mav.addObject("messageResponse", messageMap.get("messageResponse"));
+        }
+        return mav;
     }
 }

@@ -147,18 +147,23 @@
     }
 
     /* ===== Modal (minimal) ===== */
-    #ftApp .modal{position:fixed;inset:0;z-index:10000;display:none}
+    #ftApp .modal{position:fixed;inset:0;z-index:10000;display:none;overflow-y:auto}
     #ftApp .modal.show{display:block}
     #ftApp .modal-backdrop{
         position:absolute;inset:0;background:rgba(0,0,0,.45)
     }
     #ftApp .modal-dialog{
-        position:relative;max-width:900px;margin:48px auto;padding:0 12px;
-        display:flex;align-items:center;min-height:calc(100% - 96px);
+        position:relative;max-width:900px;margin:16px auto;padding:0 12px;
+        display:flex;align-items:flex-start;min-height:calc(100% - 32px);
     }
-    #ftApp .modal-content{width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    #ftApp .modal-content{
+        width:100%;
+        max-height:calc(100vh - 32px);
+        background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);
+        display:flex;flex-direction:column;
+    }
     #ftApp .modal-header,#ftApp .modal-footer{padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-    #ftApp .modal-body{padding:16px}
+    #ftApp .modal-body{padding:16px;overflow-y:auto}
     #ftApp .btn-close{
         width:32px;height:32px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;
         display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
@@ -370,6 +375,7 @@
     }
 
     .action-modal .modal-dialog { max-width: 980px; }
+    .action-modal .modal-content { max-height: calc(100vh - 32px); }
     .action-modal .modal-header {
         border-bottom: 1px solid #e5e7eb;
         justify-content: space-between;
@@ -423,6 +429,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-shrink: 0;
     }
     .btn-save-strong {
         border-radius: 18px;
@@ -436,5 +443,60 @@
         background: #9ca3af;
         border-color: #9ca3af;
         color: #f8fafc;
+    }
+
+    .ft-confirm-modal .modal-dialog { max-width: 520px; }
+    .ft-confirm-modal #ftConfirmMessage {
+        font-size: 15px;
+        color: #111827;
+        line-height: 1.5;
+    }
+
+    .ft-toast-wrap {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 11000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .ft-toast {
+        min-width: 260px;
+        max-width: 360px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 13px;
+        box-shadow: 0 10px 25px rgba(0,0,0,.2);
+        pointer-events: auto;
+        animation: ftToastIn .2s ease;
+    }
+    .ft-toast.success { background: #059669; }
+    .ft-toast.error { background: #dc2626; }
+    .ft-toast.info { background: #2563eb; }
+    @keyframes ftToastIn {
+        from { transform: translateY(-6px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 767px) {
+        #ftApp .modal-dialog {
+            margin: 8px auto;
+            min-height: calc(100% - 16px);
+            padding: 0 8px;
+        }
+        #ftApp .modal-content {
+            max-height: calc(100vh - 16px);
+            border-radius: 12px;
+        }
+        .action-footer {
+            padding: 10px 12px;
+        }
+        .btn-save-strong {
+            min-width: 150px;
+            min-height: 42px;
+        }
     }
 

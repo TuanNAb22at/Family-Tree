@@ -13,6 +13,8 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
     private String branchName;
     private String gender;
     private String avatar;
+    private Long userId;
+    private Long existingPersonId;
     private Long fatherId;
     private Long motherId;
     private Long spouseId;
@@ -89,6 +91,22 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getExistingPersonId() {
+        return existingPersonId;
+    }
+
+    public void setExistingPersonId(Long existingPersonId) {
+        this.existingPersonId = existingPersonId;
     }
 
     public Long getFatherId() {
