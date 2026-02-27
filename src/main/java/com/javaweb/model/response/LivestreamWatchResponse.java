@@ -8,6 +8,7 @@ public class LivestreamWatchResponse {
     private Long branchId;
     private String streamUrl;
     private String roomLink;
+    private Long startedAt;
 
     public Long getLivestreamId() {
         return livestreamId;
@@ -63,5 +64,13 @@ public class LivestreamWatchResponse {
 
     public void setRoomLink(String roomLink) {
         this.roomLink = roomLink;
+    }
+
+    public Long getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(Long startedAt) {
+        this.startedAt = startedAt;
     }
 }
