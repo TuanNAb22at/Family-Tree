@@ -1,4 +1,4 @@
-﻿(function () {
+﻿﻿(function () {
   var LIVE_ID = null;
   var SOCKET = null;
   var SELF_SESSION_ID = null;
