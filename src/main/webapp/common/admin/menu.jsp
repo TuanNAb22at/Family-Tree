@@ -1,6 +1,7 @@
 ﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="/common/taglib.jsp" %>
 <%@ page import="com.javaweb.security.utils.SecurityUtils" %>
+<%@ page import="java.util.List" %>
 <%
     String uri = request.getRequestURI();
     boolean homeActive = uri.contains("/admin/home");
@@ -9,6 +10,20 @@
     boolean liveActive = uri.contains("/admin/livestream");
     boolean userActive = uri.contains("/admin/user");
     boolean auditActive = uri.contains("/admin/security-audit");
+    String roleLabel = "Người dùng";
+    try {
+        List<String> authorities = SecurityUtils.getAuthorities();
+        if (authorities != null) {
+            if (authorities.contains("ROLE_MANAGER")) {
+                roleLabel = "Quản trị viên";
+            } else if (authorities.contains("ROLE_EDITOR")) {
+                roleLabel = "Biên tập viên";
+            } else if (authorities.contains("ROLE_USER")) {
+                roleLabel = "Người dùng";
+            }
+        }
+    } catch (Exception ignore) {
+    }
 %>
 
 <aside class="app-sidebar">
@@ -55,7 +70,7 @@
                 <div class="avatar"><i class="fa fa-user-circle"></i></div>
                 <div class="meta">
                     <div class="name"><%=SecurityUtils.getPrincipal().getFullName()%></div>
-                    <div class="role">Quản trị viên</div>
+                    <div class="role"><%=roleLabel%></div>
                 </div>
             </a>
             <ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">

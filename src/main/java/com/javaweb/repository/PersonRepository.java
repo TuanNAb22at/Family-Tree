@@ -4,6 +4,7 @@ import com.javaweb.entity.PersonEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,9 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
 
     @Query("select p from PersonEntity p where p.branch.id = :branchId and (p.father.id = :parentId or p.mother.id = :parentId) order by p.id asc")
     List<PersonEntity> findChildrenByParentIdAndBranchId(@Param("parentId") Long parentId, @Param("branchId") Long branchId);
+
+    @Query("select p from PersonEntity p left join fetch p.branch where p.createdDate is not null order by p.createdDate desc, p.id desc")
+    List<PersonEntity> findRecentCreated(Pageable pageable);
 
     Optional<PersonEntity> findByUserId(Long userId);
 

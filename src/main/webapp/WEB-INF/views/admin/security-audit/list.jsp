@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@include file="/common/taglib.jsp" %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -7,12 +7,13 @@
     <title>Bảo mật &amp; Kiểm toán</title>
 </head>
 <body>
+
 <div class="main-content">
     <div class="main-content-inner">
         <div class="breadcrumbs" id="breadcrumbs">
             <ul class="breadcrumb">
                 <li>
-                    <i class="ace-icon fa fa-home home-icon"></i>
+                    <i class="ace-icon fa-solid fa-house-chimney home-icon"></i>
                     <a href="<c:url value='/admin/home'/>">Trang chủ</a>
                 </li>
                 <li class="active">Bảo mật &amp; Kiểm toán</li>

@@ -1,5 +1,32 @@
+html,
+body.admin-modern {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 body.admin-modern {
     background: #0b1533;
+}
+
+body.admin-modern #main-container,
+body.admin-modern .main-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Ace adds top spacing when navbar is fixed; navbar is hidden in admin-modern */
+body.admin-modern .navbar-fixed-top + .main-container,
+body.admin-modern .navbar.navbar-fixed-top + .main-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+body.admin-modern .navbar-fixed-top + .main-container .main-content,
+body.admin-modern .navbar.navbar-fixed-top + .main-container .main-content,
+body.admin-modern .navbar-fixed-top + .main-container .main-content-inner,
+body.admin-modern .navbar.navbar-fixed-top + .main-container .main-content-inner {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 body.admin-modern #navbar,
@@ -15,6 +42,12 @@ body.admin-modern .main-content {
     margin-left: 260px;
     min-height: 100vh;
     background: #f5f7fb;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+body.admin-modern .main-content > .breadcrumbs {
+    margin-top: 0 !important;
 }
 
 body.admin-modern .breadcrumbs.has-quick-icons {

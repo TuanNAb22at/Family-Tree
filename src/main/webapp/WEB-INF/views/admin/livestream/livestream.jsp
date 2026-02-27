@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="homeUrl" value="/admin/home"/>
 <c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css"/>
@@ -19,7 +19,7 @@
             </script>
             <ul class="breadcrumb">
                 <li>
-                    <i class="ace-icon fa fa-home home-icon"></i>
+                    <i class="ace-icon fa-solid fa-house-chimney home-icon"></i>
                     <a href="${homeUrl}">Trang quản trị</a>
                 </li>
                 <li class="active">Livestream</li>
