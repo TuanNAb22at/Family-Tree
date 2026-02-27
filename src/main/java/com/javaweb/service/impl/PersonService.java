@@ -12,9 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,15 +32,37 @@ public class PersonService implements IPersonService {
 
     @Override
     public void createPerson(PersonDTO personDTO) {
+        if (personDTO.getExistingPersonId() != null) {
+            PersonEntity existing = personRepository.findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(personDTO.getExistingPersonId())
+                    .orElseThrow(() -> new IllegalArgumentException("Person available not found: " + personDTO.getExistingPersonId()));
+            existing.setBranch(resolveBranchOrDefault(null, existing.getBranch()));
+            existing.setGeneration(personDTO.getGeneration() != null ? personDTO.getGeneration() : 1);
+            if (personDTO.getGender() != null && !personDTO.getGender().trim().isEmpty()) {
+                existing.setGender(personDTO.getGender().trim().toLowerCase());
+            }
+            if (personDTO.getDob() != null) {
+                existing.setDob(java.sql.Date.valueOf(personDTO.getDob()));
+            }
+            if (personDTO.getDod() != null) {
+                existing.setDod(java.sql.Date.valueOf(personDTO.getDod()));
+            }
+            if (personDTO.getAvatar() != null && !personDTO.getAvatar().trim().isEmpty()) {
+                existing.setAvatar(personDTO.getAvatar().trim());
+            }
+            personRepository.save(existing);
+            return;
+        }
+        if (personDTO.getFullName() == null || personDTO.getFullName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Full name is required");
+        }
         PersonEntity personEntity = new PersonEntity();
-        BranchEntity branchEntity = resolveBranch(personDTO.getBranch());
         personEntity.setDob(personDTO.getDob() == null ? null : java.sql.Date.valueOf(personDTO.getDob()));
         personEntity.setDod(personDTO.getDod() == null ? null : java.sql.Date.valueOf(personDTO.getDod()));
-        personEntity.setFullName(personDTO.getFullName());
-        personEntity.setGeneration(personDTO.getGeneration());
+        personEntity.setFullName(personDTO.getFullName().trim());
+        personEntity.setGeneration(personDTO.getGeneration() != null ? personDTO.getGeneration() : 1);
         personEntity.setGender(personDTO.getGender());
         personEntity.setAvatar(personDTO.getAvatar());
-        personEntity.setBranch(branchEntity);
+        personEntity.setBranch(resolveMainBranch());
         personRepository.save(personEntity);
     }
 
@@ -45,23 +72,84 @@ public class PersonService implements IPersonService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<PersonDTO> findAttachablePersonsByBranchId(Long branchId, String fullName, String gender, LocalDate dob) {
+        if (branchId == null) {
+            return new ArrayList<>();
+        }
+        String normalizedFullName = fullName == null || fullName.trim().isEmpty() ? null : fullName.trim();
+        String normalizedGender = gender == null || gender.trim().isEmpty() ? null : gender.trim().toLowerCase();
+        java.sql.Date dobDate = dob == null ? null : java.sql.Date.valueOf(dob);
+        return personRepository.findAttachablePersons(normalizedFullName, normalizedGender, dobDate)
+                .stream()
+                .map(entity -> {
+                    PersonDTO dto = new PersonDTO();
+                    dto.setId(entity.getId());
+                    dto.setFullName(entity.getFullName());
+                    dto.setGender(entity.getGender());
+                    dto.setAvatar(entity.getAvatar());
+                    dto.setUserId(entity.getUserId());
+                    dto.setDob(toLocalDate(entity.getDob()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public PersonDTO addSpouse(Long personId, PersonDTO spouseDTO) {
         if (spouseDTO.getFullName() == null || spouseDTO.getFullName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Spouse full name is required");
+            if (spouseDTO.getExistingPersonId() == null) {
+                throw new IllegalArgumentException("Spouse full name is required");
+            }
         }
         PersonEntity person = personRepository.findByIdAndSpouseIsNull(personId).orElseThrow(
                 () -> new IllegalArgumentException("Person not found or already has spouse: " + personId)
         );
 
-        PersonEntity spouse = new PersonEntity();
-        spouse.setFullName(spouseDTO.getFullName());
-        spouse.setGender(spouseDTO.getGender());
-        spouse.setDob(spouseDTO.getDob() == null ? null : java.sql.Date.valueOf(spouseDTO.getDob()));
-        spouse.setDod(spouseDTO.getDod() == null ? null : java.sql.Date.valueOf(spouseDTO.getDod()));
-        spouse.setGeneration(person.getGeneration());
-        spouse.setBranch(resolveBranchOrDefault(spouseDTO.getBranch(), person.getBranch()));
-        spouse.setAvatar(spouseDTO.getAvatar());
+        PersonEntity spouse;
+        if (spouseDTO.getExistingPersonId() != null) {
+            spouse = personRepository.findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(spouseDTO.getExistingPersonId())
+                    .orElseThrow(() -> new IllegalArgumentException("Spouse person is not available"));
+            if (Objects.equals(spouse.getId(), person.getId())) {
+                throw new IllegalArgumentException("Person cannot be spouse of itself");
+            }
+            String spouseGender = spouse.getGender() == null ? "" : spouse.getGender().trim().toLowerCase();
+            if (!"female".equals(spouseGender)) {
+                throw new IllegalArgumentException("Chi duoc phep them vo co gioi tinh nu");
+            }
+            spouse.setGeneration(person.getGeneration());
+            spouse.setBranch(resolveBranchOrDefault(null, person.getBranch()));
+            if (spouseDTO.getGender() != null && !spouseDTO.getGender().trim().isEmpty()) {
+                String inputGender = spouseDTO.getGender().trim().toLowerCase();
+                if (!"female".equals(inputGender)) {
+                    throw new IllegalArgumentException("Chi duoc phep them vo co gioi tinh nu");
+                }
+            }
+            spouse.setGender("female");
+            if (spouseDTO.getAvatar() != null && !spouseDTO.getAvatar().trim().isEmpty()) {
+                spouse.setAvatar(spouseDTO.getAvatar());
+            }
+            if (spouseDTO.getDob() != null) {
+                spouse.setDob(java.sql.Date.valueOf(spouseDTO.getDob()));
+            }
+            if (spouseDTO.getDod() != null) {
+                spouse.setDod(java.sql.Date.valueOf(spouseDTO.getDod()));
+            }
+        } else {
+            String spouseGender = spouseDTO.getGender() == null ? "" : spouseDTO.getGender().trim().toLowerCase();
+            if (!spouseGender.isEmpty() && !"female".equals(spouseGender)) {
+                throw new IllegalArgumentException("Chi duoc phep them vo co gioi tinh nu");
+            }
+            spouse = new PersonEntity();
+            spouse.setFullName(spouseDTO.getFullName());
+            spouse.setGender("female");
+            spouse.setDob(spouseDTO.getDob() == null ? null : java.sql.Date.valueOf(spouseDTO.getDob()));
+            spouse.setDod(spouseDTO.getDod() == null ? null : java.sql.Date.valueOf(spouseDTO.getDod()));
+            spouse.setGeneration(person.getGeneration());
+            spouse.setBranch(resolveBranchOrDefault(null, person.getBranch()));
+            spouse.setAvatar(spouseDTO.getAvatar());
+        }
         spouse = personRepository.save(spouse);
 
         person.setSpouse(spouse);
@@ -76,20 +164,47 @@ public class PersonService implements IPersonService {
     @Transactional
     public PersonDTO addChild(Long personId, PersonDTO childDTO) {
         if (childDTO.getFullName() == null || childDTO.getFullName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Child full name is required");
+            if (childDTO.getExistingPersonId() == null) {
+                throw new IllegalArgumentException("Child full name is required");
+            }
         }
         PersonEntity parent = personRepository.findById(personId).orElseThrow(
                 () -> new IllegalArgumentException("Parent not found: " + personId)
         );
 
-        PersonEntity child = new PersonEntity();
-        child.setFullName(childDTO.getFullName());
-        child.setGender(childDTO.getGender());
-        child.setDob(childDTO.getDob() == null ? null : java.sql.Date.valueOf(childDTO.getDob()));
-        child.setDod(childDTO.getDod() == null ? null : java.sql.Date.valueOf(childDTO.getDod()));
-        child.setGeneration(parent.getGeneration() == null ? 1 : parent.getGeneration() + 1);
-        child.setBranch(resolveBranchOrDefault(childDTO.getBranch(), parent.getBranch()));
-        child.setAvatar(childDTO.getAvatar());
+        PersonEntity child;
+        if (childDTO.getExistingPersonId() != null) {
+            child = personRepository.findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(childDTO.getExistingPersonId())
+                    .orElseThrow(() -> new IllegalArgumentException("Child person is not available"));
+            if (Objects.equals(child.getId(), parent.getId())) {
+                throw new IllegalArgumentException("Parent cannot be child of itself");
+            }
+            if (child.getGeneration() == null) {
+                child.setGeneration(parent.getGeneration() == null ? 1 : parent.getGeneration() + 1);
+            }
+            child.setBranch(resolveChildBranch(parent));
+            if (childDTO.getGender() != null && !childDTO.getGender().trim().isEmpty()) {
+                child.setGender(childDTO.getGender());
+            }
+            if (childDTO.getAvatar() != null && !childDTO.getAvatar().trim().isEmpty()) {
+                child.setAvatar(childDTO.getAvatar());
+            }
+            if (childDTO.getDob() != null) {
+                child.setDob(java.sql.Date.valueOf(childDTO.getDob()));
+            }
+            if (childDTO.getDod() != null) {
+                child.setDod(java.sql.Date.valueOf(childDTO.getDod()));
+            }
+        } else {
+            child = new PersonEntity();
+            child.setFullName(childDTO.getFullName());
+            child.setGender(childDTO.getGender());
+            child.setDob(childDTO.getDob() == null ? null : java.sql.Date.valueOf(childDTO.getDob()));
+            child.setDod(childDTO.getDod() == null ? null : java.sql.Date.valueOf(childDTO.getDod()));
+            child.setGeneration(parent.getGeneration() == null ? 1 : parent.getGeneration() + 1);
+            child.setBranch(resolveChildBranch(parent));
+            child.setAvatar(childDTO.getAvatar());
+        }
 
         if ("female".equalsIgnoreCase(parent.getGender())) {
             child.setMother(parent);
@@ -100,6 +215,7 @@ public class PersonService implements IPersonService {
         }
 
         personRepository.save(child);
+        syncNumberedBranchesAfterTreeChange();
         return toPersonDTO(parent);
     }
 
@@ -137,6 +253,11 @@ public class PersonService implements IPersonService {
         PersonEntity person = personRepository.findById(personId).orElseThrow(
                 () -> new IllegalArgumentException("Person not found: " + personId)
         );
+        if (person.getUserId() != null) {
+            detachPersonFromTreeAndBranch(person);
+            syncNumberedBranchesAfterTreeChange();
+            return;
+        }
 
         long childrenCount = personRepository.countChildrenByParentId(personId);
         if (childrenCount > 0) {
@@ -149,10 +270,39 @@ public class PersonService implements IPersonService {
         if (spouse != null) {
             spouse.setSpouse(null);
             person.setSpouse(null);
+            detachFromBranchIfOrphan(spouse);
             personRepository.save(spouse);
         }
 
         personRepository.delete(person);
+        syncNumberedBranchesAfterTreeChange();
+    }
+
+    private void detachPersonFromTreeAndBranch(PersonEntity person) {
+        List<PersonEntity> children = personRepository.findChildrenByParentId(person.getId());
+        for (PersonEntity child : children) {
+            if (child.getFather() != null && Objects.equals(child.getFather().getId(), person.getId())) {
+                child.setFather(null);
+            }
+            if (child.getMother() != null && Objects.equals(child.getMother().getId(), person.getId())) {
+                child.setMother(null);
+            }
+            personRepository.save(child);
+        }
+
+        PersonEntity spouse = person.getSpouse();
+        if (spouse != null) {
+            spouse.setSpouse(null);
+            person.setSpouse(null);
+            detachFromBranchIfOrphan(spouse);
+            personRepository.save(spouse);
+        }
+
+        person.setFather(null);
+        person.setMother(null);
+        person.setBranch(null);
+        person.setGeneration(null);
+        personRepository.save(person);
     }
 
 
@@ -201,6 +351,7 @@ public class PersonService implements IPersonService {
         dto.setFullName(entity.getFullName());
         dto.setGender(entity.getGender());
         dto.setAvatar(entity.getAvatar());
+        dto.setUserId(entity.getUserId());
         dto.setGeneration(entity.getGeneration());
         if (entity.getBranch() != null) {
             dto.setBranch(String.valueOf(entity.getBranch().getId()));
@@ -258,15 +409,7 @@ public class PersonService implements IPersonService {
             }
         }
 
-        Optional<BranchEntity> firstBranch = branchRepository.findFirstByOrderByIdAsc();
-        if (firstBranch.isPresent()) {
-            return firstBranch.get();
-        }
-
-        BranchEntity defaultBranch = new BranchEntity();
-        defaultBranch.setName("Chi chinh");
-        defaultBranch.setDescription("Tao tu dong khi he thong chua co chi nhanh");
-        return branchRepository.save(defaultBranch);
+        return resolveMainBranch();
     }
 
     private BranchEntity resolveBranchOrDefault(String branchValue, BranchEntity defaultBranch) {
@@ -282,4 +425,132 @@ public class PersonService implements IPersonService {
         }
         return defaultBranch != null ? defaultBranch : resolveBranch(null);
     }
+
+    private BranchEntity resolveChildBranch(PersonEntity parent) {
+        // Child of root member starts a new branch sequence: 1, 2, 3, ...
+        if (parent != null && parent.getGeneration() != null && parent.getGeneration() <= 1) {
+            return createNextNumberedBranch();
+        }
+        return resolveBranchOrDefault(null, parent != null ? parent.getBranch() : null);
+    }
+
+    private BranchEntity createNextNumberedBranch() {
+        List<BranchEntity> branches = branchRepository.findAll();
+        int maxIndex = 0;
+        Pattern trailingNumber = Pattern.compile("(\\d+)$");
+        for (BranchEntity branch : branches) {
+            if (branch == null || branch.getName() == null) {
+                continue;
+            }
+            String name = branch.getName().trim();
+            Matcher matcher = trailingNumber.matcher(name);
+            if (matcher.find()) {
+                try {
+                    int idx = Integer.parseInt(matcher.group(1));
+                    if (idx > maxIndex) {
+                        maxIndex = idx;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        BranchEntity newBranch = new BranchEntity();
+        newBranch.setName(String.valueOf(maxIndex + 1));
+        newBranch.setDescription("Tao tu dong khi them con cua thanh vien goc");
+        return branchRepository.save(newBranch);
+    }
+
+    private void detachFromBranchIfOrphan(PersonEntity candidate) {
+        if (candidate == null || candidate.getId() == null) {
+            return;
+        }
+        long childCount = personRepository.countChildrenByParentId(candidate.getId());
+        boolean orphan = candidate.getFather() == null
+                && candidate.getMother() == null
+                && candidate.getSpouse() == null
+                && childCount == 0;
+        if (orphan) {
+            candidate.setBranch(null);
+            candidate.setGeneration(null);
+        }
+    }
+
+    private void syncNumberedBranchesAfterTreeChange() {
+        BranchEntity mainBranch = resolveMainBranch();
+        Long mainBranchId = mainBranch.getId();
+        Optional<PersonEntity> rootOpt = personRepository
+                .findFirstByBranch_IdAndGenerationOrderByIdAsc(mainBranchId, 1);
+        if (!rootOpt.isPresent()) {
+            rootOpt = personRepository.findFirstByBranch_IdOrderByGenerationAscIdAsc(mainBranchId);
+        }
+
+        Set<Long> usedBranchIds = new LinkedHashSet<>();
+        if (rootOpt.isPresent()) {
+            List<PersonEntity> rootChildren = personRepository.findChildrenByParentId(rootOpt.get().getId());
+            for (PersonEntity child : rootChildren) {
+                BranchEntity childBranch = child.getBranch();
+                boolean invalidBranch = childBranch == null
+                        || Objects.equals(childBranch.getId(), mainBranchId)
+                        || usedBranchIds.contains(childBranch.getId());
+                if (invalidBranch) {
+                    childBranch = createNextNumberedBranch();
+                    child.setBranch(childBranch);
+                    personRepository.save(child);
+                }
+                usedBranchIds.add(childBranch.getId());
+            }
+        }
+
+        List<BranchEntity> allBranches = branchRepository.findAll();
+        for (BranchEntity branch : allBranches) {
+            if (branch == null || branch.getId() == null) {
+                continue;
+            }
+            if (Objects.equals(branch.getId(), mainBranchId)) {
+                continue;
+            }
+            if (usedBranchIds.contains(branch.getId())) {
+                continue;
+            }
+            if (!isNumberedBranch(branch.getName())) {
+                continue;
+            }
+            long membersInBranch = personRepository.countByBranch_Id(branch.getId());
+            if (membersInBranch == 0) {
+                try {
+                    branchRepository.delete(branch);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
+    private boolean isNumberedBranch(String name) {
+        if (name == null) {
+            return false;
+        }
+        String value = name.trim();
+        if (value.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isDigit(value.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private BranchEntity resolveMainBranch() {
+        Optional<BranchEntity> firstBranch = branchRepository.findFirstByOrderByIdAsc();
+        if (firstBranch.isPresent()) {
+            return firstBranch.get();
+        }
+
+        BranchEntity defaultBranch = new BranchEntity();
+        defaultBranch.setName("Chinh");
+        defaultBranch.setDescription("Chi goc duoc tao tu dong");
+        return branchRepository.save(defaultBranch);
+    }
 }
+

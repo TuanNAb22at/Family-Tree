@@ -35,5 +35,20 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
 
     Optional<PersonEntity> findByUserId(Long userId);
 
+    @Query("select p from PersonEntity p " +
+            "where p.branch is null " +
+            "and p.generation is null and p.father is null and p.mother is null and p.spouse is null " +
+            "and (:fullName is null or lower(p.fullName) like lower(concat('%', :fullName, '%'))) " +
+            "and (:gender is null or lower(p.gender) = lower(:gender)) " +
+            "and (:dob is null or p.dob = :dob) " +
+            "order by p.id desc")
+    List<PersonEntity> findAttachablePersons(@Param("fullName") String fullName,
+                                             @Param("gender") String gender,
+                                             @Param("dob") Date dob);
+
+    Optional<PersonEntity> findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(Long id);
+
+    long countByBranch_Id(Long branchId);
+
     long countByCreatedDateBetween(Date from, Date to);
 }

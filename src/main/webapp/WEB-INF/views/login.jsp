@@ -1,8 +1,9 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="/common/taglib.jsp"%>
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Đăng nhập</title>
 </head>
 <body>
@@ -29,6 +30,12 @@
         <div class="gpo-alert alert alert-info">
             <i class="fa-solid fa-clock me-1"></i>
             Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.
+        </div>
+    </c:if>
+    <c:if test="${not empty registerSuccessMessage}">
+        <div class="gpo-alert alert alert-success">
+            <i class="fa-solid fa-circle-check me-1"></i>
+            ${registerSuccessMessage}
         </div>
     </c:if>
 

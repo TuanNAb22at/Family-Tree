@@ -1,8 +1,9 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="/common/taglib.jsp"%>
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Đăng ký</title>
 </head>
 <body>
@@ -21,9 +22,23 @@
 
     <form action="<c:url value='/register' />" id="formRegister" method="post">
         <div class="mb-3">
-            <label class="gpo-form-label" for="fullname">Họ và tên</label>
+            <label class="gpo-form-label" for="fullName">Họ và tên</label>
             <input type="text" class="form-control gpo-form-control"
-                   id="fullname" name="fullname" placeholder="Nguyễn Văn A" maxlength="100" required>
+                   id="fullName" name="fullName" placeholder="Nguyễn Văn A" maxlength="100" required>
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="gender">Giới tính</label>
+            <select class="form-control gpo-form-control" id="gender" name="gender" required>
+                <option value="">-- Chọn giới tính --</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="gpo-form-label" for="dob">Ngày sinh</label>
+            <input type="date" class="form-control gpo-form-control"
+                   id="dob" name="dob" required>
         </div>
         <div class="mb-3">
             <label class="gpo-form-label" for="regUsername">Tên đăng nhập</label>

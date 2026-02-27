@@ -50,7 +50,6 @@
                     </button>
                     <ul id="generationMenu" class="dropdown-menu dropdown-menu-end"></ul>
                 </div>
-
                 <% if (canManageMember) { %>
                     <button id="btnCreateFirst" class="btn btn-dark d-flex align-items-center gap-2">
                         <i class="bi bi-person-plus"></i> Tạo thành viên đầu tiên
@@ -101,6 +100,39 @@
                             <label class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
                             <input id="mFullname" class="form-control" placeholder="Nhập họ và tên..." />
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Cách thêm thành viên</label>
+                            <div class="d-flex gap-3">
+                                <label class="d-flex align-items-center gap-1">
+                                    <input class="form-check-input" type="radio" name="mSourceMode" value="new" checked> Tạo thành viên mới
+                                </label>
+                                <label class="d-flex align-items-center gap-1">
+                                    <input class="form-check-input" type="radio" name="mSourceMode" value="existing"> Chọn từ danh sách có sẵn
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12" id="mExistingWrap" style="display:none;">
+                            <label class="form-label fw-semibold">Thành viên có sẵn</label>
+                            <input id="mExistingFilter" class="form-control" placeholder="Tìm theo tên thành viên..." />
+                            <div style="height:8px"></div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <select id="mExistingGenderFilter" class="form-select">
+                                        <option value="">-- Lọc giới tính --</option>
+                                        <option value="male">Nam</option>
+                                        <option value="female">Nữ</option>
+                                        <option value="other">Khác</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="date" id="mExistingDobFilter" class="form-control" />
+                                </div>
+                            </div>
+                            <div style="height:8px"></div>
+                            <select id="mExistingPerson" class="form-select">
+                                <option value="">-- Chọn thành viên --</option>
+                            </select>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Ngày sinh</label>
@@ -119,14 +151,8 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Chi / Nhánh</label>
-                            <select id="mBranch" class="form-select">
-                                <option value="">-- Chọn chi --</option>
-                                <option value="1">Chi chính</option>
-                                <option value="2">Chi 1</option>
-                                <option value="3">Chi 2</option>
-                                <option value="4">Chi 3</option>
-                                <option value="5">Chi 4</option>
-                            </select>
+                            <input id="mBranchName" class="form-control" value="Tự động: Chính" readonly />
+                            <input id="mBranch" type="hidden" value="" />
                         </div>
 
                         <div class="col-12">
@@ -145,9 +171,8 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Avatar URL </label>
-                            <input id="mAvatar" class="form-control" placeholder="https://..." />
-                            <div style="height:8px"></div>
+                            <label class="form-label fw-semibold">Ảnh đại diện</label>
+                            <input id="mAvatar" type="hidden" />
                             <input id="mAvatarFile" type="file" accept="image/*" class="form-control" />
                         </div>
                     </div>
@@ -178,6 +203,39 @@
                             <label class="form-label fw-semibold">HỌ VÀ TÊN <span class="text-danger">*</span></label>
                             <input id="aFullname" class="form-control" placeholder="Nhập họ và tên..." />
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">CÁCH THÊM THÀNH VIÊN</label>
+                            <div class="d-flex gap-3">
+                                <label class="d-flex align-items-center gap-1">
+                                    <input class="form-check-input" type="radio" name="aSourceMode" value="new" checked> Tạo thành viên mới
+                                </label>
+                                <label class="d-flex align-items-center gap-1">
+                                    <input class="form-check-input" type="radio" name="aSourceMode" value="existing"> Chọn từ danh sách có sẵn
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12" id="aExistingWrap" style="display:none;">
+                            <label class="form-label fw-semibold">THÀNH VIÊN CÓ SẴN</label>
+                            <input id="aExistingFilter" class="form-control" placeholder="Tìm theo tên thành viên..." />
+                            <div style="height:8px"></div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <select id="aExistingGenderFilter" class="form-select">
+                                        <option value="">-- Lọc giới tính --</option>
+                                        <option value="male">Nam</option>
+                                        <option value="female">Nữ</option>
+                                        <option value="other">Khác</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="date" id="aExistingDobFilter" class="form-control" />
+                                </div>
+                            </div>
+                            <div style="height:8px"></div>
+                            <select id="aExistingPerson" class="form-select">
+                                <option value="">-- Chọn thành viên --</option>
+                            </select>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">NGÀY SINH</label>
                             <input type="date" id="aDob" class="form-control" />
@@ -192,13 +250,8 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">CHI / NHÁNH</label>
-                            <select id="aBranch" class="form-select">
-                                <option value="1">Chi chính</option>
-                                <option value="2">Chi 1</option>
-                                <option value="3">Chi 2</option>
-                                <option value="4">Chi 3</option>
-                                <option value="5">Chi 4</option>
-                            </select>
+                            <input id="aBranchName" class="form-control" value="Tự động theo quan hệ gia phả" readonly />
+                            <input id="aBranch" type="hidden" value="" />
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">GIỚI TÍNH</label>
@@ -216,9 +269,8 @@
                             <input type="hidden" id="aGender" />
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">AVATAR URL</label>
-                            <input id="aAvatar" class="form-control" placeholder="https://..." />
-                            <div style="height:8px"></div>
+                            <label class="form-label fw-semibold">ẢNH ĐẠI DIỆN</label>
+                            <input id="aAvatar" type="hidden" />
                             <input id="aAvatarFile" type="file" accept="image/*" class="form-control" />
                         </div>
                     </div>
@@ -232,6 +284,27 @@
             </div>
         </div>
     </div>
+
+    <div class="modal ft-confirm-modal" id="ftConfirmModal" aria-hidden="true">
+        <div class="modal-backdrop" id="ftConfirmBackdrop"></div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-semibold">Xác nhận thao tác</h5>
+                    <button type="button" class="btn-close" id="ftConfirmClose" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="ftConfirmMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" id="ftConfirmCancel" class="btn btn-link text-secondary">Hủy</button>
+                    <button type="button" id="ftConfirmOk" class="btn btn-dark">Đồng ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ftToastWrap" class="ft-toast-wrap" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Detail Offcanvas -->
     <div class="offcanvas offcanvas-end" id="detailDrawer">
@@ -281,65 +354,22 @@
             });
         })();
 
-        const NEW_BRANCH_OPTION = '__new_branch__';
         let BRANCH_CACHE = [];
         let CURRENT_TREE_ROOT = null;
         let CURRENT_GENERATION_FILTER = null;
+        const EXISTING_PERSON_CACHE = {
+            m: [],
+            a: []
+        };
 
         function setBranchFormOptions(branches) {
-            const branchSelectIds = ['mBranch', 'aBranch'];
-            branchSelectIds.forEach(function (selectId) {
-                const selectEl = document.getElementById(selectId);
-                if (!selectEl) return;
-                selectEl.innerHTML = branches.map(function (branch) {
-                    const id = String(branch.id);
-                    const name = branch.name || ('Chi ' + id);
-                    return '<option value="' + id + '">' + name + '</option>';
-                }).join('') + '<option value="' + NEW_BRANCH_OPTION + '">+ Tạo chi nhánh mới</option>';
-            });
-        }
-
-        async function createBranchAuto(name) {
-            const res = await fetch('/api/branch', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: name,
-                    description: 'Tạo nhanh từ form cây gia phả'
-                })
-            });
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(errText || 'Tạo chi nhánh thất bại');
-            }
-            return await res.json();
-        }
-
-        function bindBranchCreateInSelect() {
-            const branchSelectIds = ['mBranch', 'aBranch'];
-            branchSelectIds.forEach(function (selectId) {
-                const selectEl = document.getElementById(selectId);
-                if (!selectEl || selectEl.dataset.boundCreateBranch === 'true') return;
-                selectEl.dataset.boundCreateBranch = 'true';
-
-                selectEl.addEventListener('change', async function () {
-                    if (selectEl.value !== NEW_BRANCH_OPTION) return;
-                    const rawName = prompt('Nhập tên chi nhánh mới:');
-                    const branchName = (rawName || '').trim();
-                    if (!branchName) {
-                        selectEl.value = String(BRANCH_ID);
-                        return;
-                    }
-                    try {
-                        const created = await createBranchAuto(branchName);
-                        const createdId = Number(created && created.id ? created.id : 0);
-                        await loadBranches(createdId);
-                    } catch (err) {
-                        console.error('Create branch failed:', err);
-                        alert('Không thể tạo chi nhánh mới.');
-                        selectEl.value = String(BRANCH_ID);
-                    }
-                });
+            const hiddenBranchIds = ['mBranch', 'aBranch'];
+            hiddenBranchIds.forEach(function (inputId) {
+                const inputEl = document.getElementById(inputId);
+                if (!inputEl) return;
+                if (inputEl.value == null || inputEl.value === '') {
+                    inputEl.value = String(BRANCH_ID);
+                }
             });
         }
 
@@ -439,10 +469,189 @@
                 const branches = await res.json();
                 if (!Array.isArray(branches) || branches.length === 0) return;
                 setBranchFormOptions(branches);
-                bindBranchCreateInSelect();
                 renderBranchMenu(branches, preferredBranchId);
             } catch (err) {
                 console.error('Load branches failed:', err);
+            }
+        }
+
+        function getSourceMode(groupName, fallback) {
+            const checked = document.querySelector('input[name="' + groupName + '"]:checked');
+            return checked ? checked.value : fallback;
+        }
+
+        function normalizeSearchText(value) {
+            return String(value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+        }
+
+        function filterExistingPersons(persons, keyword, gender, dob) {
+            const normalizedKeyword = normalizeSearchText(keyword).trim();
+            const normalizedGender = normalizeSearchText(gender).trim();
+            const normalizedDob = String(dob || '').trim();
+            return (Array.isArray(persons) ? persons : []).filter(function (item) {
+                const fullName = normalizeSearchText(item && item.fullName ? item.fullName : '');
+                const genderText = normalizeSearchText(item && item.gender ? item.gender : '');
+                const dobText = String(item && item.dob ? item.dob : '');
+                const matchedKeyword = !normalizedKeyword
+                    || fullName.indexOf(normalizedKeyword) >= 0;
+                const matchedGender = !normalizedGender || genderText === normalizedGender;
+                const matchedDob = !normalizedDob || dobText === normalizedDob;
+                return matchedKeyword && matchedGender && matchedDob;
+            });
+        }
+
+        function setExistingPersonOptions(selectId, persons, keyword, gender, dob) {
+            const selectEl = document.getElementById(selectId);
+            if (!selectEl) return;
+            const filtered = filterExistingPersons(persons, keyword, gender, dob);
+            const currentValue = selectEl.value;
+            const options = filtered.map(function (item) {
+                const label = (item.fullName || 'Chưa có tên');
+                return '<option value="' + item.id + '">' + label + '</option>';
+            }).join('');
+            selectEl.innerHTML = '<option value="">-- Chọn thành viên --</option>' + options
+                + (filtered.length === 0 ? '<option value="" disabled>Không có kết quả phù hợp</option>' : '');
+            if (currentValue && filtered.some(function (item) { return String(item.id) === String(currentValue); })) {
+                selectEl.value = currentValue;
+            }
+        }
+
+        function renderExistingPersons(kind) {
+            const selectId = kind === 'm' ? 'mExistingPerson' : 'aExistingPerson';
+            const inputId = kind === 'm' ? 'mExistingFilter' : 'aExistingFilter';
+            const genderId = kind === 'm' ? 'mExistingGenderFilter' : 'aExistingGenderFilter';
+            const dobId = kind === 'm' ? 'mExistingDobFilter' : 'aExistingDobFilter';
+            const keyword = (document.getElementById(inputId)?.value || '').trim();
+            const gender = (document.getElementById(genderId)?.value || '').trim();
+            const dob = (document.getElementById(dobId)?.value || '').trim();
+            setExistingPersonOptions(selectId, EXISTING_PERSON_CACHE[kind], keyword, gender, dob);
+        }
+
+        function findExistingPersonById(kind, personId) {
+            const list = EXISTING_PERSON_CACHE[kind] || [];
+            return list.find(function (item) {
+                return String(item.id) === String(personId);
+            }) || null;
+        }
+
+        function setMemberGender(gender) {
+            const normalized = String(gender || '').toLowerCase();
+            const male = document.getElementById('gMale');
+            const female = document.getElementById('gFemale');
+            const other = document.getElementById('gOther');
+            if (!male || !female || !other) return;
+            male.checked = normalized === 'male';
+            female.checked = normalized === 'female';
+            other.checked = normalized === 'other';
+        }
+
+        function fillMemberFormFromExisting(person) {
+            if (!person) return;
+            if (person.fullName) {
+                document.getElementById('mFullname').value = person.fullName;
+            }
+            if (person.dob) {
+                document.getElementById('mDob').value = person.dob;
+            }
+            if (person.gender) {
+                setMemberGender(person.gender);
+            }
+            if (person.avatar) {
+                document.getElementById('mAvatar').value = person.avatar;
+            }
+            if (person.generation != null) {
+                document.getElementById('mGeneration').value = String(person.generation);
+            }
+        }
+
+        function fillActionFormFromExisting(person) {
+            if (!person) return;
+            if (actionState.mode === 'add-spouse') {
+                const normalized = String(person.gender || '').toLowerCase();
+                if (normalized !== 'female') {
+                    showToast('Chỉ được chọn thành viên nữ để thêm vợ', 'error');
+                    document.getElementById('aExistingPerson').value = '';
+                    return;
+                }
+            }
+            if (person.fullName) {
+                document.getElementById('aFullname').value = person.fullName;
+            }
+            if (person.dob) {
+                document.getElementById('aDob').value = person.dob;
+            }
+            if (person.gender) {
+                setActionGender(person.gender);
+            }
+            if (person.avatar) {
+                document.getElementById('aAvatar').value = person.avatar;
+            }
+            if (person.generation != null) {
+                document.getElementById('aGeneration').value = String(person.generation);
+            }
+        }
+
+        async function refreshExistingPersonCache(kind, branchId) {
+            // Fetch full source list by branch, then apply all filters locally to avoid missing results.
+            const items = await loadAvailablePersonsByBranch(branchId, null, null, null);
+            EXISTING_PERSON_CACHE[kind] = items;
+            renderExistingPersons(kind);
+        }
+
+        async function loadAvailablePersonsByBranch(branchId, fullName, gender, dob) {
+            try {
+                let url = '/api/person/available?branchId=' + encodeURIComponent(branchId);
+                if (fullName) {
+                    url += '&fullName=' + encodeURIComponent(fullName);
+                }
+                if (gender) {
+                    url += '&gender=' + encodeURIComponent(gender);
+                }
+                if (dob) {
+                    url += '&dob=' + encodeURIComponent(dob);
+                }
+                const res = await fetch(url);
+                if (!res.ok) {
+                    return [];
+                }
+                const data = await res.json();
+                return Array.isArray(data) ? data : [];
+            } catch (err) {
+                console.error('Load available persons failed:', err);
+                return [];
+            }
+        }
+
+        function toggleMemberSourceMode(mode) {
+            const wrap = document.getElementById('mExistingWrap');
+            const isExisting = mode === 'existing';
+            if (wrap) {
+                wrap.style.display = isExisting ? '' : 'none';
+            }
+            const fullName = document.getElementById('mFullname');
+            if (fullName) {
+                fullName.disabled = isExisting;
+            }
+            if (isExisting) {
+                renderExistingPersons('m');
+            }
+        }
+
+        function toggleActionSourceMode(mode, editing) {
+            const wrap = document.getElementById('aExistingWrap');
+            const isExisting = mode === 'existing' && !editing;
+            if (wrap) {
+                wrap.style.display = isExisting ? '' : 'none';
+            }
+            const fullName = document.getElementById('aFullname');
+            if (fullName) {
+                fullName.disabled = isExisting;
+            }
+            if (isExisting) {
+                renderExistingPersons('a');
             }
         }
 
@@ -453,6 +662,57 @@
             openDrawer(id){ document.getElementById(id)?.classList.add('show'); },
             closeDrawer(id){ document.getElementById(id)?.classList.remove('show'); },
         };
+
+        function showToast(message, type) {
+            const wrap = document.getElementById('ftToastWrap');
+            if (!wrap) return;
+            const toast = document.createElement('div');
+            toast.className = 'ft-toast ' + (type || 'info');
+            toast.textContent = message || '';
+            wrap.appendChild(toast);
+            setTimeout(function () {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity .18s ease';
+                setTimeout(function () { toast.remove(); }, 180);
+            }, 2500);
+        }
+
+        function askConfirm(message) {
+            return new Promise(function (resolve) {
+                const modal = document.getElementById('ftConfirmModal');
+                const msgEl = document.getElementById('ftConfirmMessage');
+                const okBtn = document.getElementById('ftConfirmOk');
+                const cancelBtn = document.getElementById('ftConfirmCancel');
+                const closeBtn = document.getElementById('ftConfirmClose');
+                const backdrop = document.getElementById('ftConfirmBackdrop');
+                if (!modal || !msgEl || !okBtn || !cancelBtn || !closeBtn || !backdrop) {
+                    resolve(false);
+                    return;
+                }
+
+                msgEl.textContent = message || 'Ban co chac chan khong?';
+                modal.classList.add('show');
+
+                let done = false;
+                const cleanup = function (answer) {
+                    if (done) return;
+                    done = true;
+                    modal.classList.remove('show');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    closeBtn.removeEventListener('click', onCancel);
+                    backdrop.removeEventListener('click', onCancel);
+                    resolve(answer);
+                };
+                const onOk = function () { cleanup(true); };
+                const onCancel = function () { cleanup(false); };
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                closeBtn.addEventListener('click', onCancel);
+                backdrop.addEventListener('click', onCancel);
+            });
+        }
 
         // close handlers
         document.addEventListener('click', function (e) {
@@ -466,6 +726,7 @@
             if (e.key === 'Escape') {
                 document.getElementById('memberModal')?.classList.remove('show');
                 document.getElementById('actionMemberModal')?.classList.remove('show');
+                document.getElementById('ftConfirmModal')?.classList.remove('show');
                 document.getElementById('detailDrawer')?.classList.remove('show');
                 document.getElementById('branchMenu')?.classList.remove('show');
                 document.getElementById('generationMenu')?.classList.remove('show');
@@ -485,13 +746,14 @@
 
             window.ftRefreshCreateFirstVisibility = async function (fallbackVisible) {
                 try {
-                    const countRes = await fetch('/api/person/count');
-                    if (!countRes.ok) {
+                    const rootRes = await fetch('/api/person/root?branchId=' + encodeURIComponent(BRANCH_ID));
+                    if (!rootRes.ok) {
                         window.ftSetCreateFirstVisible(!!fallbackVisible);
                         return;
                     }
-                    const total = Number(await countRes.json() || 0);
-                    window.ftSetCreateFirstVisible(total === 0);
+                    const root = await rootRes.json();
+                    const hasRoot = !!(root && root.id);
+                    window.ftSetCreateFirstVisible(!hasRoot);
                 } catch (e) {
                     window.ftSetCreateFirstVisible(!!fallbackVisible);
                 }
@@ -518,27 +780,38 @@
                 setVal('mDod', '');
                 setVal('mGeneration', '1');
                 setVal('mBranch', String(BRANCH_ID));
+                setVal('mBranchName', 'Tự động: Chính');
                 setVal('mAvatar', '');
                 setVal('mAvatarFile', '');
+                setVal('mExistingPerson', '');
+                setVal('mExistingFilter', '');
+                setVal('mExistingGenderFilter', '');
+                setVal('mExistingDobFilter', '');
 
                 // Default giới tính
                 const gMale = document.getElementById('gMale');
                 if (gMale) gMale.checked = true;
+                const sourceNew = document.querySelector('input[name="mSourceMode"][value="new"]');
+                if (sourceNew) sourceNew.checked = true;
+                toggleMemberSourceMode('new');
 
                 // Focus
                 const fullname = document.getElementById('mFullname');
                 if (fullname) fullname.focus();
+
+                refreshExistingPersonCache('m', BRANCH_ID);
             });
         })();
 
         // Lưu thành viên đầu tiên
         document.getElementById("btnSaveMember").addEventListener("click", async (e) => {
             e.preventDefault();
+            const sourceMode = getSourceMode('mSourceMode', 'new');
+            const selectedExistingId = document.getElementById('mExistingPerson').value;
             const fullName = document.getElementById("mFullname").value.trim();
             const dob = document.getElementById("mDob").value || null;   // "YYYY-MM-DD"
             const dod = document.getElementById("mDod").value || null;   // "YYYY-MM-DD"
             const generation = document.getElementById("mGeneration").value;
-            const branch = document.getElementById("mBranch").value || String(BRANCH_ID);
             const avatar = document.getElementById("mAvatar").value.trim() || null;
 
             const genderEl = document.querySelector('input[name="mGender"]:checked');
@@ -549,7 +822,6 @@
                 dob,          // LocalDate nhận chuỗi yyyy-MM-dd OK
                 dod,
                 generation: generation ? parseInt(generation, 10) : null,
-                branch,
                 gender,
                 avatar,
                 fatherId: null,
@@ -560,9 +832,17 @@
             };
 
             // Validate tối thiểu
-            if (!payload.fullName) {
-                alert("Vui lòng nhập họ và tên");
+            if (sourceMode === 'new' && !payload.fullName) {
+                showToast("Vui lòng nhập họ và tên", 'error');
                 return;
+            }
+            if (sourceMode === 'existing' && !selectedExistingId) {
+                showToast("Vui lòng chọn thành viên trong danh sách", 'error');
+                return;
+            }
+            if (sourceMode === 'existing') {
+                payload.existingPersonId = Number(selectedExistingId);
+                payload.fullName = "existing-person";
             }
 
             try {
@@ -575,20 +855,47 @@
                 if (!res.ok) {
                     const errText = await res.text();
                     console.error("Create person failed:", errText);
-                    alert("Lưu thất bại!");
+                    showToast(errText || "Lưu thất bại", 'error');
                     return;
                 }
 
                 const data = await res.json();
                 console.log("Saved:", data);
-                alert("Lưu thành công!");
+                showToast("Lưu thành công", 'success');
                 if (window.ftUi && typeof window.ftUi.closeModal === 'function') {
                     window.ftUi.closeModal('memberModal');
                 }
+                await loadBranches(BRANCH_ID);
                 await loadRootPerson();
             } catch (err) {
                 console.error(err);
-                alert("Có lỗi kết nối server!");
+                showToast("Có lỗi kết nối server", 'error');
+            }
+        });
+
+        document.querySelectorAll('input[name="mSourceMode"]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                const mode = getSourceMode('mSourceMode', 'new');
+                toggleMemberSourceMode(mode);
+            });
+        });
+
+        document.getElementById('mExistingFilter').addEventListener('input', function () {
+            renderExistingPersons('m');
+        });
+
+        document.getElementById('mExistingGenderFilter').addEventListener('change', function () {
+            renderExistingPersons('m');
+        });
+
+        document.getElementById('mExistingDobFilter').addEventListener('change', function () {
+            renderExistingPersons('m');
+        });
+
+        document.getElementById('mExistingPerson').addEventListener('change', function () {
+            const selected = findExistingPersonById('m', this.value);
+            if (selected) {
+                fillMemberFormFromExisting(selected);
             }
         });
 
@@ -603,6 +910,20 @@
             document.querySelectorAll('#actionGenderGrid .gender-choice').forEach(function (btn) {
                 btn.classList.toggle('active', btn.getAttribute('data-gender') === target);
             });
+        }
+
+        function setActionGenderMode(mode) {
+            const spouseMode = mode === 'add-spouse';
+            document.querySelectorAll('#actionGenderGrid .gender-choice').forEach(function (btn) {
+                const value = btn.getAttribute('data-gender');
+                const disabled = spouseMode && value !== 'female';
+                btn.disabled = disabled;
+                btn.style.opacity = disabled ? '0.45' : '1';
+                btn.style.pointerEvents = disabled ? 'none' : '';
+            });
+            if (spouseMode) {
+                setActionGender('female');
+            }
         }
 
         function openActionMemberModal(mode, person) {
@@ -649,9 +970,27 @@
             document.getElementById('aDod').value = mode === 'edit-member' ? (person?.dod || '') : '';
             document.getElementById('aGeneration').value = String(defaultGen);
             document.getElementById('aBranch').value = String(BRANCH_ID);
+            if (mode === 'add-child') {
+                document.getElementById('aBranchName').value = 'Tự động: con đời 1 sẽ là chi 1, 2, 3...';
+            } else if (mode === 'add-spouse') {
+                document.getElementById('aBranchName').value = 'Tự động: cùng chi với chồng';
+            } else {
+                document.getElementById('aBranchName').value = 'Tự động theo quan hệ gia phả';
+            }
             document.getElementById('aAvatar').value = mode === 'edit-member' ? (person?.avatar || '') : '';
             document.getElementById('aAvatarFile').value = '';
+            document.getElementById('aExistingPerson').value = '';
+            document.getElementById('aExistingFilter').value = '';
+            document.getElementById('aExistingGenderFilter').value = mode === 'add-spouse' ? 'female' : '';
+            document.getElementById('aExistingDobFilter').value = '';
             setActionGender(defaultGender);
+            setActionGenderMode(mode);
+            const sourceNew = document.querySelector('input[name="aSourceMode"][value="new"]');
+            if (sourceNew) sourceNew.checked = true;
+            toggleActionSourceMode('new', mode === 'edit-member');
+            if (mode !== 'edit-member') {
+                refreshExistingPersonCache('a', BRANCH_ID);
+            }
 
             window.ftUi.openModal('actionMemberModal');
         }
@@ -662,13 +1001,46 @@
             setActionGender(choice.getAttribute('data-gender'));
         });
 
+        document.querySelectorAll('input[name="aSourceMode"]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                const mode = getSourceMode('aSourceMode', 'new');
+                const editing = actionState.mode === 'edit-member';
+                toggleActionSourceMode(mode, editing);
+            });
+        });
+
+        document.getElementById('aExistingFilter').addEventListener('input', function () {
+            renderExistingPersons('a');
+        });
+
+        document.getElementById('aExistingGenderFilter').addEventListener('change', function () {
+            renderExistingPersons('a');
+        });
+
+        document.getElementById('aExistingDobFilter').addEventListener('change', function () {
+            renderExistingPersons('a');
+        });
+
+        document.getElementById('aExistingPerson').addEventListener('change', function () {
+            const selected = findExistingPersonById('a', this.value);
+            if (selected) {
+                fillActionFormFromExisting(selected);
+            }
+        });
+
         document.getElementById('btnSaveActionMember').addEventListener('click', async function (e) {
             e.preventDefault();
             const mode = actionState.mode;
             const personId = actionState.person?.id;
+            const sourceMode = getSourceMode('aSourceMode', 'new');
+            const selectedExistingId = document.getElementById('aExistingPerson').value;
             const fullName = document.getElementById('aFullname').value.trim();
-            if (!fullName) {
-                alert('Vui lòng nhập họ và tên');
+            if (sourceMode === 'new' && !fullName) {
+                showToast('Vui lòng nhập họ và tên', 'error');
+                return;
+            }
+            if (sourceMode === 'existing' && mode !== 'edit-member' && !selectedExistingId) {
+                showToast('Vui lòng chọn thành viên trong danh sách', 'error');
                 return;
             }
 
@@ -677,10 +1049,13 @@
                 dob: document.getElementById('aDob').value || null,
                 dod: document.getElementById('aDod').value || null,
                 generation: Number(document.getElementById('aGeneration').value || 1),
-                branch: String(document.getElementById('aBranch').value || BRANCH_ID),
                 gender: document.getElementById('aGender').value || null,
                 avatar: document.getElementById('aAvatar').value.trim() || null
             };
+            if (sourceMode === 'existing' && mode !== 'edit-member') {
+                payload.existingPersonId = Number(selectedExistingId);
+                payload.fullName = 'existing-person';
+            }
 
             if (mode === 'add-spouse') {
                 try {
@@ -692,15 +1067,17 @@
                     if (!res.ok) {
                         const errText = await res.text();
                         console.error('Add spouse failed:', errText);
-                        alert('Thêm vợ/chồng thất bại!');
+                        showToast(errText || 'Thêm vợ/chồng thất bại', 'error');
                         return;
                     }
+                    showToast('Thêm vợ thành công', 'success');
                     window.ftUi.closeModal('actionMemberModal');
+                    await loadBranches(BRANCH_ID);
                     await loadRootPerson();
                     return;
                 } catch (err) {
                     console.error(err);
-                    alert('Có lỗi kết nối server!');
+                    showToast('Có lỗi kết nối server', 'error');
                     return;
                 }
             }
@@ -715,15 +1092,17 @@
                     if (!res.ok) {
                         const errText = await res.text();
                         console.error('Add child failed:', errText);
-                        alert('Thêm con thất bại!');
+                        showToast(errText || 'Thêm con thất bại', 'error');
                         return;
                     }
+                    showToast('Thêm con thành công', 'success');
                     window.ftUi.closeModal('actionMemberModal');
+                    await loadBranches(BRANCH_ID);
                     await loadRootPerson();
                     return;
                 } catch (err) {
                     console.error(err);
-                    alert('Có lỗi kết nối server!');
+                    showToast('Có lỗi kết nối server', 'error');
                     return;
                 }
             }
@@ -738,15 +1117,16 @@
                     if (!res.ok) {
                         const errText = await res.text();
                         console.error('Update person failed:', errText);
-                        alert('Cập nhật thất bại!');
+                        showToast(errText || 'Cập nhật thất bại', 'error');
                         return;
                     }
+                    showToast('Cập nhật thành công', 'success');
                     window.ftUi.closeModal('actionMemberModal');
                     await loadRootPerson();
                     return;
                 } catch (err) {
                     console.error(err);
-                    alert('Có lỗi kết nối server!');
+                    showToast('Có lỗi kết nối server', 'error');
                     return;
                 }
             }
@@ -763,7 +1143,7 @@
         async function deleteMember(person) {
             if (!person || !person.id) return;
             const fullName = person.fullName || 'thành viên này';
-            const okToDelete = confirm('Bạn chắc chắn muốn xóa ' + fullName + '?');
+            const okToDelete = await askConfirm('Bạn chắc chắn muốn xóa ' + fullName + '?');
             if (!okToDelete) return;
 
             try {
@@ -773,14 +1153,16 @@
 
                 if (!res.ok) {
                     const errText = (await res.text()) || 'Xóa thất bại!';
-                    alert(errText);
+                    showToast(errText, 'error');
                     return;
                 }
 
+                showToast('Xử lý xóa thành công', 'success');
+                await loadBranches(BRANCH_ID);
                 await loadRootPerson();
             } catch (err) {
                 console.error('Delete person failed:', err);
-                alert('Có lỗi kết nối server!');
+                showToast('Có lỗi kết nối server', 'error');
             }
         }
 
@@ -1089,8 +1471,13 @@
         bindAvatarPicker('aAvatarFile', 'aAvatar');
         initZoomControls();
         setupPersonCardActions();
-        loadBranches();
-        loadRootPerson();
+
+        async function bootstrapFamilyTree() {
+            await loadBranches();
+            await loadRootPerson();
+        }
+
+        bootstrapFamilyTree();
 </script>
 
 
