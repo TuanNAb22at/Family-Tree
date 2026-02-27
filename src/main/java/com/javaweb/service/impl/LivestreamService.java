@@ -133,6 +133,7 @@ public class LivestreamService implements ILivestreamService {
         response.setBranchId(livestream.getBranch() != null ? livestream.getBranch().getId() : null);
         response.setStreamUrl(livestream.getStreamUrl());
         response.setRoomLink(STATUS_LIVE.equals(statusCode) ? ("/admin/livestream?livestreamId=" + livestream.getId()) : null);
+        response.setStartedAt(livestream.getCreatedDate() != null ? livestream.getCreatedDate().getTime() : null);
         return response;
     }
 

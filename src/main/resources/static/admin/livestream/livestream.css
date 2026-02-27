@@ -1,4 +1,4 @@
-﻿﻿﻿:root {
+﻿﻿﻿﻿:root {
   --ls-bg: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
   --ls-card: #ffffff;
   --ls-border: #d9e2ec;
@@ -48,6 +48,7 @@ textarea {
 .ls-entry-title {
   margin: 0 0 8px;
   color: #12263a;
+  font-family: "Tahoma", "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 28px;
   line-height: 1.2;
   font-weight: 800;
@@ -88,10 +89,10 @@ textarea {
   justify-content: flex-end;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1024px) {
   .ls-layout { flex-direction: row; align-items: stretch; }
-  .ls-left { width: 68%; }
-  .ls-right { width: 32%; }
+  .ls-left { width: 66%; }
+  .ls-right { width: 34%; }
 }
 
 .ls-card {
@@ -111,8 +112,11 @@ textarea {
 .ls-player #remoteVideo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
+
+.ls-player.fill #remoteVideo { object-fit: cover; }
 
 #remoteVideo {
   background: #000;
@@ -165,10 +169,27 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-weight: 800;
+  animation: ls-live-pulse 1.2s ease-in-out infinite;
 }
 .ls-watch-badge { background: rgba(17, 24, 39, 0.72); }
+.ls-duration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
 .ls-dot { width: 8px; height: 8px; border-radius: 999px; background: #fff; display: inline-block; }
 .ls-live-badge .ls-dot { width: 9px; height: 9px; background: #fff; }
+
+@keyframes ls-live-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { opacity: 0.72; box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
 
 .ls-player-controls {
   position: absolute;
@@ -179,22 +200,6 @@ textarea {
   color: #fff;
   padding: 10px 14px 12px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.34), transparent);
-}
-
-.ls-progress {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.ls-progress::after {
-  content: "";
-  display: block;
-  width: 32%;
-  height: 100%;
-  background: linear-gradient(90deg, #ff4d4f, #ff7a7c);
 }
 
 .ls-controls-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -214,6 +219,15 @@ textarea {
 .ls-icon-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
 .ls-icon-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(25, 182, 125, 0.4); }
 .ls-icon-btn.active { border-color: rgba(25, 182, 125, 0.8); background: rgba(25, 182, 125, 0.3); }
+.ls-fit-btn {
+  width: auto;
+  min-width: 52px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
 
 .ls-live-chip {
   border: 1px solid rgba(255, 255, 255, 0.24);
@@ -233,9 +247,11 @@ textarea {
   margin: 0;
   max-width: 760px;
   color: var(--ls-text);
+  font-family: "Tahoma", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-size: 26px;
   line-height: 1.25;
   font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .ls-subtitle {
@@ -278,11 +294,14 @@ textarea {
 .ls-status-ended { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
 .ls-badge-access { background: #fff8ef; border-color: #fed7aa; color: #c2410c; }
 .ls-badge-security { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
+.ls-host-share {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #dbe5ef;
+  border-radius: 12px;
+  background: #f8fbff;
+}
 
-.ls-divider { margin: 14px 0; border: 0; border-top: 1px solid #e6ebf2; }
-.ls-summary { margin: 0; color: #2f4055; font-size: 14px; line-height: 1.55; }
-
-.ls-config-form { margin-top: 16px; display: grid; gap: 14px; }
 .ls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .ls-label {
@@ -310,8 +329,6 @@ textarea {
 }
 
 .ls-inline-group { display: flex; gap: 8px; }
-
-.ls-actions { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 10px; }
 
 .ls-btn {
   height: 42px;
@@ -388,7 +405,7 @@ textarea {
 
 .ls-composer-input {
   flex: 1;
-  height: 46px;
+  height: 50px;
   border: 1px solid #e5e7eb;
   border-radius: 999px;
   padding: 0 18px;
@@ -401,8 +418,8 @@ textarea {
 .ls-composer-input:focus { outline: none; border-color: #19b67d; background: #fff; box-shadow: 0 0 0 3px rgba(25, 182, 125, 0.18); }
 
 .ls-send-btn {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border: 0;
   border-radius: 999px;
   background: #78d0b6;
@@ -424,11 +441,13 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   color: #94a3b8;
   font-size: 12px;
 }
 
-.ls-composer-icons { display: flex; align-items: center; gap: 6px; }
+.ls-composer-icons { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ls-emoji-btn {
   width: 28px;
   height: 28px;
@@ -443,6 +462,7 @@ textarea {
 
 .ls-emoji-btn:hover { background: #e2e8f0; transform: translateY(-1px); }
 .ls-emoji-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2); }
+.ls-emoji-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 .ls-participants-list { display: flex; flex-direction: column; }
 .ls-participant-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; border-bottom: 1px solid #eef3f9; }
@@ -489,7 +509,6 @@ textarea {
 
 @media (max-width: 1024px) {
   .ls-row { grid-template-columns: 1fr; }
-  .ls-actions { grid-template-columns: 1fr; }
   .ls-right { display: block; }
   .ls-sidebar { min-height: 560px; }
   .ls-entry-actions { grid-template-columns: 1fr; }
@@ -501,5 +520,8 @@ textarea {
   .ls-info-head { flex-direction: column; align-items: stretch; }
   .ls-title { font-size: 21px; }
   .ls-inline-group { flex-direction: column; }
+  .ls-composer-input { height: 46px; }
+  .ls-send-btn { width: 46px; height: 46px; }
+  .ls-send-btn i { font-size: 19px; }
   #localVideo { width: 120px; height: 68px; right: 10px; bottom: 10px; }
 }

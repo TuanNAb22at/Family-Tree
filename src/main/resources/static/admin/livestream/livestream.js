@@ -1,4 +1,4 @@
-﻿﻿﻿(function () {
+﻿﻿﻿﻿﻿﻿﻿﻿(function () {
   var LIVE_ID = null;
   var SOCKET = null;
   var SELF_SESSION_ID = null;
@@ -12,7 +12,7 @@
   var CAM_ENABLED = false;
   var MIC_ENABLED = false;
   var PEERS = {};
-  var PARTICIPANTS = 1;
+  var PARTICIPANTS = 0;
   var PARTICIPANT_NAMES = {};
   var PERMISSION_STORAGE_KEY = "livestream.permission.settings";
   var PERMISSIONS = { chatMode: "all", scope: "branch", security: "high" };
@@ -21,6 +21,17 @@
   var AUTO_START_SCREEN_ON_WELCOME = false;
   var DRAG_STATE = { active: false, offsetX: 0, offsetY: 0 };
   var LIVE_STATUS_CODE = 0;
+  var REMOTE_VIEW_MODE = "fit";
+  var LIVE_STARTED_AT = null;
+  var LIVE_TIME_TIMER = null;
+  var FALLBACK_VIDEO_TRACK = null;
+  var FALLBACK_VIDEO_STREAM = null;
+  var COMPOSITE_CANVAS = null;
+  var COMPOSITE_CTX = null;
+  var COMPOSITE_STREAM = null;
+  var COMPOSITE_TRACK = null;
+  var COMPOSITE_TIMER = null;
+  var REMOTE_VIEWER_STREAM = null;
 
   function $(id) { return document.getElementById(id); }
   function escapeHtml(str) {
@@ -35,22 +46,272 @@
   function setRemoteVideoBlack() {
     var remoteVideo = $("remoteVideo");
     if (!remoteVideo) return;
+    REMOTE_VIEWER_STREAM = null;
     remoteVideo.srcObject = null;
     remoteVideo.removeAttribute("src");
     remoteVideo.load();
+  }
+
+  function ensureFallbackVideoTrack() {
+    if (FALLBACK_VIDEO_TRACK && FALLBACK_VIDEO_TRACK.readyState === "live") return FALLBACK_VIDEO_TRACK;
+    var canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 360;
+    var ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    FALLBACK_VIDEO_STREAM = canvas.captureStream(5);
+    FALLBACK_VIDEO_TRACK = FALLBACK_VIDEO_STREAM.getVideoTracks()[0] || null;
+    return FALLBACK_VIDEO_TRACK;
+  }
+
+  function stopCompositeShareTrack() {
+    if (COMPOSITE_TIMER) {
+      clearInterval(COMPOSITE_TIMER);
+      COMPOSITE_TIMER = null;
+    }
+    if (COMPOSITE_STREAM) {
+      COMPOSITE_STREAM.getTracks().forEach(function (t) { t.stop(); });
+    }
+    COMPOSITE_CANVAS = null;
+    COMPOSITE_CTX = null;
+    COMPOSITE_STREAM = null;
+    COMPOSITE_TRACK = null;
+  }
+
+  function ensureCompositeShareTrack(screenTrack, camTrack) {
+    if (!screenTrack || !camTrack) return null;
+    if (COMPOSITE_TRACK && COMPOSITE_TRACK.readyState === "live") return COMPOSITE_TRACK;
+
+    COMPOSITE_CANVAS = document.createElement("canvas");
+    COMPOSITE_CANVAS.width = 1280;
+    COMPOSITE_CANVAS.height = 720;
+    COMPOSITE_CTX = COMPOSITE_CANVAS.getContext("2d");
+
+    var screenVideo = document.createElement("video");
+    screenVideo.autoplay = true;
+    screenVideo.muted = true;
+    screenVideo.playsInline = true;
+    screenVideo.srcObject = new MediaStream([screenTrack]);
+    screenVideo.play().catch(function () {});
+
+    var camVideo = document.createElement("video");
+    camVideo.autoplay = true;
+    camVideo.muted = true;
+    camVideo.playsInline = true;
+    camVideo.srcObject = new MediaStream([camTrack]);
+    camVideo.play().catch(function () {});
+
+    COMPOSITE_STREAM = COMPOSITE_CANVAS.captureStream(24);
+    COMPOSITE_TRACK = COMPOSITE_STREAM.getVideoTracks()[0] || null;
+    COMPOSITE_TIMER = setInterval(function () {
+      if (!COMPOSITE_CTX) return;
+      COMPOSITE_CTX.fillStyle = "#000";
+      COMPOSITE_CTX.fillRect(0, 0, COMPOSITE_CANVAS.width, COMPOSITE_CANVAS.height);
+      try {
+        COMPOSITE_CTX.drawImage(screenVideo, 0, 0, COMPOSITE_CANVAS.width, COMPOSITE_CANVAS.height);
+      } catch (e) {}
+
+      var pipW = Math.round(COMPOSITE_CANVAS.width * 0.25);
+      var pipH = Math.round(pipW * 9 / 16);
+      var pipX = COMPOSITE_CANVAS.width - pipW - 20;
+      var pipY = COMPOSITE_CANVAS.height - pipH - 20;
+      try {
+        COMPOSITE_CTX.drawImage(camVideo, pipX, pipY, pipW, pipH);
+      } catch (e) {}
+    }, 1000 / 24);
+
+    return COMPOSITE_TRACK;
+  }
+
+  function getPreferredOutboundVideoTrack() {
+    if (IS_SHARING_SCREEN && SCREEN_STREAM) {
+      var screenTrack = SCREEN_STREAM.getVideoTracks().find(function (t) { return t.readyState === "live"; });
+      if (screenTrack) {
+        var camTrack = CAM_ENABLED && LOCAL_STREAM
+          ? LOCAL_STREAM.getVideoTracks().find(function (t) { return t.readyState === "live"; })
+          : null;
+        if (camTrack) return ensureCompositeShareTrack(screenTrack, camTrack);
+        stopCompositeShareTrack();
+        return screenTrack;
+      }
+    }
+    if (LOCAL_STREAM) {
+      var camTrack = LOCAL_STREAM.getVideoTracks().find(function (t) { return t.readyState === "live"; });
+      if (camTrack) {
+        stopCompositeShareTrack();
+        return camTrack;
+      }
+    }
+    stopCompositeShareTrack();
+    return ensureFallbackVideoTrack();
+  }
+
+  function applyRemoteViewMode() {
+    var player = document.querySelector(".ls-player");
+    var btn = $("btnToggleFitMode");
+    if (player) player.classList.toggle("fill", REMOTE_VIEW_MODE === "fill");
+    if (btn) {
+      var isFill = REMOTE_VIEW_MODE === "fill";
+      btn.textContent = isFill ? "FILL" : "FIT";
+      btn.classList.toggle("active", isFill);
+      btn.title = isFill ? "Đang lấp đầy khung (có thể bị cắt)" : "Đang hiển thị toàn bộ màn hình chia sẻ";
+    }
+  }
+
+  function toggleRemoteViewMode() {
+    REMOTE_VIEW_MODE = REMOTE_VIEW_MODE === "fit" ? "fill" : "fit";
+    applyRemoteViewMode();
+  }
+
+  function formatClockTime(date) {
+    var d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return "--:--";
+    var h = String(d.getHours()).padStart(2, "0");
+    var m = String(d.getMinutes()).padStart(2, "0");
+    return h + ":" + m;
+  }
+
+  function formatDateTimeVN(date) {
+    var d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return "--:--:--, --/--/----";
+    var hh = String(d.getHours()).padStart(2, "0");
+    var mm = String(d.getMinutes()).padStart(2, "0");
+    var ss = String(d.getSeconds()).padStart(2, "0");
+    var dd = String(d.getDate()).padStart(2, "0");
+    var mo = String(d.getMonth() + 1).padStart(2, "0");
+    var yy = d.getFullYear();
+    return hh + ":" + mm + ":" + ss + ", " + dd + "/" + mo + "/" + yy;
+  }
+
+  function formatDuration(ms) {
+    var totalSec = Math.max(0, Math.floor(ms / 1000));
+    var h = Math.floor(totalSec / 3600);
+    var m = Math.floor((totalSec % 3600) / 60);
+    var s = totalSec % 60;
+    if (h > 0) return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  function resolveStartedAt(data) {
+    if (!data) return null;
+    var raw = data.startedAt;
+    if (raw == null) raw = data.startTime;
+    if (raw == null) raw = data.createdAt;
+    if (raw == null) raw = data.createdDate;
+    if (raw == null) return null;
+    if (typeof raw === "number") return raw;
+    var ts = new Date(raw).getTime();
+    return isNaN(ts) ? null : ts;
+  }
+
+  function stopLiveTimeTicker() {
+    if (LIVE_TIME_TIMER) {
+      clearInterval(LIVE_TIME_TIMER);
+      LIVE_TIME_TIMER = null;
+    }
+  }
+
+  function renderLiveSubtitle() {
+    var subtitle = document.querySelector(".ls-subtitle");
+    var durationBadge = $("lsLiveDurationBadge");
+    if (!subtitle) return;
+    if (!LIVE_STARTED_AT) {
+      subtitle.textContent = "Chưa bắt đầu livestream";
+      if (durationBadge) durationBadge.innerHTML = '<i class="fa fa-clock-o"></i> 00:00';
+      return;
+    }
+    var start = new Date(LIVE_STARTED_AT);
+    var elapsed = formatDuration(Date.now() - start.getTime());
+    subtitle.textContent = "Bắt đầu lúc " + formatDateTimeVN(start);
+    if (durationBadge) durationBadge.innerHTML = '<i class="fa fa-clock-o"></i> ' + elapsed;
+  }
+
+  function startLiveTimeTicker() {
+    stopLiveTimeTicker();
+    renderLiveSubtitle();
+    LIVE_TIME_TIMER = setInterval(renderLiveSubtitle, 1000);
+  }
+
+  function refreshParticipantCount() {
+    setParticipantCount(Object.keys(PARTICIPANT_NAMES).length);
+  }
+
+  function updateRoleBasedUI() {
+    var hostOnlyIds = ["btnToggleCamera", "btnToggleMic", "btnShareScreen", "btnEndLive", "btnOpenPermission"];
+    hostOnlyIds.forEach(function (id) {
+      var el = $(id);
+      if (el) el.classList.toggle("ls-hidden", !CAN_HOST);
+    });
+    updateHostShareUI();
+    updateChatComposerUI();
+  }
+
+  function updateChatComposerUI() {
+    var input = $("chatInput");
+    var sendBtn = $("btnSendChat");
+    var emojiButtons = document.querySelectorAll(".ls-emoji-btn");
+    if (!input || !sendBtn) return;
+    var canChat = canCurrentUserChat();
+    input.disabled = !canChat;
+    sendBtn.disabled = !canChat;
+    emojiButtons.forEach(function (btn) { btn.disabled = !canChat; });
+    if (!canChat) {
+      input.placeholder = PERMISSIONS.chatMode === "off" ? "Chat đã tắt bởi host" : "Chỉ host được phép chat";
+    } else {
+      input.placeholder = "Nhập tin nhắn...";
+    }
+  }
+
+  function updateHostShareUI() {
+    var panel = $("lsHostSharePanel");
+    if (panel) panel.classList.toggle("ls-hidden", !CAN_HOST);
+    var copyBtn = $("btnCopyRoom");
+    var roomLink = $("lsRoomLink");
+    if (copyBtn) copyBtn.disabled = !CAN_HOST || !roomLink || !(roomLink.value || "").trim();
   }
 
   function updateLocalPreviewVisibility() {
     var localVideo = $("localVideo");
     if (!localVideo) return;
     var hasLiveCam = !!(LOCAL_STREAM && LOCAL_STREAM.getVideoTracks().some(function (t) { return t.readyState === "live"; }));
-    localVideo.style.display = (CAN_HOST && CAM_ENABLED && hasLiveCam) ? "block" : "none";
+    localVideo.style.display = (CAN_HOST && IS_SHARING_SCREEN && CAM_ENABLED && hasLiveCam) ? "block" : "none";
     if (localVideo.style.display === "none") {
       localVideo.style.left = "";
       localVideo.style.top = "";
       localVideo.style.right = "14px";
       localVideo.style.bottom = "14px";
     }
+  }
+
+  function syncHostMainAndOverlayVideo() {
+    if (!CAN_HOST) return;
+    var remoteVideo = $("remoteVideo");
+    var localVideo = $("localVideo");
+    if (!remoteVideo || !localVideo) return;
+
+    var screenTrack = SCREEN_STREAM && SCREEN_STREAM.getVideoTracks().find(function (t) { return t.readyState === "live"; });
+    var camTrack = LOCAL_STREAM && LOCAL_STREAM.getVideoTracks().find(function (t) { return t.readyState === "live"; });
+
+    if (IS_SHARING_SCREEN && screenTrack) {
+      remoteVideo.srcObject = new MediaStream([screenTrack]);
+      localVideo.srcObject = (CAM_ENABLED && camTrack) ? new MediaStream([camTrack]) : null;
+      updateLocalPreviewVisibility();
+      return;
+    }
+
+    if (CAM_ENABLED && camTrack) {
+      remoteVideo.srcObject = new MediaStream([camTrack]);
+      localVideo.srcObject = null;
+      updateLocalPreviewVisibility();
+      return;
+    }
+
+    localVideo.srcObject = null;
+    updateLocalPreviewVisibility();
+    setRemoteVideoBlack();
   }
 
   function initDraggableLocalVideo() {
@@ -163,8 +424,9 @@
 
   function applyPermissionToUI() {
     PERMISSIONS.scope = "branch";
-    if ($("lsAccessBadge")) $("lsAccessBadge").innerHTML = '<i class="fa fa-lock"></i> Quyền truy cập: Nội bộ dòng họ (branch_id)';
+    if ($("lsAccessBadge")) $("lsAccessBadge").innerHTML = '<i class="fa fa-lock"></i> Quyền truy cập: Nội bộ dòng họ';
     if ($("lsSecurityBadge")) $("lsSecurityBadge").innerHTML = '<i class="fa fa-shield"></i> Chế độ bảo mật ' + (PERMISSIONS.security === "high" ? "cao" : "tiêu chuẩn");
+    updateChatComposerUI();
   }
 
   function openPermissionModal() {
@@ -184,7 +446,7 @@
   }
 
   function setParticipantCount(count) {
-    PARTICIPANTS = Math.max(1, Number(count || 1));
+    PARTICIPANTS = Math.max(0, Number(count || 0));
     if ($("participantCount")) $("participantCount").textContent = String(PARTICIPANTS);
   }
 
@@ -225,6 +487,13 @@
       '</span></div><div class="ls-chat-bubble">' + escapeHtml(text || "") + "</div></div>";
     chatList.appendChild(item);
     chatList.scrollTop = chatList.scrollHeight;
+  }
+
+  function clearChatMessages() {
+    var chatList = $("chatList");
+    var emptyEl = $("chatEmpty");
+    if (chatList) chatList.innerHTML = "";
+    if (emptyEl) emptyEl.style.display = "block";
   }
 
   async function readApiError(res, fallback) {
@@ -276,22 +545,36 @@
   }
 
   async function joinByUrlInput(rawUrl) {
-    var id = parseLivestreamIdFromUrl((rawUrl || "").trim());
-    if (!id) { setStatusText("URL livestream không hợp lệ.", true); return; }
-    var data = await watchLiveById(id);
-    if (!isLiveStatus(data)) {
-      setStatusText("Phòng livestream đã kết thúc (status = 0), không thể tham gia.", true);
-      return;
+    function showJoinError(message) {
+      setStatusText(message, true);
+      window.alert(message);
     }
-    showMainScreen();
-    applyLiveData(data);
-    connectSocket(data.livestreamId || id);
-    setStatusText("Đã vào phòng livestream.", false);
+    var id = parseLivestreamIdFromUrl((rawUrl || "").trim());
+    if (!id) { showJoinError("URL livestream không hợp lệ."); return; }
+    try {
+      var data = await watchLiveById(id);
+      if (!isLiveStatus(data)) {
+        showJoinError("Liên kết phòng không tồn tại hoặc livestream đã kết thúc.");
+        return;
+      }
+      showMainScreen();
+      applyLiveData(data);
+      connectSocket(data.livestreamId || id);
+      setStatusText("Đã vào phòng livestream.", false);
+    } catch (e) {
+      showJoinError("Liên kết phòng không tồn tại hoặc livestream đã kết thúc.");
+    }
   }
 
   function applyLiveData(data) {
     if (!data) return;
+    var previousLiveId = LIVE_ID ? String(LIVE_ID) : "";
+    var incomingLiveId = data.livestreamId ? String(data.livestreamId) : previousLiveId;
+    if (previousLiveId && incomingLiveId && previousLiveId !== incomingLiveId) clearChatMessages();
     LIVE_ID = data.livestreamId || LIVE_ID;
+    var startedAt = resolveStartedAt(data);
+    if (startedAt) LIVE_STARTED_AT = startedAt;
+    else if (!isLiveStatus(data)) LIVE_STARTED_AT = null;
     $("lsDisplayTitle").textContent = data.title || "Phòng livestream";
     if ($("lsTitle")) $("lsTitle").value = data.title || "";
     if (data.branchId && $("lsBranchId")) $("lsBranchId").value = String(data.branchId);
@@ -304,6 +587,12 @@
       if ($("lsJoinUrl")) $("lsJoinUrl").value = "";
     }
     setStatusBadge(data.status);
+    updateRoleBasedUI();
+    if (isLiveStatus(data)) startLiveTimeTicker();
+    else {
+      stopLiveTimeTicker();
+      renderLiveSubtitle();
+    }
   }
 
   async function startLiveRoom(customTitle, customBranchId) {
@@ -314,6 +603,9 @@
     var res = await fetch("/api/livestream/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     if (!res.ok) throw new Error(await readApiError(res, "Bắt đầu livestream thất bại."));
     var data = await res.json();
+    var nextLiveId = data && data.livestreamId ? String(data.livestreamId) : "";
+    var currentLiveId = LIVE_ID ? String(LIVE_ID) : "";
+    if (nextLiveId && nextLiveId !== currentLiveId) clearChatMessages();
     applyLiveData(data);
     return data;
   }
@@ -378,6 +670,7 @@
     if (!LOCAL_STREAM) return;
     LOCAL_STREAM.getTracks().forEach(function (t) { t.stop(); });
     LOCAL_STREAM = null;
+    stopCompositeShareTrack();
     CAM_ENABLED = false;
     MIC_ENABLED = false;
     $("localVideo").srcObject = null;
@@ -394,20 +687,44 @@
     });
   }
 
+  function syncOutgoingAudioTrack() {
+    var audioTrack = LOCAL_STREAM
+      ? LOCAL_STREAM.getAudioTracks().find(function (t) { return t.readyState === "live"; })
+      : null;
+    Object.keys(PEERS).forEach(function (sid) {
+      var pc = PEERS[sid];
+      if (!pc) return;
+      var sender = pc.getSenders().find(function (s) { return s.track && s.track.kind === "audio"; });
+      if (audioTrack) {
+        if (sender) {
+          try { sender.replaceTrack(audioTrack); } catch (e) {}
+        } else if (LOCAL_STREAM) {
+          try { pc.addTrack(audioTrack, LOCAL_STREAM); } catch (e) {}
+        }
+      } else if (sender) {
+        try { sender.replaceTrack(null); } catch (e) {}
+      }
+    });
+  }
+
+  async function renegotiateAllPeers() {
+    var peerIds = Object.keys(PEERS);
+    for (var i = 0; i < peerIds.length; i++) {
+      try { await createOfferFor(peerIds[i]); } catch (e) {}
+    }
+  }
+
   async function stopScreenShare(internalStop) {
     if (!IS_SHARING_SCREEN) return;
-    var camTrack = LOCAL_STREAM && LOCAL_STREAM.getVideoTracks()[0];
-    if (camTrack) {
-      replaceOutgoingVideoTrack(camTrack);
-      $("localVideo").srcObject = new MediaStream([camTrack]);
-    }
     if (SCREEN_STREAM) {
       SCREEN_STREAM.getTracks().forEach(function (t) { t.stop(); });
       SCREEN_STREAM = null;
     }
     IS_SHARING_SCREEN = false;
-    setRemoteVideoBlack();
+    stopCompositeShareTrack();
+    replaceOutgoingVideoTrack(getPreferredOutboundVideoTrack());
     $("btnShareScreen").classList.remove("active");
+    syncHostMainAndOverlayVideo();
     if (!internalStop) setStatusText("Đã dừng chia sẻ màn hình.", false);
   }
 
@@ -417,9 +734,9 @@
     SCREEN_STREAM = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
     var screenTrack = SCREEN_STREAM.getVideoTracks()[0];
     if (!screenTrack) { setStatusText("Không có track màn hình.", true); return; }
-    replaceOutgoingVideoTrack(screenTrack);
-    $("remoteVideo").srcObject = new MediaStream([screenTrack]);
     IS_SHARING_SCREEN = true;
+    replaceOutgoingVideoTrack(getPreferredOutboundVideoTrack());
+    syncHostMainAndOverlayVideo();
     $("btnShareScreen").classList.add("active");
     setStatusText("Đang chia sẻ màn hình.", false);
     screenTrack.onended = function () { stopScreenShare(true); };
@@ -434,17 +751,34 @@
     var pc = new RTCPeerConnection(RTC_CONFIG);
     PEERS[peerId] = pc;
     pc.onicecandidate = function (event) { if (event.candidate) sendSignal("ice", peerId, { candidate: event.candidate }); };
-    pc.ontrack = function (event) { if (!CAN_HOST) $("remoteVideo").srcObject = event.streams[0]; };
+    pc.ontrack = function (event) {
+      if (CAN_HOST) return;
+      var remoteVideo = $("remoteVideo");
+      if (!remoteVideo) return;
+      if (!REMOTE_VIEWER_STREAM) REMOTE_VIEWER_STREAM = new MediaStream();
+      if (event.track && !REMOTE_VIEWER_STREAM.getTracks().some(function (t) { return t.id === event.track.id; })) {
+        REMOTE_VIEWER_STREAM.addTrack(event.track);
+      }
+      remoteVideo.srcObject = REMOTE_VIEWER_STREAM;
+      try { remoteVideo.play(); } catch (e) {}
+    };
     if (asHostOfferer) {
-      var stream = await ensureLocalMedia();
-      stream.getTracks().forEach(function (track) { pc.addTrack(track, stream); });
+      var videoTrack = getPreferredOutboundVideoTrack();
+      if (videoTrack) pc.addTrack(videoTrack, (IS_SHARING_SCREEN && SCREEN_STREAM) ? SCREEN_STREAM : (LOCAL_STREAM || FALLBACK_VIDEO_STREAM));
+      if (LOCAL_STREAM) {
+        LOCAL_STREAM.getAudioTracks().forEach(function (track) {
+          if (track.readyState === "live") pc.addTrack(track, LOCAL_STREAM);
+        });
+      }
     }
     return pc;
   }
 
   async function createOfferFor(viewerSessionId) {
     var pc = PEERS[viewerSessionId] || await createPeerConnection(viewerSessionId, true);
-    if (IS_SHARING_SCREEN && SCREEN_STREAM && SCREEN_STREAM.getVideoTracks().length > 0) replaceOutgoingVideoTrack(SCREEN_STREAM.getVideoTracks()[0]);
+    var preferredVideoTrack = getPreferredOutboundVideoTrack();
+    if (preferredVideoTrack) replaceOutgoingVideoTrack(preferredVideoTrack);
+    syncOutgoingAudioTrack();
     var offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     sendSignal("offer", viewerSessionId, { sdp: offer });
@@ -490,8 +824,12 @@
         HOST_SESSION_ID = msg.hostSessionId || null;
         if (CAN_HOST && !HOST_SESSION_ID) HOST_SESSION_ID = SELF_SESSION_ID;
         PARTICIPANT_NAMES[SELF_SESSION_ID] = msg.displayName || "Bạn";
+        if (HOST_SESSION_ID && !PARTICIPANT_NAMES[HOST_SESSION_ID]) PARTICIPANT_NAMES[HOST_SESSION_ID] = "Chủ phòng";
+        refreshParticipantCount();
         renderParticipants();
         updateLocalPreviewVisibility();
+        syncHostMainAndOverlayVideo();
+        updateRoleBasedUI();
         setStatusText("Đã vào phòng. " + (CAN_HOST ? "Chế độ chủ phòng." : "Chế độ người xem."), false);
         if (CAN_HOST && AUTO_START_SCREEN_ON_WELCOME) {
           AUTO_START_SCREEN_ON_WELCOME = false;
@@ -501,22 +839,33 @@
       }
       if (type === "participant-joined") {
         if (msg.sessionId) PARTICIPANT_NAMES[msg.sessionId] = msg.displayName || "Thành viên";
-        setParticipantCount(msg.totalParticipants || (PARTICIPANTS + 1));
+        refreshParticipantCount();
         renderParticipants();
-        if (CAN_HOST && msg.sessionId && msg.sessionId !== SELF_SESSION_ID && LOCAL_STREAM) await createOfferFor(msg.sessionId);
+        if (CAN_HOST && msg.sessionId && msg.sessionId !== SELF_SESSION_ID) {
+          try { await createOfferFor(msg.sessionId); }
+          catch (e) { setStatusText("Không thể gửi luồng hình ảnh tới người xem mới.", true); }
+        }
         return;
       }
       if (type === "participant-left") {
         if (msg.sessionId && PARTICIPANT_NAMES[msg.sessionId]) delete PARTICIPANT_NAMES[msg.sessionId];
-        setParticipantCount(msg.totalParticipants || Math.max(1, PARTICIPANTS - 1));
+        refreshParticipantCount();
         renderParticipants();
         var sid = msg.sessionId;
         if (sid && PEERS[sid]) { PEERS[sid].close(); delete PEERS[sid]; }
         return;
       }
       if (type === "host-left") {
+        if (HOST_SESSION_ID && PARTICIPANT_NAMES[HOST_SESSION_ID]) delete PARTICIPANT_NAMES[HOST_SESSION_ID];
         HOST_SESSION_ID = null;
+        refreshParticipantCount();
         renderParticipants();
+        if (!CAN_HOST) {
+          window.alert("Livestream đã kết thúc. Chủ phòng đã rời khỏi phòng.");
+          setStatusText("Livestream đã kết thúc.", false);
+          await leaveRoom({ forceEnded: true, skipEndRequest: true });
+          return;
+        }
         setStatusText("Chủ phòng đã rời.", true);
         setRemoteVideoBlack();
         return;
@@ -534,8 +883,24 @@
     SOCKET.onerror = function () { setStatusText("Lỗi kết nối realtime.", true); };
   }
 
-  function leaveRoom() {
-    IS_LEAVING_ROOM = true;
+  async function leaveRoom(options) {
+    options = options || {};
+    var forceEnded = !!options.forceEnded;
+    var skipEndRequest = !!options.skipEndRequest;
+    if (forceEnded) {
+      IS_ENDING_LIVE = true;
+    } else if (CAN_HOST && LIVE_ID && LIVE_STATUS_CODE === 1 && !skipEndRequest) {
+      try {
+        var endData = await endLiveById(LIVE_ID);
+        applyLiveData(endData);
+        IS_ENDING_LIVE = true;
+      } catch (e) {
+        setStatusText(e.message || "Không thể kết thúc livestream.", true);
+        return;
+      }
+    } else {
+      IS_LEAVING_ROOM = true;
+    }
     if (SOCKET) { SOCKET.close(); SOCKET = null; }
     Object.keys(PEERS).forEach(function (sid) { PEERS[sid].close(); delete PEERS[sid]; });
     if (IS_SHARING_SCREEN) stopScreenShare(true);
@@ -545,9 +910,15 @@
     SELF_SESSION_ID = null;
     CAN_HOST = false;
     PARTICIPANT_NAMES = {};
+    refreshParticipantCount();
     renderParticipants();
     updateMediaButtons();
+    updateRoleBasedUI();
     showEntryScreen();
+    stopLiveTimeTicker();
+    LIVE_STARTED_AT = null;
+    renderLiveSubtitle();
+    syncHostMainAndOverlayVideo();
   }
 
   function sendChat() {
@@ -610,12 +981,15 @@
   (async function init() {
     initDraggableLocalVideo();
     setRemoteVideoBlack();
+    applyRemoteViewMode();
+    renderLiveSubtitle();
     initTabs();
     loadPermissions();
     applyPermissionToUI();
     await loadBranches();
     updateMediaButtons();
     renderParticipants();
+    updateRoleBasedUI();
     initQuickEmojiButtons();
 
     showEntryScreen();
@@ -724,18 +1098,16 @@
         if (CAM_ENABLED) {
           CAM_ENABLED = false;
           stopCameraTrack();
-          $("localVideo").srcObject = null;
-          updateLocalPreviewVisibility();
-          if (!IS_SHARING_SCREEN) replaceOutgoingVideoTrack(null);
+          replaceOutgoingVideoTrack(getPreferredOutboundVideoTrack());
+          syncHostMainAndOverlayVideo();
           updateMediaButtons();
           return;
         }
         CAM_ENABLED = true;
         var camTrack = await ensureCameraTrack();
         if (!camTrack) { CAM_ENABLED = false; updateMediaButtons(); return; }
-        $("localVideo").srcObject = new MediaStream([camTrack]);
-        updateLocalPreviewVisibility();
-        if (!IS_SHARING_SCREEN) replaceOutgoingVideoTrack(camTrack);
+        replaceOutgoingVideoTrack(getPreferredOutboundVideoTrack());
+        syncHostMainAndOverlayVideo();
         applyLocalTrackStates();
         updateMediaButtons();
       } catch (e) { setStatusText("Không truy cập được camera.", true); }
@@ -747,6 +1119,8 @@
         if (!LOCAL_STREAM) await ensureLocalMedia();
         MIC_ENABLED = !MIC_ENABLED;
         applyLocalTrackStates();
+        syncOutgoingAudioTrack();
+        if (MIC_ENABLED) await renegotiateAllPeers();
         updateMediaButtons();
       } catch (e) { setStatusText("Không truy cập được mic.", true); }
     });
@@ -754,22 +1128,20 @@
     $("btnShareScreen").addEventListener("click", async function () {
       try { await toggleScreenShare(); } catch (e) { setStatusText("Chia sẻ màn hình thất bại.", true); }
     });
-
-    $("btnEndLive").addEventListener("click", async function () {
-      if (!LIVE_ID) { setStatusText("Chưa chọn phiên livestream.", true); return; }
+    $("btnFullscreen").addEventListener("click", async function () {
+      var player = document.querySelector(".ls-player");
+      if (!player) return;
       try {
-        var endData = await endLiveById(LIVE_ID);
-        applyLiveData(endData);
-        IS_ENDING_LIVE = true;
-        if (SOCKET) SOCKET.close();
-        Object.keys(PEERS).forEach(function (sid) { PEERS[sid].close(); delete PEERS[sid]; });
-        stopScreenShare(true);
-        stopLocalMedia();
-        setRemoteVideoBlack();
-      } catch (e) { setStatusText(e.message || "Không thể kết thúc livestream.", true); }
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await player.requestFullscreen();
+      } catch (e) {}
     });
+    if ($("btnToggleFitMode")) $("btnToggleFitMode").addEventListener("click", toggleRemoteViewMode);
 
-    $("btnLeaveLive").addEventListener("click", leaveRoom);
+    $("btnLeaveLive").addEventListener("click", async function () {
+      if (!window.confirm("Bạn có chắc muốn rời phòng livestream không?")) return;
+      await leaveRoom();
+    });
 
     if ($("btnCopyRoom") && $("lsRoomLink")) {
       $("btnCopyRoom").addEventListener("click", async function () {

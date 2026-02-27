@@ -1,8 +1,8 @@
-﻿﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿﻿﻿﻿﻿﻿﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="homeUrl" value="/admin/home"/>
-<c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css?v=20260227m"/>
-<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227i"/>
+<c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css?v=20260227v3"/>
+<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227v15"/>
 <!DOCTYPE html>
 <html>
 <head>
@@ -71,7 +71,7 @@
             <div id="lsMainScreen" class="ls-layout ls-hidden">
                 <div class="ls-left">
                     <div class="ls-card ls-player">
-                        <video id="remoteVideo" autoplay playsinline controls></video>
+                        <video id="remoteVideo" autoplay playsinline></video>
                         <video id="localVideo" autoplay muted playsinline></video>
 
                         <div class="ls-player-overlay-top">
@@ -82,7 +82,6 @@
                         </div>
 
                         <div class="ls-player-controls">
-                            <div class="ls-progress"></div>
                             <div class="ls-controls-row">
                                 <div class="ls-controls-left">
                                     <button id="btnToggleCamera" type="button" class="ls-icon-btn" title="Camera"><i class="fa fa-video-camera"></i></button>
@@ -91,7 +90,7 @@
                                     <span class="ls-live-chip"><span class="ls-dot-red">●</span> LIVE</span>
                                 </div>
                                 <div class="ls-controls-right">
-                                    <button id="btnEndLive" type="button" class="ls-icon-btn" title="Kết thúc"><i class="fa fa-stop"></i></button>
+                                    <button id="btnFullscreen" type="button" class="ls-icon-btn" title="Toàn màn hình"><i class="fa fa-arrows-alt"></i></button>
                                     <button id="btnLeaveLive" type="button" class="ls-icon-btn" title="Rời phòng"><i class="fa fa-sign-out"></i></button>
                                 </div>
                             </div>
@@ -102,7 +101,7 @@
                         <div class="ls-info-head">
                             <div>
                                 <h1 id="lsDisplayTitle" class="ls-title">Lễ Giỗ Tổ Dòng Họ Nguyễn - Năm 2026</h1>
-                                <p class="ls-subtitle">Bắt đầu lúc 09:00 - Chủ Nhật, 22/02/2026</p>
+                                <p class="ls-subtitle ls-hidden">Chưa bắt đầu livestream</p>
                             </div>
                             <button id="btnOpenPermission" type="button" class="ls-permission-btn"><i class="fa fa-cog"></i> Cài đặt phân quyền</button>
                         </div>
@@ -112,6 +111,14 @@
                             <span id="lsAccessBadge" class="ls-badge ls-badge-access"><i class="fa fa-lock"></i> Quyền truy cập: Nội bộ dòng họ</span>
                             <span id="lsSecurityBadge" class="ls-badge ls-badge-security"><i class="fa fa-shield"></i> Chế độ bảo mật cao</span>
                         </div>
+                        <div id="lsHostSharePanel" class="ls-host-share ls-hidden">
+                            <label class="ls-label" for="lsRoomLink">Liên kết phòng</label>
+                            <div class="ls-inline-group">
+                                <input id="lsRoomLink" class="ls-input" readonly placeholder="Liên kết phòng sẽ xuất hiện khi đang live"/>
+                                <button id="btnCopyRoom" type="button" class="ls-btn ls-btn-light">Sao chép link</button>
+                            </div>
+                        </div>
+                        <div id="lsStatusText" class="ls-status" aria-live="polite"></div>
 
                     </div>
                 </div>
@@ -178,7 +185,7 @@
                 <div class="ls-modal-group">
                     <label class="ls-label" for="permScope">Phạm vi truy cập</label>
                     <select id="permScope" class="ls-select" disabled>
-                        <option value="branch">Nội bộ dòng họ (branch_id)</option>
+                        <option value="branch">Nội bộ dòng họ</option>
                     </select>
                 </div>
                 <div class="ls-modal-group">
