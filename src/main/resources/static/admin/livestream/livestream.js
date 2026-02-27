@@ -16,7 +16,11 @@
   var PARTICIPANT_NAMES = {};
   var PERMISSION_STORAGE_KEY = "livestream.permission.settings";
   var PERMISSIONS = { chatMode: "all", scope: "branch", security: "high" };
-  var RTC_CONFIG = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+  var DEFAULT_ICE_SERVERS = [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ];
+  var RTC_CONFIG = { iceServers: resolveIceServers() };
   var AUDIO_CONSTRAINTS = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
   var AUTO_START_SCREEN_ON_WELCOME = false;
   var DRAG_STATE = { active: false, offsetX: 0, offsetY: 0 };
@@ -34,6 +38,21 @@
   var REMOTE_VIEWER_STREAM = null;
 
   function $(id) { return document.getElementById(id); }
+
+  function resolveIceServers() {
+    var configured = (window && window.LIVESTREAM_ICE_SERVERS) || null;
+    if (!Array.isArray(configured) || !configured.length) return DEFAULT_ICE_SERVERS;
+    var normalized = configured.filter(function (item) {
+      return item && typeof item === "object" && !!item.urls;
+    }).map(function (item) {
+      var server = { urls: item.urls };
+      if (item.username) server.username = item.username;
+      if (item.credential) server.credential = item.credential;
+      if (item.credentialType) server.credentialType = item.credentialType;
+      return server;
+    });
+    return normalized.length ? normalized : DEFAULT_ICE_SERVERS;
+  }
   function escapeHtml(str) {
     return String(str || "")
       .replace(/&/g, "&amp;")
