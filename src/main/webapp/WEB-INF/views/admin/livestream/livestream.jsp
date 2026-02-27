@@ -2,7 +2,7 @@
 <%@include file="/common/taglib.jsp" %>
 <c:url var="homeUrl" value="/admin/home"/>
 <c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css?v=20260227v3"/>
-<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227v15"/>
+<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227v16"/>
 <!DOCTYPE html>
 <html>
 <head>
@@ -204,6 +204,15 @@
     </div>
 </div>
 
+<script>
+    window.LIVESTREAM_ICE_SERVERS = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+        { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+        { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+    ];
+</script>
 <script src="${livestreamJsUrl}"></script>
 </body>
 </html>
