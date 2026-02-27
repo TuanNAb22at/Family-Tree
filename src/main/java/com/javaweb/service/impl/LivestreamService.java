@@ -127,10 +127,12 @@ public class LivestreamService implements ILivestreamService {
         LivestreamWatchResponse response = new LivestreamWatchResponse();
         response.setLivestreamId(livestream.getId());
         response.setTitle(livestream.getTitle());
-        response.setStatus(STATUS_LIVE.equals(livestream.getStatus()) ? "LIVE" : "ENDED");
+        Integer statusCode = STATUS_LIVE.equals(livestream.getStatus()) ? STATUS_LIVE : STATUS_ENDED;
+        response.setStatusCode(statusCode);
+        response.setStatus(STATUS_LIVE.equals(statusCode) ? "LIVE" : "ENDED");
         response.setBranchId(livestream.getBranch() != null ? livestream.getBranch().getId() : null);
         response.setStreamUrl(livestream.getStreamUrl());
-        response.setRoomLink("/admin/livestream?livestreamId=" + livestream.getId());
+        response.setRoomLink(STATUS_LIVE.equals(statusCode) ? ("/admin/livestream?livestreamId=" + livestream.getId()) : null);
         return response;
     }
 

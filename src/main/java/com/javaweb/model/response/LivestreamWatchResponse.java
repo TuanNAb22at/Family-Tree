@@ -4,6 +4,7 @@ public class LivestreamWatchResponse {
     private Long livestreamId;
     private String title;
     private String status;
+    private Integer statusCode;
     private Long branchId;
     private String streamUrl;
     private String roomLink;
@@ -30,6 +31,14 @@ public class LivestreamWatchResponse {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Integer getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(Integer statusCode) {
+        this.statusCode = statusCode;
     }
 
     public Long getBranchId() {

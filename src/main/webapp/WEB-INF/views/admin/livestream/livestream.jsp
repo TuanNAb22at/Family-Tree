@@ -1,8 +1,8 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="homeUrl" value="/admin/home"/>
-<c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css"/>
-<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js"/>
+<c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css?v=20260227m"/>
+<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227i"/>
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,16 +27,57 @@
         </div>
 
         <div class="page-content">
-            <div class="ls-layout">
+            <div id="lsEntryScreen" class="ls-entry">
+                <div class="ls-entry-card">
+                    <h2 class="ls-entry-title">Bắt đầu livestream</h2>
+                    <p class="ls-entry-subtitle">Chọn cách bạn muốn sử dụng phòng livestream.</p>
+                    <div class="ls-entry-actions">
+                        <button id="btnEntryCreate" type="button" class="ls-btn ls-btn-success ls-entry-btn">
+                            <i class="fa fa-plus-circle"></i> Tạo phòng
+                        </button>
+                        <button id="btnEntryJoin" type="button" class="ls-btn ls-btn-primary ls-entry-btn">
+                            <i class="fa fa-sign-in"></i> Tham gia
+                        </button>
+                    </div>
+                    <div id="entrySetupBlock" class="ls-entry-setup ls-hidden">
+                        <div class="ls-row">
+                            <div>
+                                <label class="ls-label" for="entryTitle">Tiêu đề livestream</label>
+                                <input id="entryTitle" class="ls-input" placeholder="Nhập tiêu đề livestream"/>
+                            </div>
+                            <div>
+                                <label class="ls-label" for="entryBranchId">Chi nhánh</label>
+                                <select id="entryBranchId" class="ls-select"></select>
+                            </div>
+                        </div>
+                        <div class="ls-entry-setup-actions">
+                            <button id="btnEntryStartLive" type="button" class="ls-btn ls-btn-success">
+                                <i class="fa fa-play"></i> Bắt đầu
+                            </button>
+                        </div>
+                    </div>
+                    <div id="entryJoinBlock" class="ls-entry-join ls-hidden">
+                        <label class="ls-label" for="entryJoinUrl">Nhập link tham gia</label>
+                        <div class="ls-inline-group">
+                            <input id="entryJoinUrl" class="ls-input" placeholder="/admin/livestream?livestreamId=..."/>
+                            <button id="btnEntryJoinSubmit" type="button" class="ls-btn ls-btn-warning">
+                                <i class="fa fa-arrow-right"></i> Vào phòng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="lsMainScreen" class="ls-layout ls-hidden">
                 <div class="ls-left">
                     <div class="ls-card ls-player">
-                        <video id="remoteVideo" autoplay playsinline controls poster="https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1600&q=80"></video>
+                        <video id="remoteVideo" autoplay playsinline controls></video>
                         <video id="localVideo" autoplay muted playsinline></video>
 
                         <div class="ls-player-overlay-top">
                             <div class="ls-overlay-left">
                                 <span class="ls-live-badge"><span class="ls-dot"></span>TRỰC TIẾP</span>
-                                <span class="ls-watch-badge"><i class="fa fa-eye"></i><span id="participantCount">256</span> Đang xem</span>
+                                <span class="ls-watch-badge"><i class="fa fa-eye"></i><span id="participantCount">0</span> Đang xem</span>
                             </div>
                         </div>
 
@@ -72,45 +113,6 @@
                             <span id="lsSecurityBadge" class="ls-badge ls-badge-security"><i class="fa fa-shield"></i> Chế độ bảo mật cao</span>
                         </div>
 
-                        <hr class="ls-divider"/>
-                        <p class="ls-summary">Chào mừng quý bà con cô bác, anh chị em trong dòng họ đã tham gia buổi lễ trực tuyến. Đây là dịp để con cháu tề tựu, tưởng nhớ công ơn tổ tiên và gắn kết tình thân. Video sẽ được lưu lại trong thư viện Media sau khi kết thúc.</p>
-
-                        <div class="ls-config-form">
-                            <div class="ls-row">
-                                <div>
-                                    <label class="ls-label" for="lsTitle">Tiêu đề</label>
-                                    <input id="lsTitle" class="ls-input" placeholder="Nhập tiêu đề livestream"/>
-                                </div>
-                                <div>
-                                    <label class="ls-label" for="lsBranchId">Chi nhánh</label>
-                                    <select id="lsBranchId" class="ls-select"></select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="ls-label" for="lsRoomLink">Liên kết phòng</label>
-                                <div class="ls-inline-group">
-                                    <input id="lsRoomLink" class="ls-input" readonly placeholder="Liên kết sẽ xuất hiện sau khi bắt đầu"/>
-                                    <button id="btnCopyRoom" type="button" class="ls-btn ls-btn-light">Sao chép</button>
-                                </div>
-                            </div>
-
-                            <div class="ls-actions">
-                                <button id="btnStartLive" type="button" class="ls-btn ls-btn-success"><i class="fa fa-play"></i> Bắt đầu</button>
-                                <button id="btnWatchLive" type="button" class="ls-btn ls-btn-primary"><i class="fa fa-eye"></i> Xem phòng</button>
-                                <button id="btnLoadCurrentLive" type="button" class="ls-btn ls-btn-light"><i class="fa fa-rss"></i> Phòng đang live</button>
-                            </div>
-
-                            <div>
-                                <label class="ls-label" for="lsJoinUrl">Vào phòng bằng URL</label>
-                                <div class="ls-inline-group">
-                                    <input id="lsJoinUrl" class="ls-input" placeholder="/admin/livestream?livestreamId=..."/>
-                                    <button id="btnJoinByUrl" type="button" class="ls-btn ls-btn-warning"><i class="fa fa-sign-in"></i> Tham gia</button>
-                                </div>
-                            </div>
-
-                            <div id="lsStatusText" class="ls-status"></div>
-                        </div>
                     </div>
                 </div>
 
@@ -134,12 +136,18 @@
                         <div class="ls-composer">
                             <div class="ls-composer-row">
                                 <input id="chatInput" class="ls-composer-input" placeholder="Nhập tin nhắn..."/>
-                                <button id="btnSendChat" type="button" class="ls-send-btn"><i class="fa fa-paper-plane"></i></button>
+                                <button id="btnSendChat" type="button" class="ls-send-btn" title="Gửi tin nhắn">
+                                    <i class="fa fa-paper-plane-o"></i>
+                                </button>
                             </div>
                             <div class="ls-composer-foot">
                                 <div class="ls-composer-icons">
-                                    <i class="fa fa-smile-o"></i>
-                                    <i class="fa fa-heart-o"></i>
+                                    <button type="button" class="ls-emoji-btn" data-emoji="😀" title="Mặt cười">😀</button>
+                                    <button type="button" class="ls-emoji-btn" data-emoji="❤️" title="Trái tim">❤️</button>
+                                    <button type="button" class="ls-emoji-btn" data-emoji="👍" title="Thích">👍</button>
+                                    <button type="button" class="ls-emoji-btn" data-emoji="😂" title="Cười">😂</button>
+                                    <button type="button" class="ls-emoji-btn" data-emoji="🎉" title="Chúc mừng">🎉</button>
+                                    <button type="button" class="ls-emoji-btn" data-emoji="🙏" title="Cảm ơn">🙏</button>
                                 </div>
                                 <span>Nhấn Enter để gửi</span>
                             </div>
