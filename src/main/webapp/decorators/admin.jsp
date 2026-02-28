@@ -5,6 +5,8 @@
 <head>
 	<meta charset="UTF-8">
 	<title><dec:title default="Trang ch&#7911;" /></title>
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="shortcut icon" href="/favicon.svg" />
 
 	<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="font-awesome/4.5.0/css/font-awesome.min.css" />
