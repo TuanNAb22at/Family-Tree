@@ -8,5 +8,7 @@ import java.util.Optional;
 public interface LivestreamRepository extends JpaRepository<LivestreamEntity, Long> {
     Optional<LivestreamEntity> findFirstByBranch_IdAndStatusOrderByIdDesc(Long branchId, Integer status);
 
+    Optional<LivestreamEntity> findFirstByStatusOrderByIdDesc(Integer status);
+
     Optional<LivestreamEntity> findByIdAndStatus(Long id, Integer status);
 }

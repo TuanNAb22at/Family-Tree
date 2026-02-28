@@ -3,10 +3,8 @@ package com.javaweb.websocket;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javaweb.entity.LivestreamEntity;
-import com.javaweb.entity.PersonEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.repository.LivestreamRepository;
-import com.javaweb.repository.PersonRepository;
 import com.javaweb.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,7 +19,6 @@ import java.security.Principal;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -37,9 +34,6 @@ public class LiveWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private PersonRepository personRepository;
 
     private final Map<Long, RoomState> rooms = new ConcurrentHashMap<>();
     private final Map<String, SessionMeta> sessionIndex = new ConcurrentHashMap<>();
@@ -64,21 +58,9 @@ public class LiveWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        Optional<PersonEntity> personOpt = personRepository.findByUserId(user.getId());
-        if (!personOpt.isPresent() || personOpt.get().getBranch() == null) {
-            session.close(CloseStatus.NOT_ACCEPTABLE.withReason("User has no branch mapping"));
-            return;
-        }
-        Long viewerBranchId = personOpt.get().getBranch().getId();
-
         LivestreamEntity livestream = livestreamRepository.findByIdAndStatus(livestreamId, STATUS_LIVE).orElse(null);
         if (livestream == null || livestream.getBranch() == null) {
             session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Livestream not found or not live"));
-            return;
-        }
-
-        if (!viewerBranchId.equals(livestream.getBranch().getId())) {
-            session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Access denied by branch"));
             return;
         }
 
