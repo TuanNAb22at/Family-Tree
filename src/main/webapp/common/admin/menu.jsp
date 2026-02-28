@@ -29,7 +29,7 @@
 <aside class="app-sidebar">
     <div class="app-brand">
         <div class="brand-icon"><i class="fa fa-leaf"></i></div>
-        <div class="brand-text">Livestream</div>
+        <div class="brand-text">Gia phả online</div>
     </div>
 
     <nav class="app-nav">
