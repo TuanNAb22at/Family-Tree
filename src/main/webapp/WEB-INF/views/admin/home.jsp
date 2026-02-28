@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@include file="/common/taglib.jsp"%>
+<%@ include file="/common/taglib.jsp"%>
 <c:url var="homeUrl" value="/admin/home"/>
 <c:url var="familyTreeUrl" value="/admin/familytree"/>
 <c:url var="mediaUrl" value="/admin/media"/>
@@ -17,24 +17,28 @@
         </div>
 
         <div class="page-content dashboard-home">
-            <div class="row">
-                <div class="col-xs-12 col-sm-7">
-                    <h2 class="home-title">Tổng quan hệ thống gia phả</h2>
-                </div>
-                <div class="col-xs-12 col-sm-5 text-right home-actions">
-                    <a class="btn btn-success" href="${livestreamUrl}">
-                        <i class="fa-solid fa-tower-broadcast"></i> Phát trực tiếp
-                    </a>
-                    <a class="btn btn-primary" href="${familyTreeUrl}">
-                        <i class="fa-solid fa-diagram-project"></i> Cây gia phả
-                    </a>
-                    <a class="btn btn-info" href="${mediaUrl}">
-                        <i class="fa-solid fa-photo-film"></i> Media
-                    </a>
+            <div class="home-hero">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="home-kicker">Bảng điều khiển trung tâm</div>
+                        <h2 class="home-title">Tổng quan hệ thống gia phả</h2>
+                        <p class="home-hero-subtitle">Theo dõi thành viên, nhánh gia đình, media và hoạt động theo thời gian thực.</p>
+                        <div class="home-actions">
+                            <a class="btn btn-success" href="${livestreamUrl}">
+                                <i class="fa-solid fa-tower-broadcast"></i> Phát trực tiếp
+                            </a>
+                            <a class="btn btn-primary" href="${familyTreeUrl}">
+                                <i class="fa-solid fa-diagram-project"></i> Cây gia phả
+                            </a>
+                            <a class="btn btn-info" href="${mediaUrl}">
+                                <i class="fa-solid fa-photo-film"></i> Media
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="row home-stats-row" style="margin-top:14px;">
+            <div class="row home-stats-row">
                 <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="widget-box home-stat-card">
                         <div class="widget-body"><div class="widget-main">
@@ -77,15 +81,15 @@
                 </div>
             </div>
 
-            <div class="row home-panels-row" style="margin-top:14px;">
+            <div class="row home-panels-row">
                 <div class="col-xs-12 col-lg-8">
                     <div class="widget-box home-panel">
                         <div class="widget-header">
-                            <h4 class="widget-title">Thống kê tăng trưởng</h4>
+                            <h4 class="widget-title">Thống kê tăng trưởng theo tháng</h4>
                         </div>
                         <div class="widget-body">
                             <div class="widget-main no-padding">
-                                <table class="table table-bordered table-striped">
+                                <table class="table table-bordered table-striped home-growth-table">
                                     <thead>
                                     <tr>
                                         <th>Tháng</th>
@@ -123,15 +127,17 @@
                                 <ul class="list-unstyled spaced2 home-activity-list">
                                     <c:forEach var="activity" items="${recentActivities}">
                                         <li>
-                                            <strong><c:out value="${activity.actor}"/></strong> - <c:out value="${activity.timeAgo}"/><br/>
-                                            <c:out value="${activity.action}"/>
+                                            <div class="activity-head">
+                                                <strong><c:out value="${activity.actor}"/></strong>
+                                                <span class="activity-time"><c:out value="${activity.timeAgo}"/></span>
+                                            </div>
+                                            <div class="activity-text"><c:out value="${activity.action}"/></div>
                                         </li>
                                     </c:forEach>
                                     <c:if test="${empty recentActivities}">
                                         <li>Chưa có hoạt động gần đây</li>
                                     </c:if>
                                 </ul>
-                                <button class="btn btn-link no-padding-left">Xem toàn bộ hoạt động</button>
                             </div>
                         </div>
                     </div>

@@ -17,6 +17,7 @@ public interface MediaRepository extends JpaRepository<MediaEntity,Long> {
     List<MediaEntity> findAllForAdminView();
 
     Optional<MediaEntity> findFirstByFileUrlContaining(String fileUrlPart);
+    Optional<MediaEntity> findFirstByFileUrlStartingWith(String fileUrlPrefix);
 
     long countByCreatedDateBetween(Date from, Date to);
 }

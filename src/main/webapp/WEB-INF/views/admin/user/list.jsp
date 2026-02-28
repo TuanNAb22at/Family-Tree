@@ -35,11 +35,6 @@
                         <h2 class="user-list-title">Quản lý người dùng</h2>
                         <p class="user-list-subtitle">Quản lý truy cập, vai trò và trạng thái tài khoản.</p>
                     </div>
-                    <div class="col-xs-12 col-sm-5 text-right user-list-actions">
-                        <a href="<c:url value='/admin/user-edit'/>" class="btn btn-success">
-                            <i class="fa fa-user-plus"></i> Mời người dùng
-                        </a>
-                    </div>
                 </div>
 
                 <div class="widget-box user-filter-card">
@@ -93,6 +88,10 @@
 
                         <div class="table-btn-controls user-table-actions">
                             <div class="dt-buttons btn-overlap btn-group">
+                                <a href="<c:url value='/admin/user-edit'/>"
+                                   class="dt-button buttons-html5 btn btn-success btn-bold btn-invite-inline">
+                                    <span><i class="fa fa-user-plus"></i> Mời người dùng</span>
+                                </a>
                                 <button id="btnDelete" type="button" disabled
                                         class="dt-button buttons-html5 btn btn-white btn-primary btn-bold"
                                         data-toggle="tooltip"

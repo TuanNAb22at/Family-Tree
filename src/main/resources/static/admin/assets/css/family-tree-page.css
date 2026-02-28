@@ -481,7 +481,7 @@
         to { transform: translateY(0); opacity: 1; }
     }
 
-    @media (max-width: 767px) {
+@media (max-width: 767px) {
         #ftApp .modal-dialog {
             margin: 8px auto;
             min-height: calc(100% - 16px);
@@ -497,6 +497,7 @@
         .btn-save-strong {
             min-width: 150px;
             min-height: 42px;
-        }
     }
+}
+
 

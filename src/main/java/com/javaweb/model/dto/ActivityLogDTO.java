@@ -11,6 +11,8 @@ public class ActivityLogDTO {
     private String userName;
     private String fullName;
     private String action;
+    private String actionLabel;
+    private String riskLevel;
     private String description;
     private Date timestamp;
 }

@@ -1,6 +1,7 @@
 package com.javaweb.controller.web;
 import com.javaweb.exception.MyException;
 import com.javaweb.model.request.BuildingSearchRequest;
+import com.javaweb.service.IActivityLogService;
 import com.javaweb.service.IUserService;
 import com.javaweb.utils.MessageUtils;
 import org.apache.commons.lang.StringUtils;
@@ -30,6 +31,9 @@ public class HomeController {
 
     @Autowired
     private MessageUtils messageUtils;
+
+    @Autowired
+    private IActivityLogService activityLogService;
 
     @RequestMapping(value = "/trang-chu", method = RequestMethod.GET)
     public ModelAndView homePage(BuildingSearchRequest buildingSearchRequest, HttpServletRequest request) {
@@ -104,7 +108,11 @@ public class HomeController {
     }
 
     @RequestMapping(value = "/access-denied", method = RequestMethod.GET)
-    public ModelAndView accessDenied() {
+    public ModelAndView accessDenied(HttpServletRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            activityLogService.logAccessDenied(auth.getName(), request, request.getRequestURI());
+        }
         return new ModelAndView("redirect:/login?accessDenied");
     }
 

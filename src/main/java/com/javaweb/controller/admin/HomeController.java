@@ -97,10 +97,10 @@ public class HomeController {
         List<HomeActivity> result = new ArrayList<>();
         List<PersonEntity> recentPersons = personRepository.findRecentCreated(PageRequest.of(0, limit));
         for (PersonEntity person : recentPersons) {
-            String actor = "Gia pha";
-            String branchName = person.getBranch() != null ? person.getBranch().getName() : "Chua co chi";
-            String personName = StringUtils.defaultIfBlank(person.getFullName(), "Thanh vien moi");
-            String action = "Them moi thanh vien: " + personName + " (Chi: " + branchName + ")";
+            String actor = "Gia phả";
+            String branchName = person.getBranch() != null ? person.getBranch().getName() : "Chưa có chi";
+            String personName = StringUtils.defaultIfBlank(person.getFullName(), "Thành viên mới");
+            String action = "Thêm mới thành viên: " + personName + " (Chi: " + branchName + ")";
             String timeAgo = toRelativeTime(person.getCreatedDate());
             result.add(new HomeActivity(actor, timeAgo, action));
         }
@@ -109,16 +109,16 @@ public class HomeController {
 
     private String toRelativeTime(Date time) {
         if (time == null) {
-            return "vua xong";
+            return "vừa xong";
         }
         long diffMillis = Math.max(0L, System.currentTimeMillis() - time.getTime());
         long minutes = diffMillis / (60 * 1000);
-        if (minutes < 1) return "vua xong";
-        if (minutes < 60) return minutes + " phut truoc";
+        if (minutes < 1) return "vừa xong";
+        if (minutes < 60) return minutes + " phút trước";
         long hours = minutes / 60;
-        if (hours < 24) return hours + " gio truoc";
+        if (hours < 24) return hours + " giờ trước";
         long days = hours / 24;
-        return days + " ngay truoc";
+        return days + " ngày trước";
     }
 
     private Date atStartOfMonth(LocalDate date) {

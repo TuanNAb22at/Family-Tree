@@ -110,7 +110,10 @@ public class MediaAPI {
 
     @GetMapping("/file/{fileName:.+}")
     public ResponseEntity<?> getMediaFile(@PathVariable("fileName") String fileName) {
-        if (StringUtils.isBlank(fileName) || fileName.contains("..")) {
+        if (StringUtils.isBlank(fileName)
+                || fileName.contains("..")
+                || fileName.contains("/")
+                || fileName.contains("\\")) {
             return ResponseEntity.badRequest().body("Invalid file name");
         }
         try {

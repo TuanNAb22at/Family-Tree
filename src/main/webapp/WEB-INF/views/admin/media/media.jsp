@@ -225,11 +225,6 @@
     </div>
 </div>
 
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     var branchMap = {
         <c:forEach var="entry" items="${branchMap}">
