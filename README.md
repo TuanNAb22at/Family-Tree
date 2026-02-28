@@ -13,7 +13,11 @@
 Hệ thống giúp dòng họ lưu trữ và quản lý thông tin gia phả trên nền tảng online, thay cho cách ghi chép rời rạc bằng giấy hoặc file cá nhân.
 
 ---
+## 🔗 Demo
 
+- **Trang chủ:** http://18.143.147.205:8080/trang-chu
+
+---
 ## 🎯 Điểm nổi bật 
 
 - Thiết kế và triển khai **full-stack backend-driven** với Spring Boot + JSP.
