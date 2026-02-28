@@ -12,7 +12,7 @@
 
 ---
 
-## 🎯 Điểm nổi bật cho nhà tuyển dụng
+## 🎯 Điểm nổi bật 
 
 - Thiết kế và triển khai **full-stack backend-driven** với Spring Boot + JSP.
 - Xây dựng **mô hình dữ liệu gia phả nhiều đời** (cha/mẹ/con, vợ/chồng, chi nhánh).
