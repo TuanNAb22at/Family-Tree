@@ -209,7 +209,7 @@ mvn spring-boot:run
 
 ---
 
-## 📁 Cấu trúc dự án (rút gọn)
+## 📁 Cấu trúc dự án
 
 ```text
 .
@@ -223,13 +223,3 @@ mvn spring-boot:run
 └── pom.xml
 ```
 
----
-
-## ✅ Tóm tắt giá trị kỹ thuật
-
-Dự án thể hiện năng lực triển khai **end-to-end**:
-
-- từ thiết kế nghiệp vụ và dữ liệu,
-- đến phát triển chức năng realtime (livestream),
-- tích hợp bảo mật/giám sát,
-- và đưa sản phẩm lên môi trường production bằng pipeline CI/CD.
