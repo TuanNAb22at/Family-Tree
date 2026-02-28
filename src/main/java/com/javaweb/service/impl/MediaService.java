@@ -124,14 +124,14 @@ public class MediaService implements IMediaService {
     @Transactional(readOnly = true)
     public void validateCurrentUserCanAccessStoredFile(String storedFileName) {
         if (StringUtils.isBlank(storedFileName)) {
-            return;
+            throw new AccessDeniedException("Ban khong co quyen xem media nay");
         }
-        mediaRepository.findFirstByFileUrlContaining(MEDIA_FILE_API_PREFIX + storedFileName)
-                .ifPresent(entity -> {
-                    if (!canCurrentUserAccess(entity)) {
-                        throw new AccessDeniedException("Ban khong co quyen xem media nay");
-                    }
-                });
+        String lookupPrefix = MEDIA_FILE_API_PREFIX + storedFileName + "?";
+        MediaEntity entity = mediaRepository.findFirstByFileUrlStartingWith(lookupPrefix)
+                .orElseThrow(() -> new AccessDeniedException("Ban khong co quyen xem media nay"));
+        if (!canCurrentUserAccess(entity)) {
+            throw new AccessDeniedException("Ban khong co quyen xem media nay");
+        }
     }
 
     @Override

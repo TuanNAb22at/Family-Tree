@@ -13,6 +13,7 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLogEntity, 
     List<ActivityLogEntity> findByTimestampBetweenOrderByTimestampAsc(Date from, Date to);
     long countByTimestampAfter(Date since);
     long countByActionAndTimestampAfter(String action, Date since);
+    long countByActionInAndTimestampAfter(List<String> actions, Date since);
 
     @Query("select a from ActivityLogEntity a join fetch a.user order by a.timestamp desc")
     List<ActivityLogEntity> findRecentWithUser(Pageable pageable);

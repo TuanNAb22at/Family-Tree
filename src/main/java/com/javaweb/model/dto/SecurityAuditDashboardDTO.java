@@ -10,6 +10,9 @@ import java.util.List;
 @Setter
 public class SecurityAuditDashboardDTO {
     private long totalEvents7Days;
+    private long securityEvents7Days;
+    private long dataChangeEvents7Days;
+    private long highRiskEvents7Days;
     private long loginSuccess7Days;
     private long loginFailed7Days;
     private long logout7Days;

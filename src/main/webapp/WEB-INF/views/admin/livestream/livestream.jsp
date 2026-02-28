@@ -1,5 +1,5 @@
-﻿﻿﻿﻿﻿﻿﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@include file="/common/taglib.jsp" %>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@include file="/common/taglib.jsp"%>
 <c:url var="homeUrl" value="/admin/home"/>
 <c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css?v=20260227v3"/>
 <c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227v17"/>
@@ -20,7 +20,7 @@
             <ul class="breadcrumb">
                 <li>
                     <i class="ace-icon fa-solid fa-house-chimney home-icon"></i>
-                    <a href="${homeUrl}">Trang quản trị</a>
+                    <a href="${homeUrl}">Trang chủ</a>
                 </li>
                 <li class="active">Livestream</li>
             </ul>
