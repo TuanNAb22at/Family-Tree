@@ -156,7 +156,7 @@ Khi push lên `main`, workflow tự động:
 2. Push Docker Hub
 3. SSH vào EC2 để pull image mới và chạy container
 
-> Ghi chú kỹ thuật: workflow hiện dùng tên image/container `mini-football-app`; nên đổi tên theo dự án gia phả để đồng nhất branding.
+
 
 ### Livestream Internet
 
