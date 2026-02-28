@@ -1,4 +1,4 @@
-﻿CREATE DATABASE IF NOT EXISTS family_tree_db;
+CREATE DATABASE IF NOT EXISTS family_tree_db;
 USE family_tree_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
