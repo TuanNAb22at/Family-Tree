@@ -53,6 +53,36 @@
     });
     return normalized.length ? normalized : DEFAULT_ICE_SERVERS;
   }
+
+  function getMediaErrorMessage(err, actionLabel) {
+    if (!err) return actionLabel + " thất bại.";
+    var name = err.name || "";
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      return "Trình duyệt chưa cấp quyền " + actionLabel + ".";
+    }
+    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      return "Không tìm thấy thiết bị cho " + actionLabel + ".";
+    }
+    if (name === "NotReadableError" || name === "TrackStartError") {
+      return "Thiết bị đang bận hoặc bị chặn khi " + actionLabel + ".";
+    }
+    if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") {
+      return "Thiết bị không đáp ứng cấu hình khi " + actionLabel + ".";
+    }
+    if (name === "SecurityError") {
+      return "Trang web cần HTTPS để " + actionLabel + ".";
+    }
+    return actionLabel + " thất bại: " + (err.message || name || "Unknown error");
+  }
+
+  function hasTurnServer(iceServers) {
+    if (!Array.isArray(iceServers)) return false;
+    return iceServers.some(function (s) {
+      if (!s || !s.urls) return false;
+      var urls = Array.isArray(s.urls) ? s.urls : [s.urls];
+      return urls.some(function (u) { return String(u || "").indexOf("turn:") === 0 || String(u || "").indexOf("turns:") === 0; });
+    });
+  }
   function escapeHtml(str) {
     return String(str || "")
       .replace(/&/g, "&amp;")
@@ -770,6 +800,20 @@
     var pc = new RTCPeerConnection(RTC_CONFIG);
     PEERS[peerId] = pc;
     pc.onicecandidate = function (event) { if (event.candidate) sendSignal("ice", peerId, { candidate: event.candidate }); };
+    pc.oniceconnectionstatechange = function () {
+      var st = pc.iceConnectionState;
+      if (st === "failed") {
+        setStatusText("Kết nối media thất bại. Kiểm tra TURN/Firewall (3478, 5349, UDP relay).", true);
+      } else if (st === "disconnected") {
+        setStatusText("Kết nối media bị gián đoạn.", true);
+      }
+    };
+    pc.onconnectionstatechange = function () {
+      var st = pc.connectionState;
+      if (st === "failed") {
+        setStatusText("Peer connection failed. Kiểm tra cấu hình TURN và mạng.", true);
+      }
+    };
     pc.ontrack = function (event) {
       if (CAN_HOST) return;
       var remoteVideo = $("remoteVideo");
@@ -852,7 +896,7 @@
         setStatusText("Đã vào phòng. " + (CAN_HOST ? "Chế độ chủ phòng." : "Chế độ người xem."), false);
         if (CAN_HOST && AUTO_START_SCREEN_ON_WELCOME) {
           AUTO_START_SCREEN_ON_WELCOME = false;
-          try { await toggleScreenShare(); } catch (e) { setStatusText("Bạn chưa chọn màn hình để chia sẻ.", true); }
+          try { await toggleScreenShare(); } catch (e) { setStatusText(getMediaErrorMessage(e, "chia sẻ màn hình"), true); }
         }
         return;
       }
@@ -1011,6 +1055,10 @@
     updateRoleBasedUI();
     initQuickEmojiButtons();
 
+    if (!hasTurnServer(RTC_CONFIG.iceServers)) {
+      setStatusText("Cảnh báo: chưa có TURN server, livestream khác mạng có thể lỗi.", true);
+    }
+
     showEntryScreen();
     $("btnEntryCreate").addEventListener("click", openCreateSetup);
     $("btnEntryJoin").addEventListener("click", openJoinSetup);
@@ -1129,7 +1177,7 @@
         syncHostMainAndOverlayVideo();
         applyLocalTrackStates();
         updateMediaButtons();
-      } catch (e) { setStatusText("Không truy cập được camera.", true); }
+      } catch (e) { setStatusText(getMediaErrorMessage(e, "bật camera"), true); }
     });
 
     $("btnToggleMic").addEventListener("click", async function () {
@@ -1141,11 +1189,11 @@
         syncOutgoingAudioTrack();
         if (MIC_ENABLED) await renegotiateAllPeers();
         updateMediaButtons();
-      } catch (e) { setStatusText("Không truy cập được mic.", true); }
+      } catch (e) { setStatusText(getMediaErrorMessage(e, "bật micro"), true); }
     });
 
     $("btnShareScreen").addEventListener("click", async function () {
-      try { await toggleScreenShare(); } catch (e) { setStatusText("Chia sẻ màn hình thất bại.", true); }
+      try { await toggleScreenShare(); } catch (e) { setStatusText(getMediaErrorMessage(e, "chia sẻ màn hình"), true); }
     });
     $("btnFullscreen").addEventListener("click", async function () {
       var player = document.querySelector(".ls-player");

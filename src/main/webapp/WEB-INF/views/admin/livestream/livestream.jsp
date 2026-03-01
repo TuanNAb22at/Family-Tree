@@ -2,7 +2,7 @@
 <%@include file="/common/taglib.jsp"%>
 <c:url var="homeUrl" value="/admin/home"/>
 <c:url var="livestreamCssUrl" value="/admin/livestream/livestream.css?v=20260227v3"/>
-<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227v17"/>
+<c:url var="livestreamJsUrl" value="/admin/livestream/livestream.js?v=20260227v18"/>
 <!DOCTYPE html>
 <html>
 <head>
