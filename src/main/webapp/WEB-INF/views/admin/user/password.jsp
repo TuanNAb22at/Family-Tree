@@ -91,7 +91,7 @@
                     oldPassword: "required",
                     newPassword: {
                         required: true,
-                        minlength: 6
+                        minlength: 8
                     },
                     confirmPassword: "required"
                 },
@@ -99,7 +99,7 @@
                     oldPassword: "Kh&#244;ng b&#7887; tr&#7889;ng",
                     newPassword: {
                         required: "Kh&#244;ng b&#7887; tr&#7889;ng",
-                        minlength: "M&#7853;t kh&#7849;u t&#7889;i thi&#7875;u 6 k&#253; t&#7921;"
+                        minlength: "M&#7853;t kh&#7849;u t&#7889;i thi&#7875;u 8 k&#253; t&#7921;"
                     },
                     confirmPassword: "Kh&#244;ng b&#7887; tr&#7889;ng"
                 },
@@ -125,10 +125,33 @@
                         window.location.href = "<c:url value='/admin/profile-password?message=update_success'/>";
                     } else if (res == 'change_password_fail') {
                         window.location.href = "<c:url value='/admin/profile-password?message=change_password_fail'/>";
+                    } else if (res == 'change_password_weak') {
+                        window.location.href = "<c:url value='/admin/profile-password?message=change_password_weak'/>";
+                    } else if (res == 'change_password_same_old') {
+                        window.location.href = "<c:url value='/admin/profile-password?message=change_password_same_old'/>";
+                    } else if (res == 'access_denied') {
+                        window.location.href = "<c:url value='/admin/profile-password?message=access_denied'/>";
                     }
                 },
                 error: function (res) {
-                    console.log(res);
+                    if (res && res.responseText) {
+                        if (res.responseText === 'change_password_weak') {
+                            window.location.href = "<c:url value='/admin/profile-password?message=change_password_weak'/>";
+                            return;
+                        }
+                        if (res.responseText === 'change_password_same_old') {
+                            window.location.href = "<c:url value='/admin/profile-password?message=change_password_same_old'/>";
+                            return;
+                        }
+                        if (res.responseText === 'change_password_fail') {
+                            window.location.href = "<c:url value='/admin/profile-password?message=change_password_fail'/>";
+                            return;
+                        }
+                        if (res.responseText === 'access_denied') {
+                            window.location.href = "<c:url value='/admin/profile-password?message=access_denied'/>";
+                            return;
+                        }
+                    }
                     window.location.href = "<c:url value='/admin/profile-password?message=error_system'/>";
                 }
             });

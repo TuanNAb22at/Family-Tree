@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="/common/taglib.jsp"%>
 <%@ page import="com.javaweb.security.utils.SecurityUtils" %>
+<%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
 <div id="navbar" class="navbar navbar-default ace-save-state" style="background-color:#0057a0">
@@ -9,7 +10,7 @@
             <a href="#" class="navbar-brand">
                 <i class="fa-solid fa-futbol"></i>
                 <small>
-                    Cây gia phả
+                    C&#226;y gia ph&#7843;
                 </small>
             </a>
         </div>
@@ -17,7 +18,7 @@
             <ul class="nav ace-nav">
                 <li class="light-10">
                     <a data-toggle="dropdown" href="#" class="dropdown-toggle">
-                        Xin chào, <%=SecurityUtils.getPrincipal().getFullName()%>
+                        Xin ch&#224;o, <%=StringEscapeUtils.escapeHtml(SecurityUtils.getPrincipal().getFullName())%>
                         <i class="ace-icon fa fa-caret-down"></i>
                     </a>
 
@@ -26,21 +27,21 @@
                             <a href="/admin/profile-<%=SecurityUtils.getPrincipal().getUsername()%>">
                                 <i class="ace-icon fa fa-user"></i>
                                 <%--<spring:message code="label.account.information"/>--%>
-                                Thông tin tài khoản
+                                Th&#244;ng tin t&#224;i kho&#7843;n
                             </a>
                         </li>
                         <li>
                             <a href="<c:url value="/admin/profile-password"/>">
                                 <i class="ace-icon fa fa-key"></i>
                                 <%--<spring:message code="label.password.change"/>--%>
-                                Đổi mật khẩu
+                                &#272;&#7893;i m&#7853;t kh&#7849;u
                             </a>
                         </li>
                         <li class="divider"></li>
                         <li>
                             <a href="<c:url value='/logout'/>">
                                 <i class="ace-icon fa fa-power-off"></i>
-                                Thoát
+                                Tho&#225;t
                             </a>
                         </li>
                     </ul>

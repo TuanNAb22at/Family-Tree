@@ -141,7 +141,8 @@
                 window.location.href = "<c:url value='/admin/user-edit-"+res.id+"?message=insert_success'/>";
             },
             error: function (res) {
-                window.location.href = "<c:url value='/admin/user-edit-"+res.id+"?message=error_system'/>";
+                var message = (res && res.responseText) ? res.responseText : 'error_system';
+                window.location.href = "<c:url value='/admin/user-edit?message='/>" + message;
             }
         });
     }
@@ -157,7 +158,8 @@
                 window.location.href = "<c:url value='/admin/user-edit-"+res.id+"?message=update_success'/>";
             },
             error: function (res) {
-                window.location.href = "<c:url value='/admin/user-edit-"+id+"?message=error_system'/>";
+                var message = (res && res.responseText) ? res.responseText : 'error_system';
+                window.location.href = "<c:url value='/admin/user-edit-"+id+"?message='/>" + message;
             }
         });
     }
@@ -172,7 +174,8 @@
                 window.location.href = "<c:url value='/admin/user-edit-"+res.id+"?message=reset_password_success'/>";
             },
             error: function (res) {
-                window.location.href = "<c:url value='/admin/user-edit-"+id+"?message=error_system'/>";
+                var message = (res && res.responseText) ? res.responseText : 'error_system';
+                window.location.href = "<c:url value='/admin/user-edit-"+id+"?message='/>" + message;
             }
         });
     }
