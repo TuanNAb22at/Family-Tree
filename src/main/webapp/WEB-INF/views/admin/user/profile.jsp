@@ -73,8 +73,13 @@
     <script>
         $("#btnUpdateUser").click(function (event) {
             event.preventDefault();
+            var normalizedFullName = $.trim($('#fullName').val() || '');
+            if (!normalizedFullName) {
+                window.location.href = "<c:url value='/admin/profile/"+$('#userName').val()+"?message=full_name_invalid'/>";
+                return;
+            }
             var dataArray = {};
-            dataArray["fullName"] = $('#fullName').val();
+            dataArray["fullName"] = normalizedFullName;
             if ($('#userId').val() != "") {
                 updateInfo(dataArray, $('#userName').val());
             }
@@ -82,7 +87,7 @@
 
         function updateInfo(data, username) {
             $.ajax({
-                url: '${formUrl}/profile/' + username,
+                url: '${formUrl}/profile/' + encodeURIComponent(username),
                 type: 'PUT',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -91,7 +96,14 @@
                     window.location.href = "<c:url value='/admin/profile/"+res.userName+"?message=update_success'/>";
                 },
                 error: function (res) {
-                    console.log(res);
+                    if (res && res.responseText) {
+                        if (res.responseText === 'full_name_invalid'
+                            || res.responseText === 'access_denied'
+                            || res.responseText === 'user_not_found') {
+                            window.location.href = "<c:url value='/admin/profile/"+username+"?message='/>" + res.responseText;
+                            return;
+                        }
+                    }
                     window.location.href = "<c:url value='/admin/profile/"+username+"?message=error_system'/>";
                 }
             });

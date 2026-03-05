@@ -20,5 +20,6 @@
     <decorator name="login" page="login.jsp">
         <pattern>/login</pattern>
         <pattern>/dang-ky</pattern>
+        <pattern>/register</pattern>
     </decorator>
 </decorators>

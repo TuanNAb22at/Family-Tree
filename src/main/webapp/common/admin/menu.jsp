@@ -2,12 +2,14 @@
 <%@ include file="/common/taglib.jsp" %>
 <%@ page import="com.javaweb.security.utils.SecurityUtils" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
 <%
     String uri = request.getRequestURI();
     boolean homeActive = uri.contains("/admin/home");
     boolean familyActive = uri.contains("/admin/familytree");
     boolean mediaActive = uri.contains("/admin/media");
     boolean liveActive = uri.contains("/admin/livestream");
+    boolean guideActive = uri.contains("/admin/guide");
     boolean userActive = uri.contains("/admin/user");
     boolean auditActive = uri.contains("/admin/security-audit");
     String roleLabel = "Người dùng";
@@ -29,7 +31,7 @@
 <aside class="app-sidebar">
     <div class="app-brand">
         <div class="brand-icon"><i class="fa fa-leaf"></i></div>
-        <div class="brand-text">Gia phả online</div>
+        <div class="brand-text">Gia phả Họ Trần Đức</div>
     </div>
 
     <nav class="app-nav">
@@ -49,6 +51,12 @@
             <i class="fa fa-video-camera"></i>
             <span>Phát trực tiếp</span>
         </a>
+        <security:authorize access="hasAnyRole('MANAGER','EDITOR')">
+            <a class="app-nav-item <%= guideActive ? "active" : "" %>" href="/admin/guide">
+                <i class="fa fa-book"></i>
+                <span>Hướng dẫn sử dụng</span>
+            </a>
+        </security:authorize>
 
         <security:authorize access="hasRole('MANAGER')">
             <a class="app-nav-item <%= userActive ? "active" : "" %>" href="/admin/user-list">
@@ -69,7 +77,7 @@
             <a data-toggle="dropdown" href="#" class="dropdown-toggle app-user-box">
                 <div class="avatar"><i class="fa fa-user-circle"></i></div>
                 <div class="meta">
-                    <div class="name"><%=SecurityUtils.getPrincipal().getFullName()%></div>
+                    <div class="name"><%=StringEscapeUtils.escapeHtml(SecurityUtils.getPrincipal().getFullName())%></div>
                     <div class="role"><%=roleLabel%></div>
                 </div>
             </a>
@@ -93,3 +101,4 @@
         </a>
     </div>
 </aside>
+

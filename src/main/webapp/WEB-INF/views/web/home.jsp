@@ -2,7 +2,7 @@
 <%@include file="/common/taglib.jsp"%>
 <html>
 <head>
-    <title>Gia Phả Online - Lưu giữ di sản dòng họ</title>
+    <title>Gia phả Họ Trần Đức - Nhân Hữu, Nhân Thắng, Bắc Ninh</title>
 </head>
 <body>
 
@@ -12,38 +12,39 @@
     <section class="gpo-hero">
         <div class="container text-center">
             <h1 class="gpo-hero-title">
-                Lưu giữ <span class="gpo-text-primary">Di sản</span> Dòng họ cho Muôn đời
+                Gia phả <span class="gpo-text-primary">Họ Trần Đức</span>
             </h1>
             <p class="gpo-hero-subtitle mx-auto">
-                Nền tảng số hóa gia phả an toàn, chuyên nghiệp &mdash; xây dựng cây phả hệ,
-                chia sẻ kỷ niệm và kết nối cội nguồn.
+                Chi Nhân Hữu - Nhân Thắng, Bắc Ninh.<br/>
+                Nơi con cháu cùng lưu giữ thông tin gia tộc, ghi nhớ công đức tổ tiên
+                và tiếp nối truyền thống cho các thế hệ sau.
             </p>
             <div class="d-flex justify-content-center gap-3 mb-5">
                 <a href="/login" class="btn btn-gpo btn-lg">
-                    Bắt đầu ngay <i class="fa-solid fa-arrow-right ms-2"></i>
+                    Vào trang quản lý <i class="fa-solid fa-arrow-right ms-2"></i>
                 </a>
-                <a href="#features" class="btn btn-outline-gpo btn-lg">
-                    Tìm hiểu thêm
+                <a href="#about" class="btn btn-outline-gpo btn-lg">
+                    Xem giới thiệu
                 </a>
             </div>
 
-            <%-- Thống kê nhanh --%>
+            <%-- Thông tin nhanh về dòng họ --%>
             <div class="row justify-content-center gpo-stats">
                 <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">2,845</div>
-                    <div class="gpo-stat-label">Thành viên</div>
+                    <div class="gpo-stat-number">Họ Trần Đức</div>
+                    <div class="gpo-stat-label">Dòng họ</div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">142</div>
-                    <div class="gpo-stat-label">Chi nhánh</div>
+                    <div class="gpo-stat-number">Nhân Hữu</div>
+                    <div class="gpo-stat-label">Chi họ</div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">8,302</div>
-                    <div class="gpo-stat-label">Tư liệu</div>
+                    <div class="gpo-stat-number">Nhân Thắng</div>
+                    <div class="gpo-stat-label">Khu vực</div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="gpo-stat-number">315</div>
-                    <div class="gpo-stat-label">Đang hoạt động</div>
+                    <div class="gpo-stat-number">Bắc Ninh</div>
+                    <div class="gpo-stat-label">Quê quán</div>
                 </div>
             </div>
         </div>
@@ -55,10 +56,9 @@
     <section id="features" class="gpo-features">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="gpo-section-title">Mọi thứ bạn cần để quản lý Gia phả</h2>
+                <h2 class="gpo-section-title">Các chức năng đang sử dụng</h2>
                 <p class="gpo-section-subtitle mx-auto">
-                    Được xây dựng chuyên biệt cho các dòng họ Việt Nam với đầy đủ công cụ
-                    hiện đại và bảo mật.
+                    Những công cụ phục vụ trực tiếp cho việc cập nhật và lưu trữ gia phả Họ Trần Đức.
                 </p>
             </div>
 
@@ -145,25 +145,25 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-4 mb-lg-0">
-                    <h2 class="gpo-section-title text-start">Vì sao chọn Gia Phả Online?</h2>
+                    <h2 class="gpo-section-title text-start">Đôi lời về Gia phả Họ Trần Đức</h2>
                     <p class="text-muted">
-                        Gia phả là di sản tinh thần quý giá của mỗi dòng họ. Chúng tôi số hóa
-                        truyền thống ấy bằng công nghệ hiện đại, giúp mọi thế hệ dễ dàng
-                        tra cứu, cập nhật và lưu truyền.
+                        Trang web này được lập để con cháu Họ Trần Đức tại Nhân Hữu - Nhân Thắng - Bắc Ninh
+                        cùng nhau lưu giữ gia phả, bổ sung thông tin các đời, bảo tồn ký ức gia đình và
+                        gìn giữ đạo lý uống nước nhớ nguồn.
                     </p>
                     <ul class="gpo-check-list">
-                        <li><i class="fa-solid fa-check"></i> Quản lý hồ sơ nhân khẩu theo chi nhánh</li>
-                        <li><i class="fa-solid fa-check"></i> Ghi nhật ký mọi thay đổi phục vụ truy vết</li>
-                        <li><i class="fa-solid fa-check"></i> Hỗ trợ 4 vai trò: Admin, Editor, Member, Guest</li>
-                        <li><i class="fa-solid fa-check"></i> Tích hợp livestream sự kiện dòng họ</li>
+                        <li><i class="fa-solid fa-check"></i> Ghi chép thông tin tổ tiên và các thế hệ con cháu</li>
+                        <li><i class="fa-solid fa-check"></i> Cập nhật ngày giỗ, sự kiện họ tộc và thông tin quan trọng</li>
+                        <li><i class="fa-solid fa-check"></i> Lưu giữ ảnh, video và tư liệu của gia đình</li>
+                        <li><i class="fa-solid fa-check"></i> Kết nối con cháu Nhân Hữu - Nhân Thắng ở mọi nơi</li>
                     </ul>
                 </div>
                 <div class="col-lg-6">
                     <div class="gpo-about-visual">
                         <div class="gpo-about-card">
                             <i class="fa-solid fa-users fa-3x mb-3 text-success"></i>
-                            <h4>Kết nối Cội nguồn</h4>
-                            <p>Gắn kết các thành viên trong gia tộc dù ở bất kỳ đâu.</p>
+                            <h4>Uống nước nhớ nguồn</h4>
+                            <p>Cùng nhau gìn giữ gia phả để truyền lại giá trị dòng họ cho thế hệ mai sau.</p>
                         </div>
                     </div>
                 </div>
@@ -176,13 +176,13 @@
     <!-- ============================================ -->
     <section id="contact" class="gpo-cta">
         <div class="container text-center">
-            <h2 class="gpo-section-title text-white">Sẵn sàng số hóa Gia phả?</h2>
+            <h2 class="gpo-section-title text-white">Cùng xây dựng Gia phả Họ Trần Đức</h2>
             <p class="text-white-50 mx-auto mb-4" style="max-width: 600px;">
-                Bắt đầu xây dựng cây gia phả số cho dòng họ bạn ngay hôm nay.
-                Miễn phí và dễ sử dụng.
+                Mời các thành viên trong họ cùng đăng nhập để bổ sung thông tin chính xác,
+                đầy đủ và thống nhất cho gia phả chung.
             </p>
             <a href="/login" class="btn btn-light btn-lg">
-                Đăng nhập để bắt đầu <i class="fa-solid fa-arrow-right ms-2"></i>
+                Đăng nhập để cập nhật <i class="fa-solid fa-arrow-right ms-2"></i>
             </a>
         </div>
     </section>

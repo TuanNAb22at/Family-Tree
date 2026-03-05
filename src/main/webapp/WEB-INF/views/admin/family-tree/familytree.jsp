@@ -436,9 +436,9 @@
             BRANCH_CACHE = Array.isArray(branches) ? branches : [];
 
             branchMenu.innerHTML = BRANCH_CACHE.map(function (branch) {
-                const id = String(branch.id);
+                const id = Number(branch.id);
                 const name = branch.name || ('Chi ' + id);
-                return '<li><button type="button" class="dropdown-item" data-branch-id="' + id + '">' + name + '</button></li>';
+                return '<li><button type="button" class="dropdown-item" data-branch-id="' + id + '">' + escapeHtml(name) + '</button></li>';
             }).join('');
 
             const targetBranchId = preferredBranchId != null ? Number(preferredBranchId) : Number(BRANCH_ID);
@@ -664,7 +664,7 @@
             const currentValue = selectEl.value;
             const options = filtered.map(function (item) {
                 const label = (item.fullName || 'Chưa có tên');
-                return '<option value="' + item.id + '">' + label + '</option>';
+                return '<option value="' + Number(item.id) + '">' + escapeHtml(label) + '</option>';
             }).join('');
             selectEl.innerHTML = '<option value="">-- Chọn thành viên --</option>' + options
                 + (filtered.length === 0 ? '<option value="" disabled>Không có kết quả phù hợp</option>' : '');
@@ -1003,7 +1003,7 @@
                 fullName,
                 dob,          // LocalDate nhận chuỗi yyyy-MM-dd OK
                 dod,
-                generation: generation ? parseInt(generation, 10) : null,
+                generation: generation ? parseInt(generation, 10) : 1,
                 gender,
                 avatar,
                 hometown: document.getElementById('mHometown').value.trim() || null,
@@ -1029,6 +1029,16 @@
             if (sourceMode === 'existing') {
                 payload.existingPersonId = Number(selectedExistingId);
                 payload.fullName = "existing-person";
+            }
+            const generationError = validateGeneration(payload.generation);
+            if (generationError) {
+                showToast(generationError, 'error');
+                return;
+            }
+            const dateError = validateLifeDates(payload.dob, payload.dod);
+            if (dateError) {
+                showToast(dateError, 'error');
+                return;
             }
 
             try {
@@ -1250,6 +1260,20 @@
                 payload.existingPersonId = Number(selectedExistingId);
                 payload.fullName = 'existing-person';
             }
+            const generationError = validateGeneration(payload.generation);
+            if (generationError) {
+                showToast(generationError, 'error');
+                return;
+            }
+            const dateError = validateLifeDates(payload.dob, payload.dod);
+            if (dateError) {
+                showToast(dateError, 'error');
+                return;
+            }
+            if (mode === 'add-spouse' && payload.gender && payload.gender.toLowerCase() !== 'female') {
+                showToast('Chi duoc phep them vo co gioi tinh nu', 'error');
+                return;
+            }
 
             if (mode === 'add-spouse') {
                 try {
@@ -1277,6 +1301,10 @@
             }
 
             if (mode === 'add-child') {
+                if (!canAddChildInBranch(actionState.person?.branchName)) {
+                    showToast('Chi duoc phep them con trong chi 1 hoac chi 2', 'error');
+                    return;
+                }
                 try {
                     const res = await fetch('/api/person/' + personId + '/child', {
                         method: 'POST',
@@ -1356,6 +1384,46 @@
             return text ? escapeHtml(text) : '--';
         }
 
+        function canAddChildInBranch(branchName) {
+            const normalized = String(branchName || '').trim();
+            return normalized === '1' || normalized === '2';
+        }
+
+        function sanitizeAvatarUrl(url, fallbackName) {
+            const fallback = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fallbackName || 'Unknown') + '&background=e5e7eb&color=111827';
+            const value = String(url || '').trim();
+            if (!value) return fallback;
+            const lower = value.toLowerCase();
+            if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/')) return value;
+            if (lower.startsWith('data:image/')) return value;
+            return fallback;
+        }
+
+        function validateLifeDates(dob, dod) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const parseDate = function (isoText) {
+                if (!isoText) return null;
+                const parsed = new Date(isoText + 'T00:00:00');
+                return Number.isNaN(parsed.getTime()) ? null : parsed;
+            };
+            const dobDate = parseDate(dob);
+            const dodDate = parseDate(dod);
+            if (dob && !dobDate) return 'Ngay sinh khong hop le';
+            if (dod && !dodDate) return 'Ngay mat khong hop le';
+            if (dobDate && dobDate > today) return 'Ngay sinh khong duoc lon hon ngay hien tai';
+            if (dodDate && dodDate > today) return 'Ngay mat khong duoc lon hon ngay hien tai';
+            if (dobDate && dodDate && dodDate < dobDate) return 'Ngay mat khong duoc nho hon ngay sinh';
+            return '';
+        }
+
+        function validateGeneration(generation) {
+            if (generation == null) return '';
+            if (Number.isNaN(generation)) return 'Doi khong hop le';
+            if (generation < 1 || generation > 50) return 'Doi phai trong khoang 1-50';
+            return '';
+        }
+
         async function loadPersonDetailById(personId) {
             const res = await fetch('/api/person/' + encodeURIComponent(personId));
             if (!res.ok) {
@@ -1400,10 +1468,13 @@
             }
 
             const canAddSpouse = String(person.gender || '').toLowerCase() === 'male' && !person.spouseId;
+            const canAddChild = canAddChildInBranch(person.branchName);
             actions.innerHTML = ''
                 + '<button type="button" class="btn btn-link text-secondary" data-close="detailMemberModal">Đóng</button>'
                 + '<button type="button" class="btn btn-outline-secondary" id="detailEditMemberBtn"><i class="bi bi-pencil"></i> Sửa thông tin</button>'
-                + '<button type="button" class="btn btn-outline-secondary" id="detailAddChildBtn"><i class="bi bi-person-plus"></i> Thêm con</button>'
+                + (canAddChild
+                    ? '<button type="button" class="btn btn-outline-secondary" id="detailAddChildBtn"><i class="bi bi-person-plus"></i> Thêm con</button>'
+                    : '')
                 + (canAddSpouse
                     ? '<button type="button" class="btn btn-outline-secondary" id="detailAddSpouseBtn"><i class="bi bi-heart"></i> Thêm vợ</button>'
                     : '')
@@ -1413,10 +1484,12 @@
                 window.ftUi.closeModal('detailMemberModal');
                 openActionMemberModal('edit-member', person);
             });
-            document.getElementById('detailAddChildBtn')?.addEventListener('click', function () {
-                window.ftUi.closeModal('detailMemberModal');
-                openActionMemberModal('add-child', person);
-            });
+            if (canAddChild) {
+                document.getElementById('detailAddChildBtn')?.addEventListener('click', function () {
+                    window.ftUi.closeModal('detailMemberModal');
+                    openActionMemberModal('add-child', person);
+                });
+            }
             document.getElementById('detailAddSpouseBtn')?.addEventListener('click', function () {
                 window.ftUi.closeModal('detailMemberModal');
                 openActionMemberModal('add-spouse', person);
@@ -1468,16 +1541,22 @@
         function buildPersonCard(person, options) {
             const opts = options || {};
             const isSpouse = !!opts.isSpouse;
-            const gender = (person.gender || 'other').toLowerCase();
+            const personIdRaw = Number(person.id);
+            const personId = Number.isFinite(personIdRaw) ? personIdRaw : 0;
+            const rawGender = String(person.gender || 'other').toLowerCase();
+            const gender = (rawGender === 'male' || rawGender === 'female' || rawGender === 'other') ? rawGender : 'other';
             const genderClass = gender === 'male' ? 'bg-male' : (gender === 'female' ? 'bg-female' : 'bg-other');
             const genderSymbol = gender === 'male' ? '\u2642' : (gender === 'female' ? '\u2640' : '\u26A5');
             const ringClass = gender === 'male' ? 'ring-male' : (gender === 'female' ? 'ring-female' : 'ring-other');
-            const generation = person.generation || 1;
+            const generationParsed = Number(person.generation);
+            const generation = Number.isFinite(generationParsed) && generationParsed > 0 ? generationParsed : 1;
             const branchName = person.branchName || 'Chưa có chi';
             const fullName = person.fullName || 'Chưa có tên';
-            const avatar = person.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=e5e7eb&color=111827');
-            const dobText = formatDate(person.dob);
-            const dodText = formatDate(person.dod);
+            const avatar = sanitizeAvatarUrl(person.avatar, fullName);
+            const safeFullName = escapeHtml(fullName);
+            const safeBranchName = escapeHtml(branchName);
+            const dobText = escapeHtml(formatDate(person.dob));
+            const dodText = escapeHtml(formatDate(person.dod));
             const encodedName = encodeURIComponent(fullName);
             const encodedAvatar = encodeURIComponent(avatar);
             const encodedDob = encodeURIComponent(person.dob || '');
@@ -1492,19 +1571,19 @@
                 if (gender === 'male' && !hasSpouse) {
                     menuItems = '<button type="button" class="btn-amber" data-action="add-spouse"><i class="bi bi-heart"></i> Thêm vợ</button>' + menuItems;
                 }
-                if (gender === 'male') {
+                if (gender === 'male' && canAddChildInBranch(branchName)) {
                     menuItems = '<button type="button" class="btn-emerald" data-action="add-child"><i class="bi bi-person-plus"></i> Thêm con</button>' + menuItems;
                 }
             }
 
             return '' +
-                '<div class="person-card' + (isSpouse ? ' spouse' : '') + '" data-id="' + person.id + '" data-full-name="' + encodedName + '" data-generation="' + generation + '" data-gender="' + gender + '" data-avatar="' + encodedAvatar + '" data-dob="' + encodedDob + '" data-dod="' + encodedDod + '" data-has-spouse="' + (hasSpouse ? '1' : '0') + '">' +
+                '<div class="person-card' + (isSpouse ? ' spouse' : '') + '" data-id="' + personId + '" data-full-name="' + encodedName + '" data-generation="' + generation + '" data-gender="' + gender + '" data-avatar="' + encodedAvatar + '" data-dob="' + encodedDob + '" data-dod="' + encodedDod + '" data-has-spouse="' + (hasSpouse ? '1' : '0') + '">' +
                     '<div class="badge-gender ' + genderClass + '">' + genderSymbol + '</div>' +
                     '<div class="d-flex align-items-center gap-2">' +
-                        '<img class="avatar ' + ringClass + '" src="' + avatar + '" alt="' + fullName + '" onerror="this.src=\'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=e5e7eb&color=111827\'" />' +
+                        '<img class="avatar ' + ringClass + '" src="' + escapeHtml(avatar) + '" alt="' + safeFullName + '" onerror="this.src=\'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=e5e7eb&color=111827\'" />' +
                         '<div>' +
-                            '<p class="person-name">' + fullName + '</p>' +
-                            '<p class="person-meta">Chi: ' + branchName + '</p>' +
+                            '<p class="person-name">' + safeFullName + '</p>' +
+                            '<p class="person-meta">Chi: ' + safeBranchName + '</p>' +
                             '<p class="person-meta">Sinh: ' + (dobText || '--') + '</p>' +
                             (dodText ? '<p class="person-meta">Mất: ' + dodText + '</p>' : '') +
                         '</div>' +
