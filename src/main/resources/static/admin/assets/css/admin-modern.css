@@ -1,0 +1,374 @@
+html,
+body.admin-modern {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.admin-modern {
+    background: #ecf0f5;
+}
+
+body.admin-modern .main-container {
+    padding-top: 0 !important;
+}
+
+body.admin-modern #navbar,
+body.admin-modern .navbar {
+    display: none !important;
+}
+
+.app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    background-image: url('https://cp.giaphadaiviet.vn/images/bglogin2.png');
+    background-size: cover;
+    background-position: center;
+    border-right: 1px solid rgba(44, 71, 119, 0.2);
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.25s ease, transform 0.25s ease;
+}
+
+.app-sidebar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+}
+
+.app-sidebar > * {
+    position: relative;
+    z-index: 1;
+}
+
+.app-sidebar-overlay {
+    display: none;
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 0 14px;
+    border-bottom: none;
+    box-sizing: border-box;
+}
+
+.app-brand .brand-icon {
+    color: #2c4777;
+    font-size: 18px;
+}
+
+.app-brand .brand-text {
+    color: #2c4777;
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.app-nav {
+    padding: 10px 8px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.app-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2c4777;
+    text-decoration: none !important;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 3px;
+    font-size: 14px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-nav-item i {
+    width: 18px;
+    text-align: center;
+    font-size: 15px;
+}
+
+.app-nav-item:hover {
+    color: #1a2f55;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.app-nav-item.active {
+    background: rgba(0, 0, 0, 0.08);
+    color: #2c4777;
+    border-left: 3px solid #3c8dbc;
+    padding-left: 9px;
+    font-weight: 700;
+}
+
+.app-nav-item .role-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    border: 1px solid rgba(44, 71, 119, 0.3);
+    border-radius: 999px;
+    padding: 1px 6px;
+    color: #274168;
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.app-sidebar-bottom {
+    border-top: 1px solid rgba(44, 71, 119, 0.15);
+    padding: 10px 8px 12px;
+}
+
+.app-user-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.app-user-box.dropdown-toggle {
+    text-decoration: none;
+}
+
+.app-user-box .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(44, 71, 119, 0.2);
+    color: #2c4777;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.app-user-box .meta .name {
+    color: #2c4777;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.app-user-box .meta .role {
+    color: #4f6890;
+    font-size: 12px;
+}
+
+.app-sidebar-bottom .sign-out {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c4777;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.app-sidebar-bottom .sign-out:hover {
+    color: #1a2f55;
+}
+
+.app-topbar {
+    position: fixed;
+    top: 0;
+    left: 250px;
+    right: 0;
+    height: 50px;
+    background: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    z-index: 1030;
+    transition: left 0.25s ease;
+}
+
+.app-topbar-toggle {
+    border: 0;
+    background: #f8f9fa;
+    color: #64748b;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    padding: 0;
+    position: relative;
+    top: -1px;
+}
+
+.app-topbar-toggle:hover {
+    background: #eef2f7;
+    color: #334155;
+}
+
+.app-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.app-topbar-bell {
+    position: relative;
+    color: #64748b;
+    font-size: 18px;
+    text-decoration: none !important;
+}
+
+.app-topbar-bell .dot {
+    position: absolute;
+    top: 1px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #ef4444;
+    border: 1px solid #ffffff;
+}
+
+.app-topbar-user-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b !important;
+    text-decoration: none !important;
+}
+
+.app-topbar-user-link .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+}
+
+.app-topbar-user-link .name {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.admin-modern .main-content {
+    margin-left: 250px;
+    margin-top: 50px;
+    min-height: calc(100vh - 50px);
+    background: #f5f7fb;
+    transition: margin-left 0.25s ease;
+}
+
+body.admin-modern .breadcrumbs {
+    display: none !important;
+}
+
+body.admin-modern .breadcrumbs.has-quick-icons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+body.admin-modern .breadcrumbs.has-quick-icons .breadcrumb {
+    margin: 0;
+}
+
+.crumb-quick-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: 10px;
+}
+
+.crumb-icon-btn {
+    position: relative;
+    color: #94a3b8;
+    font-size: 22px;
+    line-height: 1;
+    text-decoration: none !important;
+}
+
+.crumb-icon-btn:hover {
+    color: #64748b;
+}
+
+.crumb-icon-btn.has-dot::after {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ef4444;
+    right: -2px;
+    top: 1px;
+    border: 2px solid #eef2f7;
+}
+
+body.admin-modern.sidebar-collapsed .app-sidebar {
+    width: 80px;
+}
+
+body.admin-modern.sidebar-collapsed .app-brand .brand-text,
+body.admin-modern.sidebar-collapsed .app-nav-item span,
+body.admin-modern.sidebar-collapsed .app-nav-item .role-badge,
+body.admin-modern.sidebar-collapsed .app-user-box .meta,
+body.admin-modern.sidebar-collapsed .app-sidebar-bottom .sign-out {
+    display: none;
+}
+
+body.admin-modern.sidebar-collapsed .app-nav-item {
+    justify-content: center;
+}
+
+body.admin-modern.sidebar-collapsed .app-topbar {
+    left: 80px;
+}
+
+body.admin-modern.sidebar-collapsed .main-content {
+    margin-left: 80px;
+}
+
+@media (max-width: 991px) {
+    .app-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .app-topbar {
+        left: 0;
+    }
+
+    body.admin-modern .main-content {
+        margin-left: 0;
+    }
+
+    body.admin-modern.sidebar-collapsed .app-topbar {
+        left: 0;
+    }
+
+    body.admin-modern.sidebar-collapsed .main-content {
+        margin-left: 0;
+    }
+
+    body.admin-modern.sidebar-open-mobile .app-sidebar {
+        transform: translateX(0);
+    }
+
+    body.admin-modern.sidebar-open-mobile .app-sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 250px;
+        right: 0;
+        bottom: 0;
+        display: block;
+        background: rgba(15, 23, 42, 0.35);
+    }
+}

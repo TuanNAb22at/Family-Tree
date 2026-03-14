@@ -1,0 +1,9 @@
+.idea/
+target/
+.env
+.env.*
+*.pem
+*.key
+Thumbs.db
+src/main/resources/application-dev.properties
+src/main/resources/application-uat.properties
