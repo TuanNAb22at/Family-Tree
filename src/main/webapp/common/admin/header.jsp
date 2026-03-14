@@ -2,51 +2,45 @@
 <%@include file="/common/taglib.jsp"%>
 <%@ page import="com.javaweb.security.utils.SecurityUtils" %>
 <%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
-<div id="navbar" class="navbar navbar-default ace-save-state" style="background-color:#0057a0">
-    <div class="navbar-container ace-save-state" id="navbar-container">
-        <div class="navbar-header pull-left">
-            <a href="#" class="navbar-brand">
-                <i class="fa-solid fa-futbol"></i>
-                <small>
-                    C&#226;y gia ph&#7843;
-                </small>
+<header class="app-topbar">
+    <button class="app-topbar-toggle" id="appSidebarToggle" type="button" aria-label="Mở menu">
+        <i class="fa fa-bars"></i>
+    </button>
+
+    <div class="app-topbar-right">
+        <a href="#" class="app-topbar-bell" aria-label="Thông báo">
+            <i class="fa fa-bell-o"></i>
+            <span class="dot"></span>
+        </a>
+
+        <div class="dropdown app-topbar-user">
+            <a data-toggle="dropdown" href="#" class="dropdown-toggle app-topbar-user-link">
+                <span class="avatar"><i class="fa fa-user"></i></span>
+                <span class="name"><%=StringEscapeUtils.escapeHtml(SecurityUtils.getPrincipal().getFullName())%></span>
+                <i class="fa fa-caret-down"></i>
             </a>
-        </div>
-        <div class="navbar-buttons navbar-header pull-right" role="navigation">
-            <ul class="nav ace-nav">
-                <li class="light-10">
-                    <a data-toggle="dropdown" href="#" class="dropdown-toggle">
-                        Xin ch&#224;o, <%=StringEscapeUtils.escapeHtml(SecurityUtils.getPrincipal().getFullName())%>
-                        <i class="ace-icon fa fa-caret-down"></i>
+            <ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+                <li>
+                    <a href="/admin/profile-<%=SecurityUtils.getPrincipal().getUsername()%>">
+                        <i class="ace-icon fa fa-user"></i>
+                        Thông tin tài khoản
                     </a>
-
-                    <ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
-                        <li>
-                            <a href="/admin/profile-<%=SecurityUtils.getPrincipal().getUsername()%>">
-                                <i class="ace-icon fa fa-user"></i>
-                                <%--<spring:message code="label.account.information"/>--%>
-                                Th&#244;ng tin t&#224;i kho&#7843;n
-                            </a>
-                        </li>
-                        <li>
-                            <a href="<c:url value="/admin/profile-password"/>">
-                                <i class="ace-icon fa fa-key"></i>
-                                <%--<spring:message code="label.password.change"/>--%>
-                                &#272;&#7893;i m&#7853;t kh&#7849;u
-                            </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a href="<c:url value='/logout'/>">
-                                <i class="ace-icon fa fa-power-off"></i>
-                                Tho&#225;t
-                            </a>
-                        </li>
-                    </ul>
+                </li>
+                <li>
+                    <a href="<c:url value='/admin/profile-password'/>">
+                        <i class="ace-icon fa fa-key"></i>
+                        Đổi mật khẩu
+                    </a>
+                </li>
+                <li class="divider"></li>
+                <li>
+                    <a href="<c:url value='/logout'/>">
+                        <i class="ace-icon fa fa-power-off"></i>
+                        Thoát
+                    </a>
                 </li>
             </ul>
         </div>
     </div>
-</div>
+</header>

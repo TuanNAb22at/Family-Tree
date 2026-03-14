@@ -1,6 +1,7 @@
 package com.javaweb.api.admin;
 
 import com.javaweb.model.dto.MediaDTO;
+import com.javaweb.model.dto.MediaAlbumDTO;
 import com.javaweb.service.IMediaService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +45,41 @@ public class MediaAPI {
                                          @RequestParam(value = "displayNames", required = false) List<String> displayNames,
                                          @RequestParam(value = "visibilityScopes", required = false) List<String> visibilityScopes,
                                          @RequestParam(value = "personId", required = false) Long personId,
+                                         @RequestParam(value = "branchId", required = false) Long branchId,
+                                         @RequestParam(value = "albumId", required = false) Long albumId) {
+        try {
+            List<MediaDTO> uploaded = mediaService.uploadMediaFiles(files, normalizeDisplayNames(displayNames), normalizeScopes(visibilityScopes), personId, branchId, albumId);
+            return ResponseEntity.ok(uploaded);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
+    @GetMapping("/albums")
+    public ResponseEntity<?> getAlbums() {
+        List<MediaAlbumDTO> albums = mediaService.findAllAlbumsForAdminView();
+        return ResponseEntity.ok(albums);
+    }
+
+    @PostMapping("/albums")
+    public ResponseEntity<?> createAlbum(@RequestParam("name") String name,
+                                         @RequestParam(value = "description", required = false) String description,
+                                         @RequestParam(value = "accessScope", required = false) String accessScope,
+                                         @RequestParam(value = "personId", required = false) Long personId,
                                          @RequestParam(value = "branchId", required = false) Long branchId) {
         try {
-            List<MediaDTO> uploaded = mediaService.uploadMediaFiles(files, normalizeDisplayNames(displayNames), normalizeScopes(visibilityScopes), personId, branchId);
-            return ResponseEntity.ok(uploaded);
+            MediaAlbumDTO created = mediaService.createAlbum(name, description, accessScope, personId, branchId);
+            return ResponseEntity.ok(created);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
+    @DeleteMapping("/albums/{id}")
+    public ResponseEntity<?> deleteAlbum(@PathVariable("id") Long id) {
+        try {
+            mediaService.deleteAlbum(id);
+            return ResponseEntity.ok().build();
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }

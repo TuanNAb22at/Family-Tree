@@ -3,6 +3,7 @@ package com.javaweb.model.dto;
 public class MediaDTO extends AbstractDTO<MediaDTO> {
     private String fileUrl;
     private String mediaType;
+    private Long albumId;
     private Long personId;
     private Long branchId;
     private Long uploaderId;
@@ -26,6 +27,14 @@ public class MediaDTO extends AbstractDTO<MediaDTO> {
 
     public void setMediaType(String mediaType) {
         this.mediaType = mediaType;
+    }
+
+    public Long getAlbumId() {
+        return albumId;
+    }
+
+    public void setAlbumId(Long albumId) {
+        this.albumId = albumId;
     }
 
     public Long getPersonId() {

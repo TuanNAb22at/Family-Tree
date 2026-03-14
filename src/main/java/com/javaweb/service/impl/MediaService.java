@@ -1,32 +1,35 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.entity.BranchEntity;
+import com.javaweb.entity.MediaAlbumEntity;
 import com.javaweb.entity.MediaEntity;
 import com.javaweb.entity.PersonEntity;
 import com.javaweb.entity.UserEntity;
+import com.javaweb.model.dto.MediaAlbumDTO;
 import com.javaweb.model.dto.MediaDTO;
 import com.javaweb.repository.BranchRepository;
+import com.javaweb.repository.MediaAlbumRepository;
 import com.javaweb.repository.MediaRepository;
 import com.javaweb.repository.PersonRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.security.utils.SecurityUtils;
 import com.javaweb.service.IMediaService;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -52,6 +55,9 @@ public class MediaService implements IMediaService {
     private MediaRepository mediaRepository;
 
     @Autowired
+    private MediaAlbumRepository mediaAlbumRepository;
+
+    @Autowired
     private BranchRepository branchRepository;
 
     @Autowired
@@ -75,15 +81,72 @@ public class MediaService implements IMediaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<MediaAlbumDTO> findAllAlbumsForAdminView() {
+        boolean privileged = hasMediaAdminPermission();
+        return mediaAlbumRepository.findAllForAdminView()
+                .stream()
+                .filter(album -> privileged || ACCESS_SCOPE_PUBLIC.equals(resolveAlbumAccessScope(album.getAccessScope())))
+                .map(this::toAlbumDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
-    public List<MediaDTO> uploadMediaFiles(List<MultipartFile> files, List<String> displayNames, List<String> visibilityScopes, Long personId, Long branchId) {
+    public MediaAlbumDTO createAlbum(String name, String description, String accessScope, Long personId, Long branchId) {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("Ten album khong duoc de trong");
+        }
+        UserEntity uploader = resolveCurrentUser();
+        PersonEntity person = resolvePerson(personId);
+        BranchEntity branch = resolveBranch(branchId, person);
+
+        MediaAlbumEntity entity = new MediaAlbumEntity();
+        entity.setName(name.trim());
+        entity.setDescription(StringUtils.defaultString(description, "").trim());
+        entity.setCoverUrl(null);
+        entity.setPerson(person);
+        entity.setBranch(branch);
+        entity.setUploader(uploader);
+        entity.setAccessScope(resolveAlbumAccessScope(accessScope));
+        return toAlbumDto(mediaAlbumRepository.save(entity));
+    }
+
+    @Override
+    @Transactional
+    public void deleteAlbum(Long albumId) {
+        MediaAlbumEntity entity = mediaAlbumRepository.findById(albumId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay album id=" + albumId));
+        List<MediaEntity> items = mediaRepository.findByAlbumId(albumId);
+        items.forEach(item -> deletePhysicalFile(item.getFileUrl()));
+        if (!items.isEmpty()) {
+            mediaRepository.deleteAll(items);
+        }
+        mediaAlbumRepository.delete(entity);
+    }
+
+    @Override
+    @Transactional
+    public List<MediaDTO> uploadMediaFiles(List<MultipartFile> files,
+                                           List<String> displayNames,
+                                           List<String> visibilityScopes,
+                                           Long personId,
+                                           Long branchId,
+                                           Long albumId) {
         if (files == null || files.isEmpty()) {
             throw new IllegalArgumentException("Danh sach file upload dang rong");
         }
 
         UserEntity uploader = resolveCurrentUser();
+        MediaAlbumEntity album = resolveAlbum(albumId);
         PersonEntity person = resolvePerson(personId);
+        if (person == null && album != null) {
+            person = album.getPerson();
+        }
         BranchEntity branch = resolveBranch(branchId, person);
+        if (branch == null && album != null) {
+            branch = album.getBranch();
+        }
 
         Path uploadRoot = getUploadRootPath();
         try {
@@ -92,9 +155,19 @@ public class MediaService implements IMediaService {
             throw new IllegalStateException("Khong the tao thu muc upload media", ex);
         }
 
+        MediaAlbumEntity finalAlbum = album;
+        PersonEntity finalPerson = person;
+        BranchEntity finalBranch = branch;
         List<MediaEntity> savedEntities = files.stream()
                 .filter(file -> file != null && !file.isEmpty())
-                .map(file -> storeSingleFile(file, resolveDisplayName(file, files, displayNames), resolveAccessScopeValue(file, files, visibilityScopes), uploadRoot, uploader, person, branch))
+                .map(file -> storeSingleFile(file,
+                        resolveDisplayName(file, files, displayNames),
+                        resolveAccessScopeValue(file, files, visibilityScopes),
+                        uploadRoot,
+                        uploader,
+                        finalPerson,
+                        finalBranch,
+                        finalAlbum))
                 .collect(Collectors.toList());
 
         return savedEntities.stream().map(this::toDto).collect(Collectors.toList());
@@ -180,6 +253,7 @@ public class MediaService implements IMediaService {
         dto.setId(entity.getId());
         dto.setFileUrl(entity.getFileUrl());
         dto.setMediaType(resolveMediaType(entity.getMediaType(), entity.getFileUrl()));
+        dto.setAlbumId(entity.getAlbum() != null ? entity.getAlbum().getId() : null);
         dto.setPersonId(entity.getPerson() != null ? entity.getPerson().getId() : null);
         dto.setBranchId(entity.getBranch() != null ? entity.getBranch().getId() : null);
         dto.setUploaderId(entity.getUploader() != null ? entity.getUploader().getId() : null);
@@ -188,6 +262,20 @@ public class MediaService implements IMediaService {
         dto.setUploadDate(formatDate(entity.getCreatedDate()));
         dto.setDuration(null);
         dto.setAccessScope(resolveAccessScope(entity.getFileUrl()));
+        return dto;
+    }
+
+    private MediaAlbumDTO toAlbumDto(MediaAlbumEntity entity) {
+        MediaAlbumDTO dto = new MediaAlbumDTO();
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setDescription(entity.getDescription());
+        dto.setCoverUrl(entity.getCoverUrl());
+        dto.setPersonId(entity.getPerson() != null ? entity.getPerson().getId() : null);
+        dto.setBranchId(entity.getBranch() != null ? entity.getBranch().getId() : null);
+        dto.setUploaderId(entity.getUploader() != null ? entity.getUploader().getId() : null);
+        dto.setAccessScope(resolveAlbumAccessScope(entity.getAccessScope()));
+        dto.setTotalItems((int) mediaRepository.countByAlbumId(entity.getId()));
         return dto;
     }
 
@@ -271,6 +359,18 @@ public class MediaService implements IMediaService {
         return uploader;
     }
 
+    private MediaAlbumEntity resolveAlbum(Long albumId) {
+        if (albumId == null) {
+            return null;
+        }
+        MediaAlbumEntity album = mediaAlbumRepository.findById(albumId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay album id=" + albumId));
+        if (!hasMediaAdminPermission() && ACCESS_SCOPE_PRIVATE.equals(resolveAlbumAccessScope(album.getAccessScope()))) {
+            throw new AccessDeniedException("Ban khong co quyen upload vao album nay");
+        }
+        return album;
+    }
+
     private PersonEntity resolvePerson(Long personId) {
         if (personId == null) {
             return null;
@@ -297,7 +397,8 @@ public class MediaService implements IMediaService {
                                         Path uploadRoot,
                                         UserEntity uploader,
                                         PersonEntity person,
-                                        BranchEntity branch) {
+                                        BranchEntity branch,
+                                        MediaAlbumEntity album) {
         String originalName = file.getOriginalFilename();
         String extension = "";
         if (StringUtils.isNotBlank(originalName) && originalName.lastIndexOf('.') >= 0) {
@@ -324,9 +425,16 @@ public class MediaService implements IMediaService {
         mediaEntity.setFileUrl(MEDIA_FILE_API_PREFIX + storedFileName + "?name=" + encodeUtf8(displayFileName) + "&scope=" + accessScope);
         mediaEntity.setMediaType(resolveMediaTypeByMime(file.getContentType(), extension));
         mediaEntity.setUploader(uploader);
+        mediaEntity.setAlbum(album);
         mediaEntity.setPerson(person);
         mediaEntity.setBranch(branch);
-        return mediaRepository.save(mediaEntity);
+        MediaEntity saved = mediaRepository.save(mediaEntity);
+
+        if (album != null && StringUtils.isBlank(album.getCoverUrl())) {
+            album.setCoverUrl(saved.getFileUrl());
+            mediaAlbumRepository.save(album);
+        }
+        return saved;
     }
 
     private String resolveMediaTypeByMime(String contentType, String extension) {
@@ -472,6 +580,14 @@ public class MediaService implements IMediaService {
         return ACCESS_SCOPE_PUBLIC;
     }
 
+    private String resolveAlbumAccessScope(String accessScope) {
+        if (StringUtils.isBlank(accessScope)) {
+            return ACCESS_SCOPE_PUBLIC;
+        }
+        String normalized = accessScope.trim().toUpperCase(Locale.ROOT);
+        return ACCESS_SCOPE_PRIVATE.equals(normalized) ? ACCESS_SCOPE_PRIVATE : ACCESS_SCOPE_PUBLIC;
+    }
+
     private boolean hasMediaAdminPermission() {
         List<String> authorities = SecurityUtils.getAuthorities();
         return authorities.contains("ROLE_MANAGER") || authorities.contains("ROLE_EDITOR");
@@ -483,6 +599,9 @@ public class MediaService implements IMediaService {
         }
         if (hasMediaAdminPermission()) {
             return true;
+        }
+        if (entity.getAlbum() != null && !ACCESS_SCOPE_PUBLIC.equals(resolveAlbumAccessScope(entity.getAlbum().getAccessScope()))) {
+            return false;
         }
         return ACCESS_SCOPE_PUBLIC.equals(resolveAccessScope(entity.getFileUrl()));
     }
