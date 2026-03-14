@@ -79,6 +79,35 @@ public class PersonAPI {
         return ResponseEntity.ok(iPersonService.findRootPersonsByBranchId(branchId));
     }
 
+    @GetMapping("/members")
+    public ResponseEntity<List<PersonDTO>> getMembersByFilters(
+            @RequestParam(value = "branchId", defaultValue = "1") Long branchId,
+            @RequestParam(value = "generation", required = false) Integer generation,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "lifeStatus", required = false) String lifeStatus,
+            @RequestParam(value = "birthYearFrom", required = false) Integer birthYearFrom,
+            @RequestParam(value = "birthYearTo", required = false) Integer birthYearTo,
+            @RequestParam(value = "focusPersonId", required = false) Long focusPersonId
+    ) {
+        return ResponseEntity.ok(iPersonService.findMembersByBranchWithFilters(
+                branchId, generation, name, gender, lifeStatus, birthYearFrom, birthYearTo, focusPersonId
+        ));
+    }
+
+    @PostMapping("/marriage/repair")
+    public ResponseEntity<?> repairMarriageLinks(
+            @RequestParam(value = "fromId") Long fromId,
+            @RequestParam(value = "toId") Long toId
+    ) {
+        try {
+            int fixed = iPersonService.repairMarriageLinks(fromId, toId);
+            return ResponseEntity.ok("Da sua " + fixed + " quan he hon nhan");
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
     @PostMapping("/{id}/spouse")
     public ResponseEntity<?> addSpouse(
             @PathVariable("id") Long personId,

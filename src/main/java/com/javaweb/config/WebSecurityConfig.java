@@ -87,6 +87,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(HttpMethod.PUT, "/api/user/change-password/**").authenticated()
                         .antMatchers(HttpMethod.PUT, "/api/user/profile/**").authenticated()
                         .antMatchers(HttpMethod.POST, "/api/media/upload").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.POST, "/api/media/albums").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.DELETE, "/api/media/albums/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.DELETE, "/api/media/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.GET, "/api/media/**").hasAnyRole("MANAGER", "EDITOR", "USER")
                         .antMatchers("/api/livestream/**").authenticated()

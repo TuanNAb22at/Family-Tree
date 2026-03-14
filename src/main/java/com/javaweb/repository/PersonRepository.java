@@ -51,6 +51,18 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
             "order by p.generation asc, p.id asc")
     List<PersonEntity> findAllByBranchIdWithRelations(@Param("branchId") Long branchId);
 
+    @Query("select distinct p from PersonEntity p " +
+            "left join fetch p.branch " +
+            "left join fetch p.spouse s " +
+            "left join fetch s.branch " +
+            "left join fetch p.father f " +
+            "left join fetch f.branch " +
+            "left join fetch p.mother m " +
+            "left join fetch m.branch " +
+            "where p.branch is not null " +
+            "order by p.generation asc, p.id asc")
+    List<PersonEntity> findAllWithRelations();
+
     @Query("select p from PersonEntity p left join fetch p.branch where p.createdDate is not null order by p.createdDate desc, p.id desc")
     List<PersonEntity> findRecentCreated(Pageable pageable);
 
@@ -69,6 +81,8 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
 
     Optional<PersonEntity> findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(Long id);
 
+    List<PersonEntity> findByIdBetweenOrderByIdAsc(Long fromId, Long toId);
+
     long countByBranch_Id(Long branchId);
 
     long countByBranchIsNotNull();
@@ -76,4 +90,7 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
     long countByBranchIsNotNullAndCreatedDateBetween(Date from, Date to);
 
     long countByCreatedDateBetween(Date from, Date to);
+
+    @Query("select coalesce(max(p.generation), 0) from PersonEntity p where p.branch is not null")
+    Integer findMaxGenerationByBranchIsNotNull();
 }

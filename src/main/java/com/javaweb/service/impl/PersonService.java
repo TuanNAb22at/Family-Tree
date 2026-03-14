@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -124,6 +126,86 @@ public class PersonService implements IPersonService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public int repairMarriageLinks(Long fromId, Long toId) {
+        if (fromId == null || toId == null || fromId <= 0 || toId <= 0) {
+            throw new IllegalArgumentException("Khoang id khong hop le");
+        }
+        long minId = Math.min(fromId, toId);
+        long maxId = Math.max(fromId, toId);
+        List<PersonEntity> persons = personRepository.findByIdBetweenOrderByIdAsc(minId, maxId);
+        if (persons.isEmpty()) {
+            return 0;
+        }
+
+        Map<Long, PersonEntity> inRange = persons.stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getId() != null)
+                .collect(Collectors.toMap(
+                        PersonEntity::getId,
+                        p -> p,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+
+        int fixed = 0;
+        for (PersonEntity person : persons) {
+            if (person == null || person.getId() == null) {
+                continue;
+            }
+            PersonEntity spouseRef = person.getSpouse();
+            if (spouseRef == null) {
+                continue;
+            }
+            Long spouseId = spouseRef.getId();
+            if (spouseId == null || Objects.equals(spouseId, person.getId())) {
+                person.setSpouse(null);
+                personRepository.save(person);
+                fixed++;
+                continue;
+            }
+
+            PersonEntity spouse = inRange.get(spouseId);
+            if (spouse == null) {
+                spouse = personRepository.findById(spouseId).orElse(null);
+            }
+            if (spouse == null) {
+                person.setSpouse(null);
+                personRepository.save(person);
+                fixed++;
+                continue;
+            }
+
+            PersonEntity spouseOfSpouse = spouse.getSpouse();
+            if (spouseOfSpouse == null) {
+                spouse.setSpouse(person);
+                personRepository.save(spouse);
+                fixed++;
+                continue;
+            }
+
+            if (!Objects.equals(spouseOfSpouse.getId(), person.getId())) {
+                Long rivalId = spouseOfSpouse.getId();
+                PersonEntity rival = rivalId == null ? null : personRepository.findById(rivalId).orElse(null);
+                boolean rivalMutual = rival != null
+                        && rival.getSpouse() != null
+                        && Objects.equals(rival.getSpouse().getId(), spouse.getId());
+                if (rivalMutual) {
+                    person.setSpouse(null);
+                    personRepository.save(person);
+                    fixed++;
+                } else {
+                    spouse.setSpouse(person);
+                    personRepository.save(spouse);
+                    fixed++;
+                }
+            }
+        }
+
+        return fixed;
     }
 
     @Override
@@ -377,10 +459,12 @@ public class PersonService implements IPersonService {
             return roots.get(0);
         }
 
+        if (branchId == null || branchId <= 0) {
+            return null;
+        }
+
         Optional<PersonEntity> optionalEntity =
-                personRepository.findFirstByBranch_IdAndGenerationOrderByIdAsc(
-                        branchId, 1
-                );
+                personRepository.findFirstByBranch_IdAndGenerationOrderByIdAsc(branchId, 1);
         if (!optionalEntity.isPresent()) {
             optionalEntity = personRepository.findFirstByBranch_IdOrderByGenerationAscIdAsc(branchId);
         }
@@ -393,92 +477,314 @@ public class PersonService implements IPersonService {
     @Override
     @Transactional(readOnly = true)
     public List<PersonDTO> findRootPersonsByBranchId(Long branchId) {
+        if (branchId == null) return new ArrayList<>();
+        return buildTreeRoots(branchId, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PersonDTO> findMembersByBranchWithFilters(Long branchId,
+                                                           Integer generation,
+                                                           String fullName,
+                                                           String gender,
+                                                           String lifeStatus,
+                                                           Integer birthYearFrom,
+                                                           Integer birthYearTo,
+                                                           Long focusPersonId) {
         if (branchId == null) {
             return new ArrayList<>();
         }
-        return buildBranchTreeRoots(branchId);
-    }
-
-    private List<PersonDTO> buildBranchTreeRoots(Long branchId) {
-        List<PersonEntity> members = personRepository.findAllByBranchIdWithRelations(branchId);
-        if (members == null || members.isEmpty()) {
+        List<PersonDTO> roots = buildTreeRoots(branchId, false);
+        if (roots.isEmpty()) {
             return new ArrayList<>();
         }
 
-        Map<Long, PersonEntity> membersById = new LinkedHashMap<>();
-        Map<Long, List<PersonEntity>> childrenByParentId = new LinkedHashMap<>();
-        for (PersonEntity member : members) {
-            if (member == null || member.getId() == null) {
-                continue;
-            }
-            membersById.put(member.getId(), member);
-        }
-        for (PersonEntity member : membersById.values()) {
-            Set<Long> parentIds = new LinkedHashSet<>();
-            PersonEntity father = member.getFather();
-            if (father != null && father.getId() != null && membersById.containsKey(father.getId())) {
-                parentIds.add(father.getId());
-            }
-            PersonEntity mother = member.getMother();
-            if (mother != null && mother.getId() != null && membersById.containsKey(mother.getId())) {
-                parentIds.add(mother.getId());
-            }
-            for (Long parentId : parentIds) {
-                childrenByParentId.computeIfAbsent(parentId, key -> new ArrayList<>()).add(member);
+        List<PersonDTO> sourceRoots = roots;
+        if (focusPersonId != null && focusPersonId > 0) {
+            PersonDTO focusNode = findNodeInTree(roots, focusPersonId);
+            if (focusNode != null) {
+                sourceRoots = Collections.singletonList(focusNode);
             }
         }
 
-        List<PersonEntity> candidates = membersById.values()
-                .stream()
-                .filter(member -> !hasParentInsideBranch(member, branchId))
+        List<PersonDTO> members = new ArrayList<>();
+        flattenTree(sourceRoots, members, new LinkedHashSet<>());
+
+        String normalizedName = normalizeTextFilter(fullName);
+        String normalizedGender = normalizeTextFilter(gender);
+        String normalizedLifeStatus = normalizeTextFilter(lifeStatus);
+        Integer normalizedGeneration = normalizeGenerationFilter(generation);
+        Integer fromYear = normalizeYearFilter(birthYearFrom);
+        Integer toYear = normalizeYearFilter(birthYearTo);
+
+        List<PersonDTO> filtered = members.stream()
+                .filter(member -> memberMatchesFilters(
+                        member,
+                        normalizedGeneration,
+                        normalizedName,
+                        normalizedGender,
+                        normalizedLifeStatus,
+                        fromYear,
+                        toYear
+                ))
                 .collect(Collectors.toList());
-        if (candidates.isEmpty()) {
-            candidates.add(membersById.values().iterator().next());
+        return dedupeAndSortMembersForList(filtered);
+    }
+
+    private List<PersonDTO> buildTreeRoots(Long branchId, boolean strictMainScope) {
+        TreeGraph graph = buildTreeGraph(branchId, strictMainScope);
+        if (graph.membersById.isEmpty()) {
+            return new ArrayList<>();
         }
 
         List<PersonDTO> roots = new ArrayList<>();
         Set<Long> consumed = new LinkedHashSet<>();
-        for (PersonEntity candidate : candidates) {
+        for (PersonEntity candidate : graph.rootCandidates) {
             if (candidate == null || candidate.getId() == null || consumed.contains(candidate.getId())) {
                 continue;
             }
             PersonEntity spouse = candidate.getSpouse();
-            if (spouse != null && spouse.getId() != null) {
-                if (consumed.contains(spouse.getId())) {
-                    continue;
-                }
-                if (spouse.getBranch() != null
-                        && Objects.equals(spouse.getBranch().getId(), branchId)
-                        && spouse.getId() < candidate.getId()) {
-                    continue;
-                }
+            if (spouse != null
+                    && spouse.getId() != null
+                    && graph.membersById.containsKey(spouse.getId())
+                    && spouse.getId() < candidate.getId()) {
+                continue;
             }
-            roots.add(toPersonDTOByBranch(candidate, branchId, childrenByParentId));
+            roots.add(toPersonDTOByBranch(candidate, branchId, graph.childrenByParentId));
             consumed.add(candidate.getId());
-            if (spouse != null && spouse.getId() != null) {
+            if (spouse != null && spouse.getId() != null && graph.membersById.containsKey(spouse.getId())) {
                 consumed.add(spouse.getId());
             }
         }
 
         if (!roots.isEmpty()) {
+            normalizeDtoMarriageLinks(roots);
             return roots;
         }
-
-        PersonEntity fallback = membersById.values().iterator().next();
-        roots.add(toPersonDTOByBranch(fallback, branchId, childrenByParentId));
-        return roots;
+        PersonEntity fallback = graph.membersById.values().iterator().next();
+        List<PersonDTO> fallbackRoots = new ArrayList<>(Collections.singletonList(
+                toPersonDTOByBranch(fallback, branchId, graph.childrenByParentId)
+        ));
+        normalizeDtoMarriageLinks(fallbackRoots);
+        return fallbackRoots;
     }
 
-    private boolean hasParentInsideBranch(PersonEntity member, Long branchId) {
-        if (member == null || branchId == null) {
+    private TreeGraph buildTreeGraph(Long branchId, boolean strictMainScope) {
+        List<PersonEntity> members = (branchId != null && branchId > 0)
+                ? personRepository.findAllByBranchIdWithRelations(branchId)
+                : personRepository.findAllWithRelations();
+        if (members == null || members.isEmpty()) {
+            return new TreeGraph(new LinkedHashMap<>(), new LinkedHashMap<>(), new ArrayList<>());
+        }
+
+        Map<Long, PersonEntity> membersById = members.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.getId() != null)
+                .collect(Collectors.toMap(
+                        PersonEntity::getId,
+                        item -> item,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+        normalizeReciprocalSpouseLinks(membersById);
+
+        Map<Long, List<PersonEntity>> childrenByParentId = new LinkedHashMap<>();
+        for (PersonEntity member : membersById.values()) {
+            Long parentId = resolveCanonicalParentId(member, membersById);
+            if (parentId != null) {
+                childrenByParentId.computeIfAbsent(parentId, key -> new ArrayList<>()).add(member);
+            }
+        }
+        for (List<PersonEntity> children : childrenByParentId.values()) {
+            children.sort(personTreeComparator());
+        }
+
+        List<PersonEntity> candidates = membersById.values().stream()
+                .filter(member -> !hasParentInCollection(member, membersById))
+                .sorted(personTreeComparator())
+                .collect(Collectors.toList());
+
+        if (isStrictMainTreeScope(branchId, strictMainScope)) {
+            List<PersonEntity> levelOneRoots = candidates.stream()
+                    .filter(root -> root != null && root.getGeneration() != null && root.getGeneration() == 1)
+                    .sorted(personTreeComparator())
+                    .collect(Collectors.toList());
+            if (!levelOneRoots.isEmpty()) {
+                Set<Long> allowedIds = collectConnectedIds(levelOneRoots, membersById, childrenByParentId);
+                Map<Long, PersonEntity> strictMembersById = membersById.entrySet().stream()
+                        .filter(entry -> allowedIds.contains(entry.getKey()))
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue,
+                                (left, right) -> left,
+                                LinkedHashMap::new
+                        ));
+                Map<Long, List<PersonEntity>> strictChildrenByParentId = new LinkedHashMap<>();
+                for (Map.Entry<Long, List<PersonEntity>> entry : childrenByParentId.entrySet()) {
+                    Long parentId = entry.getKey();
+                    if (!allowedIds.contains(parentId)) {
+                        continue;
+                    }
+                    List<PersonEntity> filtered = entry.getValue().stream()
+                            .filter(Objects::nonNull)
+                            .filter(child -> child.getId() != null && allowedIds.contains(child.getId()))
+                            .sorted(personTreeComparator())
+                            .collect(Collectors.toList());
+                    if (!filtered.isEmpty()) {
+                        strictChildrenByParentId.put(parentId, filtered);
+                    }
+                }
+                List<PersonEntity> strictCandidates = levelOneRoots.stream()
+                        .filter(root -> root != null && root.getId() != null && allowedIds.contains(root.getId()))
+                        .sorted(personTreeComparator())
+                        .collect(Collectors.toList());
+                if (strictCandidates.isEmpty() && !strictMembersById.isEmpty()) {
+                    strictCandidates.add(strictMembersById.values().iterator().next());
+                }
+                return new TreeGraph(strictMembersById, strictChildrenByParentId, strictCandidates);
+            }
+        }
+
+        if (candidates.isEmpty() && !membersById.isEmpty()) {
+            candidates.add(membersById.values().iterator().next());
+        }
+        return new TreeGraph(membersById, childrenByParentId, candidates);
+    }
+
+    private void normalizeReciprocalSpouseLinks(Map<Long, PersonEntity> membersById) {
+        if (membersById == null || membersById.isEmpty()) {
+            return;
+        }
+        for (PersonEntity person : membersById.values()) {
+            if (person == null || person.getId() == null) {
+                continue;
+            }
+            PersonEntity spouse = person.getSpouse();
+            if (spouse == null || spouse.getId() == null) {
+                continue;
+            }
+            if (Objects.equals(spouse.getId(), person.getId())) {
+                person.setSpouse(null);
+                continue;
+            }
+            PersonEntity spouseInScope = membersById.get(spouse.getId());
+            if (spouseInScope == null) {
+                continue;
+            }
+            // Loose mode: if spouse_id points to a valid person, accept and mirror immediately.
+            spouseInScope.setSpouse(person);
+        }
+    }
+
+    private Long resolveCanonicalParentId(PersonEntity child, Map<Long, PersonEntity> membersById) {
+        if (child == null || child.getId() == null || membersById == null || membersById.isEmpty()) {
+            return null;
+        }
+        PersonEntity father = child.getFather();
+        PersonEntity mother = child.getMother();
+
+        PersonEntity fatherInScope = (father != null && father.getId() != null && membersById.containsKey(father.getId()))
+                ? membersById.get(father.getId())
+                : null;
+        PersonEntity motherInScope = (mother != null && mother.getId() != null && membersById.containsKey(mother.getId()))
+                ? membersById.get(mother.getId())
+                : null;
+
+        Integer childGen = child.getGeneration();
+        if (fatherInScope != null && isParentGenerationValid(fatherInScope, childGen)) {
+            return fatherInScope.getId();
+        }
+        if (motherInScope != null && isParentGenerationValid(motherInScope, childGen)) {
+            return motherInScope.getId();
+        }
+
+        // Fallback when generation data is missing/inconsistent.
+        if (fatherInScope != null) {
+            return fatherInScope.getId();
+        }
+        if (motherInScope != null) {
+            return motherInScope.getId();
+        }
+        return null;
+    }
+
+    private boolean isParentGenerationValid(PersonEntity parent, Integer childGeneration) {
+        if (parent == null) return false;
+        if (childGeneration == null || parent.getGeneration() == null) return true;
+        return parent.getGeneration() < childGeneration;
+    }
+
+    private boolean isStrictMainTreeScope(Long branchId, boolean strictMainScope) {
+        return strictMainScope && branchId != null && branchId <= 0;
+    }
+
+    private Set<Long> collectConnectedIds(List<PersonEntity> roots,
+                                          Map<Long, PersonEntity> membersById,
+                                          Map<Long, List<PersonEntity>> childrenByParentId) {
+        Set<Long> visited = new LinkedHashSet<>();
+        List<PersonEntity> stack = new ArrayList<>(roots == null ? Collections.emptyList() : roots);
+        while (!stack.isEmpty()) {
+            PersonEntity current = stack.remove(stack.size() - 1);
+            if (current == null || current.getId() == null || !membersById.containsKey(current.getId())) {
+                continue;
+            }
+            Long currentId = current.getId();
+            if (!visited.add(currentId)) {
+                continue;
+            }
+
+            PersonEntity spouse = current.getSpouse();
+            if (spouse != null && spouse.getId() != null && membersById.containsKey(spouse.getId())) {
+                stack.add(spouse);
+            }
+
+            List<PersonEntity> children = childrenByParentId.getOrDefault(currentId, Collections.emptyList());
+            for (PersonEntity child : children) {
+                if (child != null && child.getId() != null && membersById.containsKey(child.getId())) {
+                    stack.add(child);
+                }
+            }
+        }
+        return visited;
+    }
+
+    private boolean hasParentInCollection(PersonEntity member, Map<Long, PersonEntity> membersById) {
+        if (member == null || membersById == null || membersById.isEmpty()) {
             return false;
         }
         PersonEntity father = member.getFather();
-        if (father != null && father.getBranch() != null && Objects.equals(father.getBranch().getId(), branchId)) {
+        if (father != null && father.getId() != null && membersById.containsKey(father.getId())) {
             return true;
         }
         PersonEntity mother = member.getMother();
-        return mother != null && mother.getBranch() != null && Objects.equals(mother.getBranch().getId(), branchId);
+        return mother != null && mother.getId() != null && membersById.containsKey(mother.getId());
+    }
+
+    private Comparator<PersonEntity> personTreeComparator() {
+        return (a, b) -> {
+            int genA = a.getGeneration() == null ? Integer.MAX_VALUE : a.getGeneration();
+            int genB = b.getGeneration() == null ? Integer.MAX_VALUE : b.getGeneration();
+            if (genA != genB) {
+                return Integer.compare(genA, genB);
+            }
+            LocalDate dobA = toLocalDate(a.getDob());
+            LocalDate dobB = toLocalDate(b.getDob());
+            if (dobA != null && dobB != null) {
+                int dobCompare = dobA.compareTo(dobB);
+                if (dobCompare != 0) {
+                    return dobCompare;
+                }
+            }
+            if (dobA == null && dobB != null) {
+                return 1;
+            }
+            if (dobA != null && dobB == null) {
+                return -1;
+            }
+            long idA = a.getId() == null ? Long.MAX_VALUE : a.getId();
+            long idB = b.getId() == null ? Long.MAX_VALUE : b.getId();
+            return Long.compare(idA, idB);
+        };
     }
 
     private PersonDTO toPersonDTO(PersonEntity entity) {
@@ -517,6 +823,7 @@ public class PersonService implements IPersonService {
         }
 
         PersonDTO dto = buildPersonDtoWithoutChildren(entity, branchId);
+        dto.setGeneration(level + 1);
         List<PersonEntity> children;
         if (branchId != null) {
             children = personRepository.findChildrenByParentIdAndBranchId(entity.getId(), branchId);
@@ -553,6 +860,7 @@ public class PersonService implements IPersonService {
         }
 
         PersonDTO dto = buildPersonDtoWithoutChildren(entity, branchId);
+        dto.setGeneration(level + 1);
         List<PersonEntity> children = entityId == null
                 ? Collections.emptyList()
                 : childrenByParentId.getOrDefault(entityId, Collections.emptyList());
@@ -561,6 +869,306 @@ public class PersonService implements IPersonService {
                 .map(child -> toPersonDTOByBranch(child, level + 1, branchId, nextPath, childrenByParentId))
                 .collect(Collectors.toList()));
         return dto;
+    }
+
+    private PersonDTO findNodeInTree(List<PersonDTO> roots, Long personId) {
+        if (roots == null || personId == null) {
+            return null;
+        }
+        for (PersonDTO root : roots) {
+            PersonDTO found = findNodeInTree(root, personId);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private PersonDTO findNodeInTree(PersonDTO node, Long personId) {
+        if (node == null || personId == null) {
+            return null;
+        }
+        if (Objects.equals(node.getId(), personId)) {
+            return node;
+        }
+        List<PersonDTO> children = node.getChildren();
+        if (children == null || children.isEmpty()) {
+            return null;
+        }
+        for (PersonDTO child : children) {
+            PersonDTO found = findNodeInTree(child, personId);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private void flattenTree(List<PersonDTO> roots, List<PersonDTO> out, Set<Long> seen) {
+        if (roots == null) {
+            return;
+        }
+        for (PersonDTO root : roots) {
+            flattenTree(root, out, seen);
+        }
+    }
+
+    private void flattenTree(PersonDTO node, List<PersonDTO> out, Set<Long> seen) {
+        if (node == null || out == null || seen == null) {
+            return;
+        }
+        Long id = node.getId();
+        if (id != null && seen.contains(id)) {
+            return;
+        }
+        if (id != null) {
+            seen.add(id);
+        }
+        out.add(node);
+        List<PersonDTO> children = node.getChildren();
+        if (children == null || children.isEmpty()) {
+            return;
+        }
+        for (PersonDTO child : children) {
+            flattenTree(child, out, seen);
+        }
+    }
+
+    private String normalizeTextFilter(String raw) {
+        if (raw == null) return null;
+        String value = Normalizer.normalize(raw.trim().toLowerCase(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return value.isEmpty() ? null : value;
+    }
+
+    private Integer normalizeGenerationFilter(Integer generation) {
+        if (generation == null || generation <= 0) {
+            return null;
+        }
+        return generation;
+    }
+
+    private Integer normalizeYearFilter(Integer year) {
+        if (year == null || year <= 0) {
+            return null;
+        }
+        return year;
+    }
+
+    private boolean memberMatchesFilters(PersonDTO member,
+                                         Integer generation,
+                                         String name,
+                                         String gender,
+                                         String lifeStatus,
+                                         Integer birthYearFrom,
+                                         Integer birthYearTo) {
+        if (member == null) return false;
+        boolean selfMatch = matchesProfile(
+                member.getFullName(),
+                member.getGender(),
+                member.getDob(),
+                member.getDod(),
+                member.getGeneration(),
+                generation,
+                name,
+                gender,
+                lifeStatus,
+                birthYearFrom,
+                birthYearTo
+        );
+        boolean spouseMatch = matchesProfile(
+                member.getSpouseFullName(),
+                member.getSpouseGender(),
+                member.getSpouseDob(),
+                member.getSpouseDod(),
+                member.getSpouseGeneration(),
+                generation,
+                name,
+                gender,
+                lifeStatus,
+                birthYearFrom,
+                birthYearTo
+        );
+        return selfMatch || spouseMatch;
+    }
+
+    private boolean matchesProfile(String fullName,
+                                   String genderValue,
+                                   LocalDate dob,
+                                   LocalDate dod,
+                                   Integer generationValue,
+                                   Integer generationFilter,
+                                   String nameFilter,
+                                   String genderFilter,
+                                   String lifeStatusFilter,
+                                   Integer birthYearFrom,
+                                   Integer birthYearTo) {
+        if (generationFilter != null && !Objects.equals(generationFilter, generationValue)) {
+            return false;
+        }
+        if (nameFilter != null) {
+            String nameValue = fullName == null ? "" : normalizeTextFilter(fullName);
+            if (nameValue == null) {
+                nameValue = "";
+            }
+            if (!nameValue.contains(nameFilter)) {
+                return false;
+            }
+        }
+        if (genderFilter != null) {
+            String currentGender = genderValue == null ? "" : genderValue.trim().toLowerCase();
+            if (!genderFilter.equals(currentGender)) {
+                return false;
+            }
+        }
+        if (lifeStatusFilter != null) {
+            boolean isAlive = dod == null;
+            if ("alive".equals(lifeStatusFilter) && !isAlive) {
+                return false;
+            }
+            if ("deceased".equals(lifeStatusFilter) && isAlive) {
+                return false;
+            }
+        }
+        int birthYear = dob == null ? -1 : dob.getYear();
+        if (birthYearFrom != null && (birthYear < 0 || birthYear < birthYearFrom)) {
+            return false;
+        }
+        if (birthYearTo != null && (birthYear < 0 || birthYear > birthYearTo)) {
+            return false;
+        }
+        return true;
+    }
+
+    private List<PersonDTO> dedupeAndSortMembersForList(List<PersonDTO> members) {
+        normalizeDtoMarriageLinksFlat(members);
+        List<PersonDTO> sorted = new ArrayList<>(members == null ? Collections.emptyList() : members);
+        sorted.sort((a, b) -> {
+            int genA = a.getGeneration() == null ? Integer.MAX_VALUE : a.getGeneration();
+            int genB = b.getGeneration() == null ? Integer.MAX_VALUE : b.getGeneration();
+            if (genA != genB) {
+                return Integer.compare(genA, genB);
+            }
+            LocalDate dobA = a.getDob();
+            LocalDate dobB = b.getDob();
+            if (dobA != null && dobB != null) {
+                int dobCompare = dobA.compareTo(dobB);
+                if (dobCompare != 0) {
+                    return dobCompare;
+                }
+            }
+            if (dobA == null && dobB != null) {
+                return 1;
+            }
+            if (dobA != null && dobB == null) {
+                return -1;
+            }
+            long idA = a.getId() == null ? Long.MAX_VALUE : a.getId();
+            long idB = b.getId() == null ? Long.MAX_VALUE : b.getId();
+            return Long.compare(idA, idB);
+        });
+
+        Set<Long> consumed = new LinkedHashSet<>();
+        List<PersonDTO> result = new ArrayList<>();
+        for (PersonDTO person : sorted) {
+            if (person == null || person.getId() == null || consumed.contains(person.getId())) {
+                continue;
+            }
+            result.add(person);
+            consumed.add(person.getId());
+            if (person.getSpouseId() != null) {
+                consumed.add(person.getSpouseId());
+            }
+        }
+        return result;
+    }
+
+    private void normalizeDtoMarriageLinks(List<PersonDTO> roots) {
+        if (roots == null || roots.isEmpty()) return;
+        List<PersonDTO> all = new ArrayList<>();
+        flattenTree(roots, all, new LinkedHashSet<>());
+        normalizeDtoMarriageLinksFlat(all);
+    }
+
+    private void normalizeDtoMarriageLinksFlat(List<PersonDTO> nodes) {
+        if (nodes == null || nodes.isEmpty()) return;
+        Map<Long, PersonDTO> byId = nodes.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.getId() != null)
+                .collect(Collectors.toMap(
+                        PersonDTO::getId,
+                        item -> item,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+
+        Map<Long, Long> inverse = new LinkedHashMap<>();
+        for (PersonDTO person : byId.values()) {
+            if (person.getSpouseId() != null && !Objects.equals(person.getSpouseId(), person.getId())) {
+                inverse.put(person.getSpouseId(), person.getId());
+            }
+        }
+
+        for (PersonDTO person : byId.values()) {
+            if (person.getId() == null) continue;
+            Long spouseId = person.getSpouseId();
+            if (spouseId == null) {
+                Long inferred = inverse.get(person.getId());
+                if (inferred != null) {
+                    PersonDTO spouse = byId.get(inferred);
+                    if (spouse != null && !Objects.equals(spouse.getId(), person.getId())) {
+                        bindSpouseFields(person, spouse);
+                        bindSpouseFields(spouse, person);
+                    }
+                }
+                continue;
+            }
+            if (Objects.equals(spouseId, person.getId())) {
+                clearSpouseFields(person);
+                continue;
+            }
+            PersonDTO spouse = byId.get(spouseId);
+            if (spouse == null) {
+                continue;
+            }
+            // Loose mode: spouse_id points to valid id => bind both directions.
+            bindSpouseFields(person, spouse);
+            bindSpouseFields(spouse, person);
+        }
+    }
+
+    private void bindSpouseFields(PersonDTO person, PersonDTO spouse) {
+        if (person == null || spouse == null || spouse.getId() == null) {
+            return;
+        }
+        person.setSpouseId(spouse.getId());
+        person.setSpouseFullName(spouse.getFullName());
+        person.setSpouseGender(spouse.getGender());
+        person.setSpouseGeneration(spouse.getGeneration());
+        person.setSpouseBranchName(spouse.getBranchName());
+        person.setSpouseAvatar(spouse.getAvatar());
+        person.setSpouseDob(spouse.getDob());
+        person.setSpouseDod(spouse.getDod());
+        person.setSpouseHometown(spouse.getHometown());
+        person.setSpouseCurrentResidence(spouse.getCurrentResidence());
+        person.setSpouseOccupation(spouse.getOccupation());
+        person.setSpouseOtherNote(spouse.getOtherNote());
+    }
+
+    private void clearSpouseFields(PersonDTO person) {
+        if (person == null) return;
+        person.setSpouseId(null);
+        person.setSpouseFullName(null);
+        person.setSpouseGender(null);
+        person.setSpouseGeneration(null);
+        person.setSpouseBranchName(null);
+        person.setSpouseAvatar(null);
+        person.setSpouseDob(null);
+        person.setSpouseDod(null);
+        person.setSpouseHometown(null);
+        person.setSpouseCurrentResidence(null);
+        person.setSpouseOccupation(null);
+        person.setSpouseOtherNote(null);
     }
 
     private PersonDTO buildPersonDtoWithoutChildren(PersonEntity entity, Long branchId) {
@@ -587,10 +1195,7 @@ public class PersonService implements IPersonService {
         }
         dto.setDob(toLocalDate(entity.getDob()));
         dto.setDod(toLocalDate(entity.getDod()));
-        if (entity.getSpouse() != null
-                && (branchId == null
-                || (entity.getSpouse().getBranch() != null
-                && Objects.equals(entity.getSpouse().getBranch().getId(), branchId)))) {
+        if (entity.getSpouse() != null) {
             dto.setSpouseId(entity.getSpouse().getId());
             dto.setSpouseFullName(entity.getSpouse().getFullName());
             dto.setSpouseGender(entity.getSpouse().getGender());
@@ -901,6 +1506,20 @@ public class PersonService implements IPersonService {
             }
         }
         return true;
+    }
+
+    private static final class TreeGraph {
+        private final Map<Long, PersonEntity> membersById;
+        private final Map<Long, List<PersonEntity>> childrenByParentId;
+        private final List<PersonEntity> rootCandidates;
+
+        private TreeGraph(Map<Long, PersonEntity> membersById,
+                          Map<Long, List<PersonEntity>> childrenByParentId,
+                          List<PersonEntity> rootCandidates) {
+            this.membersById = membersById;
+            this.childrenByParentId = childrenByParentId;
+            this.rootCandidates = rootCandidates;
+        }
     }
 
     private BranchEntity resolveMainBranch() {

@@ -11,7 +11,16 @@ public interface IPersonService {
     PersonDTO findPersonById(Long personId);
     PersonDTO findRootPersonByBranchId(Long branchId);
     List<PersonDTO> findRootPersonsByBranchId(Long branchId);
+    List<PersonDTO> findMembersByBranchWithFilters(Long branchId,
+                                                   Integer generation,
+                                                   String fullName,
+                                                   String gender,
+                                                   String lifeStatus,
+                                                   Integer birthYearFrom,
+                                                   Integer birthYearTo,
+                                                   Long focusPersonId);
     List<PersonDTO> findAttachablePersonsByBranchId(Long branchId, String fullName, String gender, LocalDate dob);
+    int repairMarriageLinks(Long fromId, Long toId);
     PersonDTO addSpouse(Long personId, PersonDTO spouseDTO);
     PersonDTO addChild(Long personId, PersonDTO childDTO);
     PersonDTO updatePerson(Long personId, PersonDTO personDTO);

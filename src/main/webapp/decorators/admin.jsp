@@ -35,6 +35,7 @@
 		</script>
 		<!-- header -->
     	<%@ include file="/common/admin/menu.jsp" %>
+		<%@ include file="/common/admin/header.jsp" %>
     	<!-- header -->
 		
 		<dec:body/>
@@ -89,6 +90,37 @@
         }
 
         $(function () {
+            var $body = $('body');
+            var $toggle = $('#appSidebarToggle');
+            var $overlay = $('#appSidebarOverlay');
+
+            function closeSidebarOnMobile() {
+                if (window.innerWidth <= 991) {
+                    $body.removeClass('sidebar-open-mobile');
+                }
+            }
+
+            if ($toggle.length) {
+                $toggle.on('click', function (e) {
+                    e.preventDefault();
+                    if (window.innerWidth <= 991) {
+                        $body.toggleClass('sidebar-open-mobile');
+                    } else {
+                        $body.toggleClass('sidebar-collapsed');
+                    }
+                });
+            }
+
+            if ($overlay.length) {
+                $overlay.on('click', function () {
+                    $body.removeClass('sidebar-open-mobile');
+                });
+            }
+
+            $(window).on('resize', function () {
+                closeSidebarOnMobile();
+            });
+
             $('.main-content-inner .breadcrumbs').each(function () {
                 var $crumb = $(this);
                 if ($crumb.find('.breadcrumb').length === 0 || $crumb.find('.crumb-quick-icons').length > 0) {

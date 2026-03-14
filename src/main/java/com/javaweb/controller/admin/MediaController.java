@@ -15,6 +15,7 @@ public class MediaController {
     @GetMapping("/admin/media")
     public ModelAndView mediaPage() {
         ModelAndView mav = new ModelAndView("admin/media/media");
+        mav.addObject("albumList", mediaService.findAllAlbumsForAdminView());
         mav.addObject("mediaList", mediaService.findAllMediaForAdminView());
         mav.addObject("branchMap", mediaService.getBranchMap());
         mav.addObject("userMap", mediaService.getUserMap());

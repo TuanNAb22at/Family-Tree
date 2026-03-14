@@ -18,6 +18,10 @@ public class MediaEntity extends BaseEntity {
     private String mediaType;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "album_id")
+    private MediaAlbumEntity album;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id")
     private PersonEntity person;
 
