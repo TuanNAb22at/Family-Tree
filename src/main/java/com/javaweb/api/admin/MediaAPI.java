@@ -50,6 +50,8 @@ public class MediaAPI {
         try {
             List<MediaDTO> uploaded = mediaService.uploadMediaFiles(files, normalizeDisplayNames(displayNames), normalizeScopes(visibilityScopes), personId, branchId, albumId);
             return ResponseEntity.ok(uploaded);
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
@@ -70,6 +72,8 @@ public class MediaAPI {
         try {
             MediaAlbumDTO created = mediaService.createAlbum(name, description, accessScope, personId, branchId);
             return ResponseEntity.ok(created);
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
@@ -80,6 +84,8 @@ public class MediaAPI {
         try {
             mediaService.deleteAlbum(id);
             return ResponseEntity.ok().build();
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
@@ -90,6 +96,8 @@ public class MediaAPI {
         try {
             mediaService.deleteMedia(id);
             return ResponseEntity.ok().build();
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }

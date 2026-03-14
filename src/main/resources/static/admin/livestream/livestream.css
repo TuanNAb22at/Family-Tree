@@ -11,15 +11,15 @@
 
 * { box-sizing: border-box; }
 
-body,
-input,
-select,
-button,
-textarea {
+.livestream-page,
+.livestream-page input,
+.livestream-page select,
+.livestream-page button,
+.livestream-page textarea {
   font-family: "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
-.page-content {
+.livestream-page .page-content {
   background: var(--ls-bg);
   border-radius: 18px;
   padding: 20px;

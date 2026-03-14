@@ -39,12 +39,10 @@
             <a class="app-nav-item <%= userActive ? "active" : "" %>" href="/admin/user-list">
                 <i class="fa fa-user"></i>
                 <span>Quản lý người dùng</span>
-                <span class="role-badge">QUẢN TRỊ</span>
             </a>
             <a class="app-nav-item <%= auditActive ? "active" : "" %>" href="/admin/security-audit">
                 <i class="fa fa-shield"></i>
                 <span>Bảo mật &amp; Kiểm toán</span>
-                <span class="role-badge">QUẢN TRỊ</span>
             </a>
         </security:authorize>
     </nav>

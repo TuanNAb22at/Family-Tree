@@ -81,8 +81,6 @@ public interface PersonRepository extends JpaRepository<PersonEntity,Long> {
 
     Optional<PersonEntity> findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(Long id);
 
-    List<PersonEntity> findByIdBetweenOrderByIdAsc(Long fromId, Long toId);
-
     long countByBranch_Id(Long branchId);
 
     long countByBranchIsNotNull();

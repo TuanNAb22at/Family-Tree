@@ -54,8 +54,10 @@ body.admin-modern .navbar {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 14px 14px;
-    border-bottom: 1px solid rgba(44, 71, 119, 0.15);
+    height: 50px;
+    padding: 0 14px;
+    border-bottom: none;
+    box-sizing: border-box;
 }
 
 .app-brand .brand-icon {
@@ -199,6 +201,8 @@ body.admin-modern .navbar {
     height: 34px;
     border-radius: 8px;
     padding: 0;
+    position: relative;
+    top: -1px;
 }
 
 .app-topbar-toggle:hover {

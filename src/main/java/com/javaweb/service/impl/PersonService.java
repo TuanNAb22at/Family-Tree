@@ -6,7 +6,6 @@ import com.javaweb.model.dto.PersonDTO;
 import com.javaweb.repository.BranchRepository;
 import com.javaweb.repository.PersonRepository;
 import com.javaweb.service.IPersonService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,11 +37,13 @@ public class PersonService implements IPersonService {
     private static final Set<String> ALLOWED_GENDERS =
             Collections.unmodifiableSet(new HashSet<>(Arrays.asList("male", "female", "other")));
 
-    @Autowired
-    PersonRepository personRepository;
+    private final PersonRepository personRepository;
+    private final BranchRepository branchRepository;
 
-    @Autowired
-    BranchRepository branchRepository;
+    public PersonService(PersonRepository personRepository, BranchRepository branchRepository) {
+        this.personRepository = personRepository;
+        this.branchRepository = branchRepository;
+    }
 
     @Override
     public void createPerson(PersonDTO personDTO) {
@@ -126,86 +127,6 @@ public class PersonService implements IPersonService {
                     return dto;
                 })
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public int repairMarriageLinks(Long fromId, Long toId) {
-        if (fromId == null || toId == null || fromId <= 0 || toId <= 0) {
-            throw new IllegalArgumentException("Khoang id khong hop le");
-        }
-        long minId = Math.min(fromId, toId);
-        long maxId = Math.max(fromId, toId);
-        List<PersonEntity> persons = personRepository.findByIdBetweenOrderByIdAsc(minId, maxId);
-        if (persons.isEmpty()) {
-            return 0;
-        }
-
-        Map<Long, PersonEntity> inRange = persons.stream()
-                .filter(Objects::nonNull)
-                .filter(p -> p.getId() != null)
-                .collect(Collectors.toMap(
-                        PersonEntity::getId,
-                        p -> p,
-                        (left, right) -> left,
-                        LinkedHashMap::new
-                ));
-
-        int fixed = 0;
-        for (PersonEntity person : persons) {
-            if (person == null || person.getId() == null) {
-                continue;
-            }
-            PersonEntity spouseRef = person.getSpouse();
-            if (spouseRef == null) {
-                continue;
-            }
-            Long spouseId = spouseRef.getId();
-            if (spouseId == null || Objects.equals(spouseId, person.getId())) {
-                person.setSpouse(null);
-                personRepository.save(person);
-                fixed++;
-                continue;
-            }
-
-            PersonEntity spouse = inRange.get(spouseId);
-            if (spouse == null) {
-                spouse = personRepository.findById(spouseId).orElse(null);
-            }
-            if (spouse == null) {
-                person.setSpouse(null);
-                personRepository.save(person);
-                fixed++;
-                continue;
-            }
-
-            PersonEntity spouseOfSpouse = spouse.getSpouse();
-            if (spouseOfSpouse == null) {
-                spouse.setSpouse(person);
-                personRepository.save(spouse);
-                fixed++;
-                continue;
-            }
-
-            if (!Objects.equals(spouseOfSpouse.getId(), person.getId())) {
-                Long rivalId = spouseOfSpouse.getId();
-                PersonEntity rival = rivalId == null ? null : personRepository.findById(rivalId).orElse(null);
-                boolean rivalMutual = rival != null
-                        && rival.getSpouse() != null
-                        && Objects.equals(rival.getSpouse().getId(), spouse.getId());
-                if (rivalMutual) {
-                    person.setSpouse(null);
-                    personRepository.save(person);
-                    fixed++;
-                } else {
-                    spouse.setSpouse(person);
-                    personRepository.save(spouse);
-                    fixed++;
-                }
-            }
-        }
-
-        return fixed;
     }
 
     @Override
@@ -450,29 +371,6 @@ public class PersonService implements IPersonService {
     }
 
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public PersonDTO findRootPersonByBranchId(Long branchId) {
-        List<PersonDTO> roots = findRootPersonsByBranchId(branchId);
-        if (!roots.isEmpty()) {
-            return roots.get(0);
-        }
-
-        if (branchId == null || branchId <= 0) {
-            return null;
-        }
-
-        Optional<PersonEntity> optionalEntity =
-                personRepository.findFirstByBranch_IdAndGenerationOrderByIdAsc(branchId, 1);
-        if (!optionalEntity.isPresent()) {
-            optionalEntity = personRepository.findFirstByBranch_IdOrderByGenerationAscIdAsc(branchId);
-        }
-        if (!optionalEntity.isPresent()) {
-            return null;
-        }
-        return toPersonDTOByBranch(optionalEntity.get(), branchId);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -789,10 +687,6 @@ public class PersonService implements IPersonService {
 
     private PersonDTO toPersonDTO(PersonEntity entity) {
         return toPersonDTO(entity, 0, null, new LinkedHashSet<>());
-    }
-
-    private PersonDTO toPersonDTOByBranch(PersonEntity entity, Long branchId) {
-        return toPersonDTO(entity, 0, branchId, new LinkedHashSet<>());
     }
 
     private PersonDTO toPersonDTOByBranch(PersonEntity entity, Long branchId, Map<Long, List<PersonEntity>> childrenByParentId) {

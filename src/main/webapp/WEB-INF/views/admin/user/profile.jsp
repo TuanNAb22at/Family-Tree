@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@include file="/common/taglib.jsp" %>
 <c:url var="formUrl" value="/api/user"/>
-<c:url var="adminProfileBaseUrl" value="/admin/profile/"/>
+<c:url var="adminProfileBaseUrl" value="/admin/profile-"/>
 <html>
 <head>
     <title>Ch&#7881;nh s&#7917;a ng&#432;&#7901;i d&#249;ng</title>

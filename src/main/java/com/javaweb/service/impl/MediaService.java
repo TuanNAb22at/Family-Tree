@@ -94,6 +94,7 @@ public class MediaService implements IMediaService {
     @Override
     @Transactional
     public MediaAlbumDTO createAlbum(String name, String description, String accessScope, Long personId, Long branchId) {
+        assertCanManageMedia();
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Ten album khong duoc de trong");
         }
@@ -115,6 +116,7 @@ public class MediaService implements IMediaService {
     @Override
     @Transactional
     public void deleteAlbum(Long albumId) {
+        assertCanManageMedia();
         MediaAlbumEntity entity = mediaAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay album id=" + albumId));
         List<MediaEntity> items = mediaRepository.findByAlbumId(albumId);
@@ -133,6 +135,7 @@ public class MediaService implements IMediaService {
                                            Long personId,
                                            Long branchId,
                                            Long albumId) {
+        assertCanManageMedia();
         if (files == null || files.isEmpty()) {
             throw new IllegalArgumentException("Danh sach file upload dang rong");
         }
@@ -187,6 +190,7 @@ public class MediaService implements IMediaService {
     @Override
     @Transactional
     public void deleteMedia(Long mediaId) {
+        assertCanManageMedia();
         MediaEntity entity = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay media id=" + mediaId));
         deletePhysicalFile(entity.getFileUrl());
@@ -591,6 +595,12 @@ public class MediaService implements IMediaService {
     private boolean hasMediaAdminPermission() {
         List<String> authorities = SecurityUtils.getAuthorities();
         return authorities.contains("ROLE_MANAGER") || authorities.contains("ROLE_EDITOR");
+    }
+
+    private void assertCanManageMedia() {
+        if (!hasMediaAdminPermission()) {
+            throw new AccessDeniedException("Ban khong co quyen thuc hien thao tac nay");
+        }
     }
 
     private boolean canCurrentUserAccess(MediaEntity entity) {

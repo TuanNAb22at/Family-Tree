@@ -38,6 +38,9 @@ public class UserController {
 	}
 	@RequestMapping(value = "/admin/user-edit", method = RequestMethod.GET)
 	public ModelAndView addUser(@ModelAttribute(SystemConstant.MODEL) UserDTO model, HttpServletRequest request) {
+		if (!SecurityUtils.getAuthorities().contains("ROLE_MANAGER")) {
+			return new ModelAndView("redirect:/access-denied");
+		}
 		ModelAndView mav = new ModelAndView("admin/user/edit");
 		model.setRoleDTOs(roleService.getRoles());
 		initMessageResponse(mav, request);
@@ -62,6 +65,9 @@ public class UserController {
 	}
 	@RequestMapping(value = "/admin/user-edit-{id}", method = RequestMethod.GET)
 	public ModelAndView updateUser(@PathVariable("id") Long id, HttpServletRequest request) {
+		if (!SecurityUtils.getAuthorities().contains("ROLE_MANAGER")) {
+			return new ModelAndView("redirect:/access-denied");
+		}
 		ModelAndView mav = new ModelAndView("admin/user/edit");
 		UserDTO model = userService.findUserById(id);
 		model.setRoleDTOs(roleService.getRoles());

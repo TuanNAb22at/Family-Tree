@@ -234,7 +234,10 @@ function renderList() {
     if (!list.length) { g.innerHTML = ''; e.style.display = 'block'; return; }
     e.style.display = 'none';
     g.innerHTML = list.map(function (a) {
-        return '<div class="album-item" data-id="' + a.id + '"><div class="album-thumb">' + cover(a) + '</div><div class="album-body"><p class="name">' + h(a.name || 'Album') + '</p><p class="desc">' + h(a.description || '') + '</p><div class="album-foot"><a href="#" data-open="1">Chi tiết →</a><div class="mini-actions"><button class="icon-btn edit" data-open="1" type="button"><i class="fa fa-pencil"></i></button><button class="icon-btn danger" data-del-album="1" type="button"><i class="fa fa-trash"></i></button></div></div></div></div>';
+        var manageActions = canUpload
+            ? '<div class="mini-actions"><button class="icon-btn edit" data-open="1" type="button"><i class="fa fa-pencil"></i></button><button class="icon-btn danger" data-del-album="1" type="button"><i class="fa fa-trash"></i></button></div>'
+            : '';
+        return '<div class="album-item" data-id="' + a.id + '"><div class="album-thumb">' + cover(a) + '</div><div class="album-body"><p class="name">' + h(a.name || 'Album') + '</p><p class="desc">' + h(a.description || '') + '</p><div class="album-foot"><a href="#" data-open="1">Chi tiết →</a>' + manageActions + '</div></div></div>';
     }).join('');
 }
 
@@ -244,9 +247,18 @@ function renderDetail() {
     document.getElementById('albumCover').innerHTML = cover(a);
     document.getElementById('albumName').textContent = a.name;
     document.getElementById('albumDesc').textContent = a.description || ('Tổng ' + a.total + ' tệp');
-    document.getElementById('deleteAlbumBtn').style.display = a.id > 0 ? 'inline-flex' : 'none';
-    document.getElementById('addPhotoBtn').style.display = state.tab === 'photos' ? 'inline-flex' : 'none';
-    document.getElementById('addVideoBtn').style.display = state.tab === 'videos' ? 'inline-flex' : 'none';
+    var deleteAlbumBtn = document.getElementById('deleteAlbumBtn');
+    var addPhotoBtn = document.getElementById('addPhotoBtn');
+    var addVideoBtn = document.getElementById('addVideoBtn');
+    if (deleteAlbumBtn) {
+        deleteAlbumBtn.style.display = canUpload && a.id > 0 ? 'inline-flex' : 'none';
+    }
+    if (addPhotoBtn) {
+        addPhotoBtn.style.display = canUpload && state.tab === 'photos' ? 'inline-flex' : 'none';
+    }
+    if (addVideoBtn) {
+        addVideoBtn.style.display = canUpload && state.tab === 'videos' ? 'inline-flex' : 'none';
+    }
 
     var list = a.items.filter(function (i) { return state.tab === 'photos' ? i.mediaType === 'IMAGE' : i.mediaType !== 'IMAGE'; });
     var g = document.getElementById('albumMediaGrid');
@@ -385,6 +397,7 @@ function createAlbum() {
 }
 
 function delAlbum(id) {
+    if (!canUpload) return;
     ask('Bạn có chắc muốn xóa album này không? Tất cả ảnh/video bên trong cũng sẽ bị xóa vĩnh viễn.', 'Xóa album')
         .then(function (r) {
             if (!r || !r.confirmed) return;
@@ -402,6 +415,7 @@ function delAlbum(id) {
 }
 
 function delMedia(id) {
+    if (!canUpload) return;
     ask('Bạn có chắc muốn xóa tệp này không?', 'Xóa tệp')
         .then(function (r) {
             if (!r || !r.confirmed) return;

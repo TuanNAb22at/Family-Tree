@@ -44,14 +44,21 @@
     /* Tang do ro cua net noi nhanh */
     #ftApp #treeRoot .li-person::before,
     #ftApp #treeRoot .li-person::after {
-        border-top-color: #334155 !important;
+        border-top-color: #d0d0d0 !important;
+        border-top-width: 8px !important;
     }
     #ftApp #treeRoot .li-person::after,
     #ftApp #treeRoot .ul-person .ul-person::before {
-        border-left-color: #334155 !important;
+        border-left-color: #d0d0d0 !important;
+        border-left-width: 8px !important;
     }
     #ftApp #treeRoot .li-person:last-child::before {
-        border-right-color: #334155 !important;
+        border-right-color: #d0d0d0 !important;
+        border-right-width: 8px !important;
+        border-radius: 0 !important;
+    }
+    #ftApp #treeRoot .li-person:first-child::after {
+        border-radius: 0 !important;
     }
 
     /* Ket qua loc/tim kiem: hien thi roi, khong ve duong noi quan he */
@@ -527,7 +534,6 @@
         // const BRANCH_ID = "<%= request.getAttribute("branchId") %>";
         let BRANCH_ID = 1;
         const HOME_TOTAL_MEMBERS = Number('${empty totalMembers ? 0 : totalMembers}');
-        const HOME_TOTAL_GENERATIONS = Math.max(1, Number('${empty totalGenerations ? 1 : totalGenerations}'));
         const canManageMember = <%= canManageMember %>;
 
         // Dropdown minimal toggle (không phụ thuộc BS5)
@@ -574,6 +580,7 @@
         let ACTIVE_BRANCH_NAME = '';
         let FT_RENDER_PENDING = false;
         let FT_FILTER_RENDER_SEQ = 0;
+        let FT_FILTER_DEBOUNCE = null;
         const FT_VIEWPORT = {
             initialized: false,
             scale: 1,
@@ -916,40 +923,69 @@
 
         function memberMatchesAdvancedFilters(person) {
             if (!person) return false;
+            const candidates = [];
+            candidates.push({
+                fullName: person.fullName || '',
+                dob: person.dob || '',
+                gender: person.gender || '',
+                dod: person.dod || ''
+            });
+            if (person.spouseId) {
+                candidates.push({
+                    fullName: person.spouseFullName || '',
+                    dob: person.spouseDob || '',
+                    gender: person.spouseGender || '',
+                    dod: person.spouseDod || ''
+                });
+            }
+
             const normalizedNameFilter = normalizeSearchText(CURRENT_NAME_FILTER).trim();
-            const fullName = normalizeSearchText(person.fullName || '');
-            const spouseName = normalizeSearchText(person.spouseFullName || '');
             if (normalizedNameFilter) {
-                const nameMatched = fullName.indexOf(normalizedNameFilter) >= 0
-                    || spouseName.indexOf(normalizedNameFilter) >= 0;
+                const nameMatched = candidates.some(function (c) {
+                    return normalizeSearchText(c.fullName).indexOf(normalizedNameFilter) >= 0;
+                });
                 if (!nameMatched) return false;
             }
 
             if (CURRENT_DOB_FILTER) {
-                const dobText = String(person.dob || '').trim();
-                const spouseDobText = String(person.spouseDob || '').trim();
-                if (dobText !== CURRENT_DOB_FILTER && spouseDobText !== CURRENT_DOB_FILTER) {
+                const dobMatched = candidates.some(function (c) {
+                    return String(c.dob || '').trim() === CURRENT_DOB_FILTER;
+                });
+                if (!dobMatched) {
                     return false;
                 }
             }
 
             if (CURRENT_GENDER_FILTER) {
-                const g = String(person.gender || '').toLowerCase();
-                if (g !== CURRENT_GENDER_FILTER) return false;
+                const genderMatched = candidates.some(function (c) {
+                    return String(c.gender || '').toLowerCase() === CURRENT_GENDER_FILTER;
+                });
+                if (!genderMatched) return false;
             }
 
             if (CURRENT_LIFE_STATUS_FILTER) {
-                const hasDod = !!person.dod;
-                if (CURRENT_LIFE_STATUS_FILTER === 'alive' && hasDod) return false;
-                if (CURRENT_LIFE_STATUS_FILTER === 'deceased' && !hasDod) return false;
+                const lifeStatusMatched = candidates.some(function (c) {
+                    const hasDod = !!c.dod;
+                    if (CURRENT_LIFE_STATUS_FILTER === 'alive') return !hasDod;
+                    if (CURRENT_LIFE_STATUS_FILTER === 'deceased') return hasDod;
+                    return true;
+                });
+                if (!lifeStatusMatched) return false;
             }
 
-            const birthYear = getBirthYearFromDateString(person.dob || '');
             if (CURRENT_BIRTH_YEAR_FROM != null) {
-                if (birthYear == null || birthYear < CURRENT_BIRTH_YEAR_FROM) return false;
+                const matchedFromYear = candidates.some(function (c) {
+                    const birthYear = getBirthYearFromDateString(c.dob || '');
+                    return birthYear != null && birthYear >= CURRENT_BIRTH_YEAR_FROM;
+                });
+                if (!matchedFromYear) return false;
             }
             if (CURRENT_BIRTH_YEAR_TO != null) {
-                if (birthYear == null || birthYear > CURRENT_BIRTH_YEAR_TO) return false;
+                const matchedToYear = candidates.some(function (c) {
+                    const birthYear = getBirthYearFromDateString(c.dob || '');
+                    return birthYear != null && birthYear <= CURRENT_BIRTH_YEAR_TO;
+                });
+                if (!matchedToYear) return false;
             }
 
             return true;
@@ -962,6 +998,10 @@
                 || CURRENT_LIFE_STATUS_FILTER
                 || CURRENT_BIRTH_YEAR_FROM != null
                 || CURRENT_BIRTH_YEAR_TO != null);
+        }
+
+        function hasAnyActiveFilter() {
+            return CURRENT_GENERATION_FILTER != null || hasAdvancedFilter();
         }
 
         function dedupeMembersForList(members) {
@@ -979,6 +1019,44 @@
                 if (spouseId) consumed.add(spouseId);
             });
             return result;
+        }
+
+        function collectScopedMembers(roots, generationFilter) {
+            const scoped = [];
+            const seen = new Set();
+            (Array.isArray(roots) ? roots : []).forEach(function (root) {
+                if (generationFilter == null) {
+                    collectMembersFromTree(root, scoped, seen);
+                    return;
+                }
+                collectMembersByGeneration(root, generationFilter, scoped);
+            });
+            return scoped;
+        }
+
+        function computeVisibleStatsFromMembers(members) {
+            const memberIds = new Set();
+            const generationValues = new Set();
+            (Array.isArray(members) ? members : []).forEach(function (person) {
+                if (!person) return;
+                const id = Number(person.id || 0);
+                if (id > 0) memberIds.add(id);
+                const spouseId = Number(person.spouseId || 0);
+                if (spouseId > 0) memberIds.add(spouseId);
+
+                const ownGen = getRawGeneration(person);
+                if (ownGen != null) generationValues.add(ownGen);
+                const spouseGen = getRawSpouseGeneration(person);
+                if (spouseGen != null) generationValues.add(spouseGen);
+            });
+
+            const generationCount = generationValues.size > 0
+                ? generationValues.size
+                : (memberIds.size > 0 ? 1 : 0);
+            return {
+                generations: generationCount,
+                members: memberIds.size
+            };
         }
 
         function filterExistingPersons(persons, keyword, gender, dob) {
@@ -1734,7 +1812,8 @@
         }
 
         function canAddChildInBranch(branchName) {
-            return true;
+            const name = String(branchName || '').trim();
+            return name === '1' || name === '2';
         }
 
         function buildDefaultAvatarDataUri(gender) {
@@ -1907,9 +1986,6 @@
             const personId = Number(person.id || 0);
 
             let items = '';
-            if (!isSpouse && isRoot && canManageMember) {
-                items += '<li><a class="dropdown-item cursor-pointer" data-tree-action="add-root" data-person-id="' + personId + '"><i class="fa-solid fa-square-plus"></i> Thêm đời đầu</a></li>';
-            }
             items += '<li><a class="dropdown-item cursor-pointer" data-tree-action="back-root" data-person-id="' + personId + '"><i class="fas fa-long-arrow-alt-left"></i> Trở về gốc</a></li>';
             items += '<li><a class="dropdown-item cursor-pointer" data-tree-action="copy-data" data-person-id="' + personId + '"><i class="fas fa-clone"></i> Sao chép dữ liệu</a></li>';
 
@@ -2142,24 +2218,37 @@
             }
         }
 
-        async function fetchRootsByBranchId(branchId) {
-            const res = await fetch('/api/person/roots?branchId=' + encodeURIComponent(branchId));
-            if (!res.ok) return [];
-            const data = await res.json();
-            return Array.isArray(data) ? data : [];
+        async function resetFiltersAndBackToRoot() {
+            const nameInput = document.getElementById('ftFilterName');
+            const dobInput = document.getElementById('ftFilterDob');
+            if (nameInput) nameInput.value = '';
+            if (dobInput) dobInput.value = '';
+
+            CURRENT_GENERATION_FILTER = null;
+            CURRENT_FOCUS_PERSON_ID = null;
+            CURRENT_NAME_FILTER = '';
+            CURRENT_DOB_FILTER = '';
+            CURRENT_GENDER_FILTER = '';
+            CURRENT_LIFE_STATUS_FILTER = '';
+            CURRENT_BIRTH_YEAR_FROM = null;
+            CURRENT_BIRTH_YEAR_TO = null;
+
+            const activeGenerationLabel = document.getElementById('activeGenerationLabel');
+            if (activeGenerationLabel) {
+                activeGenerationLabel.textContent = 'Tất cả đời';
+            }
+
+            if (FT_FILTER_DEBOUNCE) {
+                clearTimeout(FT_FILTER_DEBOUNCE);
+                FT_FILTER_DEBOUNCE = null;
+            }
+
+            resetTreeViewport();
+            await loadRootPersons({ forceReload: false, center: true, centerBranchId: BRANCH_ID });
         }
 
-        async function fetchFilteredMembersByBranchId(branchId, params) {
-            const query = new URLSearchParams();
-            query.set('branchId', String(branchId));
-            if (params && params.generation != null) query.set('generation', String(params.generation));
-            if (params && params.name) query.set('name', String(params.name));
-            if (params && params.gender) query.set('gender', String(params.gender));
-            if (params && params.lifeStatus) query.set('lifeStatus', String(params.lifeStatus));
-            if (params && params.birthYearFrom != null) query.set('birthYearFrom', String(params.birthYearFrom));
-            if (params && params.birthYearTo != null) query.set('birthYearTo', String(params.birthYearTo));
-            if (params && params.focusPersonId != null) query.set('focusPersonId', String(params.focusPersonId));
-            const res = await fetch('/api/person/members?' + query.toString());
+        async function fetchRootsByBranchId(branchId) {
+            const res = await fetch('/api/person/roots?branchId=' + encodeURIComponent(branchId));
             if (!res.ok) return [];
             const data = await res.json();
             return Array.isArray(data) ? data : [];
@@ -2198,33 +2287,33 @@
                 }
             }
 
-            if (CURRENT_GENERATION_FILTER == null && !hasAdvancedFilter()) {
-                FT_FILTER_RENDER_SEQ += 1;
-                treeRoot.innerHTML = renderForest(renderRoots);
-                if (app) {
-                    const nodes = treeRoot.querySelectorAll('.person-node').length;
-                    app.classList.toggle('ft-heavy', nodes > 140);
-                }
-                updateTopStats(HOME_TOTAL_GENERATIONS, HOME_TOTAL_MEMBERS);
-                return;
+            const scopedMembers = collectScopedMembers(renderRoots, CURRENT_GENERATION_FILTER);
+            let visibleMembers = scopedMembers;
+
+            if (hasAdvancedFilter()) {
+                visibleMembers = scopedMembers.filter(memberMatchesAdvancedFilters);
             }
-            const members = [];
-            const seen = new Set();
-            renderRoots.forEach(function (root) {
-                if (CURRENT_GENERATION_FILTER == null) {
-                    collectMembersFromTree(root, members, seen);
-                } else {
-                    collectMembersByGeneration(root, CURRENT_GENERATION_FILTER, members);
-                }
-            });
-            const filtered = dedupeMembersForList(members.filter(memberMatchesAdvancedFilters));
+            if (hasAnyActiveFilter()) {
+                visibleMembers = dedupeMembersForList(visibleMembers);
+            }
+
             FT_FILTER_RENDER_SEQ += 1;
-            treeRoot.innerHTML = renderGenerationOnly(filtered);
+            if (!hasAnyActiveFilter()) {
+                treeRoot.innerHTML = renderForest(renderRoots);
+            } else {
+                treeRoot.innerHTML = renderGenerationOnly(visibleMembers);
+            }
             if (app) {
                 const nodes = treeRoot.querySelectorAll('.person-node').length;
                 app.classList.toggle('ft-heavy', nodes > 140);
             }
-            updateTopStats(HOME_TOTAL_GENERATIONS, HOME_TOTAL_MEMBERS);
+            const stats = computeVisibleStatsFromMembers(visibleMembers);
+            const isViewingWholeTree = !hasAnyActiveFilter() && CURRENT_FOCUS_PERSON_ID == null;
+            if (isViewingWholeTree) {
+                updateTopStats(stats.generations, HOME_TOTAL_MEMBERS);
+            } else {
+                updateTopStats(stats.generations, stats.members);
+            }
         }
 
         async function loadRootPersons(options) {
@@ -2280,9 +2369,7 @@
                 if (typeof window.ftRefreshCreateFirstVisibility === 'function') {
                     await window.ftRefreshCreateFirstVisibility(false, validRoots);
                 }
-                const menuGenerationMax = CURRENT_FOCUS_PERSON_ID == null
-                    ? HOME_TOTAL_GENERATIONS
-                    : getMaxGenerationFromRoots(validRoots);
+                const menuGenerationMax = getMaxGenerationFromRoots(validRoots);
                 renderGenerationMenu(menuGenerationMax);
                 applyGenerationFilterAndRender();
                 if (centerAfterRender) {
@@ -2365,8 +2452,7 @@
                         return;
                     }
                     if (action === 'back-root') {
-                        CURRENT_FOCUS_PERSON_ID = null;
-                        loadRootPersons({ forceReload: false, center: true, centerBranchId: BRANCH_ID })
+                        resetFiltersAndBackToRoot()
                             .catch(function (err) {
                                 console.error('Back root reload failed:', err);
                                 requestTreeRender();
@@ -2430,15 +2516,25 @@
             const app = document.getElementById('ftApp');
             if (!contentArea || !scaleWrap) return;
             scaleWrap.style.transformOrigin = '0 0';
+            scaleWrap.style.willChange = 'transform';
 
             FT_VIEWPORT.scale = FT_VIEWPORT.initialized ? FT_VIEWPORT.scale : 1;
             FT_VIEWPORT.panX = FT_VIEWPORT.initialized ? FT_VIEWPORT.panX : 0;
             FT_VIEWPORT.panY = FT_VIEWPORT.initialized ? FT_VIEWPORT.panY : 0;
 
-            const minScale = 0.02;
-            const maxScale = 1.6;
+            const minScale = 0.005;
+            const maxScale = 2.2;
             let viewportRaf = 0;
             let interactionTimer = 0;
+            const clampScale = function (value) {
+                if (!Number.isFinite(value)) return FT_VIEWPORT.scale || 1;
+                return Math.min(maxScale, Math.max(minScale, value));
+            };
+            const clampPan = function (value) {
+                if (!Number.isFinite(value)) return 0;
+                const PAN_LIMIT = 10000000;
+                return Math.min(PAN_LIMIT, Math.max(-PAN_LIMIT, value));
+            };
 
             const setInteractingState = function () {
                 if (!app) return;
@@ -2451,7 +2547,10 @@
 
             const applyViewportNow = function () {
                 viewportRaf = 0;
-                scaleWrap.style.transform = 'translate(' + FT_VIEWPORT.panX.toFixed(2) + 'px,' + FT_VIEWPORT.panY.toFixed(2) + 'px) scale(' + FT_VIEWPORT.scale.toFixed(4) + ')';
+                FT_VIEWPORT.scale = clampScale(FT_VIEWPORT.scale);
+                FT_VIEWPORT.panX = clampPan(FT_VIEWPORT.panX);
+                FT_VIEWPORT.panY = clampPan(FT_VIEWPORT.panY);
+                scaleWrap.style.transform = 'translate(' + FT_VIEWPORT.panX + 'px,' + FT_VIEWPORT.panY + 'px) scale(' + FT_VIEWPORT.scale + ')';
             };
 
             FT_VIEWPORT.apply = function () {
@@ -2460,17 +2559,38 @@
             };
 
             const zoomAtPoint = function (nextScale, clientX, clientY) {
-                const clamped = Math.min(maxScale, Math.max(minScale, nextScale));
+                const clamped = clampScale(nextScale);
                 const areaRect = contentArea.getBoundingClientRect();
                 const localX = clientX - areaRect.left;
                 const localY = clientY - areaRect.top;
                 const worldX = (localX - FT_VIEWPORT.panX) / FT_VIEWPORT.scale;
                 const worldY = (localY - FT_VIEWPORT.panY) / FT_VIEWPORT.scale;
                 FT_VIEWPORT.scale = clamped;
-                FT_VIEWPORT.panX = localX - worldX * FT_VIEWPORT.scale;
-                FT_VIEWPORT.panY = localY - worldY * FT_VIEWPORT.scale;
+                FT_VIEWPORT.panX = clampPan(localX - worldX * FT_VIEWPORT.scale);
+                FT_VIEWPORT.panY = clampPan(localY - worldY * FT_VIEWPORT.scale);
                 setInteractingState();
                 FT_VIEWPORT.apply();
+            };
+
+            let pendingPanDx = 0;
+            let pendingPanDy = 0;
+            let panRaf = 0;
+            const flushPan = function () {
+                panRaf = 0;
+                if (!pendingPanDx && !pendingPanDy) return;
+                FT_VIEWPORT.panX += pendingPanDx;
+                FT_VIEWPORT.panY += pendingPanDy;
+                pendingPanDx = 0;
+                pendingPanDy = 0;
+                FT_VIEWPORT.apply();
+            };
+            const schedulePan = function (dx, dy) {
+                pendingPanDx += dx;
+                pendingPanDy += dy;
+                setInteractingState();
+                if (!panRaf) {
+                    panRaf = requestAnimationFrame(flushPan);
+                }
             };
 
             if (FT_VIEWPORT.initialized && contentArea.dataset.ftPanZoomBound === 'true') {
@@ -2484,11 +2604,20 @@
 
             contentArea.addEventListener('wheel', function (e) {
                 e.preventDefault();
-                const factor = Math.exp(-e.deltaY * 0.0015);
+                const wheelSensitivity = e.ctrlKey ? 0.0032 : 0.0024;
+                let factor = Math.exp(-e.deltaY * wheelSensitivity);
+                factor = Math.min(1.22, Math.max(0.82, factor));
+                if (FT_VIEWPORT.scale < 0.03 && factor > 1) {
+                    factor = Math.pow(factor, 1.25);
+                }
                 zoomAtPoint(FT_VIEWPORT.scale * factor, e.clientX, e.clientY);
             }, { passive: false });
+            contentArea.addEventListener('dragstart', function (e) {
+                e.preventDefault();
+            });
 
             let pinchState = null;
+            let touchPanState = null;
             function distance(t1, t2) {
                 const dx = t1.clientX - t2.clientX;
                 const dy = t1.clientY - t2.clientY;
@@ -2501,54 +2630,81 @@
                         centerX: (e.touches[0].clientX + e.touches[1].clientX) / 2,
                         centerY: (e.touches[0].clientY + e.touches[1].clientY) / 2
                     };
+                    touchPanState = null;
+                } else if (e.touches.length === 1) {
+                    touchPanState = {
+                        lastX: e.touches[0].clientX,
+                        lastY: e.touches[0].clientY,
+                        moved: false
+                    };
                 }
             }, { passive: true });
 
             contentArea.addEventListener('touchmove', function (e) {
-                if (!pinchState || e.touches.length !== 2) return;
-                e.preventDefault();
-                const newDist = distance(e.touches[0], e.touches[1]);
-                if (newDist <= 0) return;
-                const ratio = newDist / pinchState.dist;
-                pinchState.dist = newDist;
-                pinchState.centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                pinchState.centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                zoomAtPoint(FT_VIEWPORT.scale * ratio, pinchState.centerX, pinchState.centerY);
+                if (e.touches.length === 2 && pinchState) {
+                    e.preventDefault();
+                    const newDist = distance(e.touches[0], e.touches[1]);
+                    if (newDist <= 0) return;
+                    const ratio = newDist / pinchState.dist;
+                    let smoothRatio = Math.pow(ratio, 1.04);
+                    smoothRatio = Math.min(1.2, Math.max(0.84, smoothRatio));
+                    pinchState.dist = newDist;
+                    pinchState.centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    pinchState.centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    zoomAtPoint(FT_VIEWPORT.scale * smoothRatio, pinchState.centerX, pinchState.centerY);
+                    return;
+                }
+                if (e.touches.length === 1 && touchPanState && !pinchState) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const dx = (touch.clientX - touchPanState.lastX) * 1.25;
+                    const dy = (touch.clientY - touchPanState.lastY) * 1.25;
+                    if (Math.abs(dx) > 0.4 || Math.abs(dy) > 0.4) {
+                        touchPanState.moved = true;
+                        schedulePan(dx, dy);
+                    }
+                    touchPanState.lastX = touch.clientX;
+                    touchPanState.lastY = touch.clientY;
+                }
             }, { passive: false });
 
             contentArea.addEventListener('touchend', function (e) {
                 if (pinchState && e.touches && e.touches.length < 2) {
                     pinchState = null;
                 }
+                if (touchPanState && (!e.touches || e.touches.length === 0)) {
+                    if (touchPanState.moved) {
+                        FT_SUPPRESS_CLICK_UNTIL = Date.now() + 220;
+                    }
+                    touchPanState = null;
+                }
+            });
+            contentArea.addEventListener('touchcancel', function () {
+                pinchState = null;
+                touchPanState = null;
             });
 
             let dragging = false;
             let dragMoved = false;
             let panStarted = false;
+            let dragStartX = 0;
+            let dragStartY = 0;
             let lastX = 0;
             let lastY = 0;
-            let pendingPanDx = 0;
-            let pendingPanDy = 0;
-            let panRaf = 0;
-            const DRAG_THRESHOLD = 4;
-
-            const flushPan = function () {
-                panRaf = 0;
-                if (!pendingPanDx && !pendingPanDy) return;
-                FT_VIEWPORT.panX += pendingPanDx;
-                FT_VIEWPORT.panY += pendingPanDy;
-                pendingPanDx = 0;
-                pendingPanDy = 0;
-                FT_VIEWPORT.apply();
-            };
+            const DRAG_THRESHOLD = 1;
+            const PAN_SPEED = 1.18;
             contentArea.addEventListener('mousedown', function (e) {
                 if (e.button !== 0) return;
                 if (e.target.closest('.tree-action-menu') || e.target.closest('.tree-menu-toggle') || e.target.closest('[data-tree-action]')) return;
+                e.preventDefault();
                 dragging = true;
                 dragMoved = false;
                 panStarted = false;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
                 lastX = e.clientX;
                 lastY = e.clientY;
+                contentArea.style.cursor = 'grabbing';
             });
 
             window.addEventListener('mousemove', function (e) {
@@ -2562,23 +2718,17 @@
                 const dx = e.clientX - lastX;
                 const dy = e.clientY - lastY;
                 if (!panStarted) {
-                    const distX = e.clientX - lastX;
-                    const distY = e.clientY - lastY;
+                    const distX = e.clientX - dragStartX;
+                    const distY = e.clientY - dragStartY;
                     if (Math.abs(distX) < DRAG_THRESHOLD && Math.abs(distY) < DRAG_THRESHOLD) {
                         return;
                     }
                     panStarted = true;
-                    contentArea.style.cursor = 'grabbing';
                 }
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                     dragMoved = true;
                 }
-                pendingPanDx += dx;
-                pendingPanDy += dy;
-                setInteractingState();
-                if (!panRaf) {
-                    panRaf = requestAnimationFrame(flushPan);
-                }
+                schedulePan(dx * PAN_SPEED, dy * PAN_SPEED);
                 lastX = e.clientX;
                 lastY = e.clientY;
             });
@@ -2654,7 +2804,6 @@
             const todayIso = new Date().toISOString().slice(0, 10);
             dobInput.setAttribute('max', todayIso);
 
-            let filterDebounce = null;
             const applyAllFilters = function () {
                 CURRENT_NAME_FILTER = String(nameInput.value || '').trim();
                 const normalizedDob = normalizeDateFilterValue(dobInput.value);
@@ -2662,19 +2811,15 @@
                 if (String(dobInput.value || '').trim() && !normalizedDob) {
                     dobInput.value = '';
                 }
-                CURRENT_GENDER_FILTER = '';
-                CURRENT_LIFE_STATUS_FILTER = '';
-                CURRENT_BIRTH_YEAR_FROM = null;
-                CURRENT_BIRTH_YEAR_TO = null;
                 resetTreeViewport();
                 requestTreeRender();
             };
 
             const applyDebounced = function () {
-                if (filterDebounce) {
-                    clearTimeout(filterDebounce);
+                if (FT_FILTER_DEBOUNCE) {
+                    clearTimeout(FT_FILTER_DEBOUNCE);
                 }
-                filterDebounce = setTimeout(function () {
+                FT_FILTER_DEBOUNCE = setTimeout(function () {
                     applyAllFilters();
                 }, 120);
             };
@@ -2686,27 +2831,8 @@
                 dobInput.value = normalized || '';
             });
             resetBtn.addEventListener('click', async function () {
-                nameInput.value = '';
-                dobInput.value = '';
-                CURRENT_GENERATION_FILTER = null;
-                CURRENT_FOCUS_PERSON_ID = null;
-                CURRENT_NAME_FILTER = '';
-                CURRENT_DOB_FILTER = '';
-                CURRENT_GENDER_FILTER = '';
-                CURRENT_LIFE_STATUS_FILTER = '';
-                CURRENT_BIRTH_YEAR_FROM = null;
-                CURRENT_BIRTH_YEAR_TO = null;
-                const activeGenerationLabel = document.getElementById('activeGenerationLabel');
-                if (activeGenerationLabel) {
-                    activeGenerationLabel.textContent = 'Tất cả đời';
-                }
-                if (filterDebounce) {
-                    clearTimeout(filterDebounce);
-                    filterDebounce = null;
-                }
-                resetTreeViewport();
                 try {
-                    await loadRootPersons({ forceReload: false, center: true, centerBranchId: BRANCH_ID });
+                    await resetFiltersAndBackToRoot();
                 } catch (err) {
                     console.error('Reset reload failed:', err);
                     requestTreeRender();

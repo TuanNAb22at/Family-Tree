@@ -10,7 +10,7 @@
     <title>Livestream</title>
     <link rel="stylesheet" href="${livestreamCssUrl}">
 </head>
-<body>
+<body class="livestream-page">
 <div class="main-content">
     <div class="main-content-inner">
         <div class="breadcrumbs" id="breadcrumbs">

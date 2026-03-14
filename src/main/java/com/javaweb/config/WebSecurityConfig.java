@@ -57,7 +57,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                         .antMatchers
                                 (
-                                         "/admin/user-edit/**", "/admin/user-list"
+                                         "/admin/user-edit/**", "/admin/user-edit-*", "/admin/user-list"
                                 )
                         .hasRole("MANAGER")
                         .antMatchers(
@@ -80,6 +80,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(HttpMethod.PUT, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.DELETE, "/api/person/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.GET, "/api/person/**").hasAnyRole("MANAGER", "EDITOR", "USER")
+                        .antMatchers(HttpMethod.POST, "/api/branch/**").hasRole("MANAGER")
+                        .antMatchers(HttpMethod.GET, "/api/branch/**").hasAnyRole("MANAGER", "EDITOR", "USER")
                         .antMatchers(HttpMethod.POST, "/api/user").hasRole("MANAGER")
                         .antMatchers(HttpMethod.PUT, "/api/user/*").hasRole("MANAGER")
                         .antMatchers(HttpMethod.PUT, "/api/user/password/*/reset").hasRole("MANAGER")

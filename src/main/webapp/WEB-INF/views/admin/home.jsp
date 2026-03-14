@@ -169,7 +169,17 @@
                                     <tr>
                                         <td><security:authentication property="principal.username"/></td>
                                         <td>-</td>
-                                        <td><span class="role-badge">QTV</span></td>
+                                        <td>
+                                            <security:authorize access="hasRole('MANAGER')">
+                                                <span class="role-badge">QTV</span>
+                                            </security:authorize>
+                                            <security:authorize access="!hasRole('MANAGER') and hasRole('EDITOR')">
+                                                <span class="role-badge">EDITOR</span>
+                                            </security:authorize>
+                                            <security:authorize access="!hasRole('MANAGER') and !hasRole('EDITOR')">
+                                                <span class="role-badge">USER</span>
+                                            </security:authorize>
+                                        </td>
                                     </tr>
                                     </tbody>
                                 </table>

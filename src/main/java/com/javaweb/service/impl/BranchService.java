@@ -5,7 +5,6 @@ import com.javaweb.entity.BranchEntity;
 import com.javaweb.model.dto.BranchDTO;
 import com.javaweb.repository.BranchRepository;
 import com.javaweb.service.IBranchService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -15,14 +14,13 @@ import java.util.stream.Collectors;
 @Service
 public class BranchService implements IBranchService {
 
-    @Autowired
-    private BranchRepository branchRepository;
+    private final BranchRepository branchRepository;
 
-    @Autowired
-    private BranchConverter branchConverter;
+    private final BranchConverter branchConverter;
 
-    public BranchService(BranchRepository branchRepository) {
+    public BranchService(BranchRepository branchRepository, BranchConverter branchConverter) {
         this.branchRepository = branchRepository;
+        this.branchConverter = branchConverter;
     }
 
     @Override

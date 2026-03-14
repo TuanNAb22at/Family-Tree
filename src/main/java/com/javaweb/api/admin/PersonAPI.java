@@ -2,7 +2,6 @@ package com.javaweb.api.admin;
 
 import com.javaweb.model.dto.PersonDTO;
 import com.javaweb.service.IPersonService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +19,11 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/person")
 public class PersonAPI {
-    @Autowired
-    IPersonService iPersonService;
+    private final IPersonService iPersonService;
+
+    public PersonAPI(IPersonService iPersonService) {
+        this.iPersonService = iPersonService;
+    }
     @PostMapping
     public ResponseEntity<?> createPerson(@RequestBody PersonDTO personDTO) {
         try {
@@ -64,14 +66,6 @@ public class PersonAPI {
         return ResponseEntity.ok(iPersonService.findAttachablePersonsByBranchId(branchId, fullName, gender, dobValue));
     }
 
-    @GetMapping("/root")
-    public ResponseEntity<PersonDTO> getRootPerson(
-            @RequestParam(value = "branchId", defaultValue = "1") Long branchId
-    ) {
-        PersonDTO root = iPersonService.findRootPersonByBranchId(branchId);
-        return ResponseEntity.ok(root);
-    }
-
     @GetMapping("/roots")
     public ResponseEntity<List<PersonDTO>> getRootPersons(
             @RequestParam(value = "branchId", defaultValue = "1") Long branchId
@@ -93,19 +87,6 @@ public class PersonAPI {
         return ResponseEntity.ok(iPersonService.findMembersByBranchWithFilters(
                 branchId, generation, name, gender, lifeStatus, birthYearFrom, birthYearTo, focusPersonId
         ));
-    }
-
-    @PostMapping("/marriage/repair")
-    public ResponseEntity<?> repairMarriageLinks(
-            @RequestParam(value = "fromId") Long fromId,
-            @RequestParam(value = "toId") Long toId
-    ) {
-        try {
-            int fixed = iPersonService.repairMarriageLinks(fromId, toId);
-            return ResponseEntity.ok("Da sua " + fixed + " quan he hon nhan");
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
-        }
     }
 
     @PostMapping("/{id}/spouse")

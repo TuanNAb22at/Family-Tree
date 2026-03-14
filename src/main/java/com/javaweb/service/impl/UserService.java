@@ -137,6 +137,9 @@ public class UserService implements IUserService {
     @Override
     @Transactional
     public UserDTO insert(UserDTO newUser) {
+        if (!isCurrentUserManager()) {
+            throw new AccessDeniedException("access_denied");
+        }
         if (newUser == null) {
             throw new IllegalArgumentException("user_payload_invalid");
         }
@@ -206,6 +209,9 @@ public class UserService implements IUserService {
     @Override
     @Transactional
     public UserDTO update(Long id, UserDTO updateUser) {
+        if (!isCurrentUserManager()) {
+            throw new AccessDeniedException("access_denied");
+        }
         if (updateUser == null) {
             throw new IllegalArgumentException("user_payload_invalid");
         }

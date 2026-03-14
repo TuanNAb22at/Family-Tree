@@ -533,12 +533,15 @@
 /* ==== phado2-style tree nodes ==== */
 #ftApp #treeRoot {
     position: relative;
+    --connector-color: #d0d0d0;
+    --connector-width: 8px;
+    --connector-height: 84px;
 }
 #ftApp #treeRoot .ft-forest-root {
     margin-bottom: 18px;
 }
 #ftApp #treeRoot .ul-person {
-    padding-top: 28px;
+    padding-top: var(--connector-height);
     position: relative;
     display: flex;
     justify-content: center;
@@ -549,12 +552,20 @@
 }
 #ftApp #treeRoot > .ft-forest-root > .ul-person {
     min-width: 100%;
+    padding-top: 0;
+}
+#ftApp #treeRoot > .ft-forest-root > .ul-person > .li-person {
+    padding-top: 0;
+}
+#ftApp #treeRoot > .ft-forest-root > .ul-person > .li-person::before,
+#ftApp #treeRoot > .ft-forest-root > .ul-person > .li-person::after {
+    display: none !important;
 }
 #ftApp #treeRoot .li-person {
     list-style: none;
     text-align: center;
     position: relative;
-    padding: 28px 6px 0;
+    padding: var(--connector-height) 6px 0;
 }
 #ftApp #treeRoot .li-person::before,
 #ftApp #treeRoot .li-person::after {
@@ -562,29 +573,38 @@
     position: absolute;
     top: 0;
     right: 50%;
-    border-top: 3px solid rgba(80, 98, 128, 0.48);
+    border-top: var(--connector-width) solid var(--connector-color);
     width: 50%;
-    height: 28px;
+    height: var(--connector-height);
 }
 #ftApp #treeRoot .li-person::after {
     right: auto;
     left: 50%;
-    border-left: 3px solid rgba(80, 98, 128, 0.48);
+    border-left: var(--connector-width) solid var(--connector-color);
 }
 #ftApp #treeRoot .li-person:only-child::before,
 #ftApp #treeRoot .li-person:only-child::after {
     display: none;
+}
+#ftApp #treeRoot .ul-person > .li-person:only-child::before {
+    display: none;
+}
+#ftApp #treeRoot .ul-person > .li-person:only-child::after {
+    display: none;
+}
+#ftApp #treeRoot .ul-person > .li-person:only-child {
+    padding-top: 0;
 }
 #ftApp #treeRoot .li-person:first-child::before,
 #ftApp #treeRoot .li-person:last-child::after {
     border: 0 none;
 }
 #ftApp #treeRoot .li-person:last-child::before {
-    border-right: 3px solid rgba(80, 98, 128, 0.48);
-    border-radius: 0 6px 0 0;
+    border-right: var(--connector-width) solid var(--connector-color);
+    border-radius: 0;
 }
 #ftApp #treeRoot .li-person:first-child::after {
-    border-radius: 6px 0 0 0;
+    border-radius: 0;
 }
 #ftApp #treeRoot .ul-person .ul-person::before {
     content: "";
@@ -592,9 +612,9 @@
     top: 0;
     left: 50%;
     width: 0;
-    height: 28px;
-    border-left: 3px solid rgba(80, 98, 128, 0.48);
-    transform: translateX(-1.5px);
+    height: var(--connector-height);
+    border-left: var(--connector-width) solid var(--connector-color);
+    transform: translateX(calc(var(--connector-width) / -2));
 }
 #ftApp #treeRoot .li-person > .ul-person {
     margin-top: 8px;
@@ -620,6 +640,14 @@
     box-shadow: 0 2px 8px rgba(0,0,0,.11);
     padding: 8px 8px 9px;
     border: 1px solid rgba(255,255,255,.7);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+#ftApp #treeRoot .person-node * {
+    user-select: none;
+    -webkit-user-select: none;
 }
 #ftApp #treeRoot .person-node.male { background: #78bbea; }
 #ftApp #treeRoot .person-node.female { background: #e398dc; }
@@ -673,6 +701,9 @@
     display: block;
     margin: 16px auto 8px;
     background: rgba(229, 231, 235, 0.9);
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
 }
 #ftApp #treeRoot .name-phado {
     display: block;
@@ -728,9 +759,10 @@
 #ftApp #treeRoot .tree-action-menu {
     display: none;
     position: absolute;
-    left: 0;
-    top: 28px;
-    z-index: 30;
+    left: calc(100% + 8px);
+    right: auto;
+    top: 0;
+    z-index: 10020;
     min-width: 188px;
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -827,7 +859,7 @@
 #ftApp.ft-heavy #treeRoot .li-person::before,
 #ftApp.ft-heavy #treeRoot .li-person::after,
 #ftApp.ft-heavy #treeRoot .ul-person .ul-person::before {
-    border-width: 3px;
+    border-width: var(--connector-width);
 }
 
 
