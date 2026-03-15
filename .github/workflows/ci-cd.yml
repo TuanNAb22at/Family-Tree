@@ -77,6 +77,9 @@ jobs:
             LIVESTREAM_ICE_SERVERS_JSON=${{ secrets.LIVESTREAM_ICE_SERVERS_JSON }}
             EOF
 
+            # Cleanup legacy standalone containers from old deploy flow.
+            docker rm -f family-tree-app family-tree-mysql family-tree-nginx family-tree-coturn || true
+
             docker compose -f deploy/stack/docker-compose.ec2.yml --env-file .env pull
             docker compose -f deploy/stack/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
             docker compose -f deploy/stack/docker-compose.ec2.yml --env-file .env ps
