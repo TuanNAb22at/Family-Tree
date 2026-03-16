@@ -550,15 +550,18 @@
     width: max-content;
     min-width: max-content;
 }
-#ftApp #treeRoot > .ft-forest-root > .ul-person {
-    min-width: 100%;
+#ftApp #treeRoot > .ul-person.ft-forest-roots {
+    min-width: max-content;
+    padding-top: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 22px;
+}
+#ftApp #treeRoot > .ul-person.ft-forest-roots > .li-person {
     padding-top: 0;
 }
-#ftApp #treeRoot > .ft-forest-root > .ul-person > .li-person {
-    padding-top: 0;
-}
-#ftApp #treeRoot > .ft-forest-root > .ul-person > .li-person::before,
-#ftApp #treeRoot > .ft-forest-root > .ul-person > .li-person::after {
+#ftApp #treeRoot > .ul-person.ft-forest-roots > .li-person::before,
+#ftApp #treeRoot > .ul-person.ft-forest-roots > .li-person::after {
     display: none !important;
 }
 #ftApp #treeRoot .li-person {
@@ -618,6 +621,73 @@
 }
 #ftApp #treeRoot .li-person > .ul-person {
     margin-top: 8px;
+}
+#ftApp #treeRoot .ft-depth-cap-row {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 30px;
+}
+#ftApp #treeRoot .li-person.ft-depth-capped::before,
+#ftApp #treeRoot .li-person.ft-depth-capped::after {
+    display: none;
+}
+#ftApp #treeRoot .ft-overflow-lane {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-left: 26px;
+    margin-top: 4px;
+}
+#ftApp #treeRoot .ft-overflow-lane::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 86px;
+    width: 20px;
+    border-top: var(--connector-width) solid var(--connector-color);
+}
+#ftApp #treeRoot .ft-overflow-items {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+}
+#ftApp #treeRoot .ft-overflow-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+#ftApp #treeRoot .ft-overflow-item::before {
+    content: "";
+    position: absolute;
+    top: 24px;
+    left: -22px;
+    width: 22px;
+    border-top: var(--connector-width) solid var(--connector-color);
+}
+#ftApp #treeRoot .ft-overflow-item:first-child::before {
+    display: none;
+}
+#ftApp #treeRoot .ft-overflow-label,
+#ftApp #treeRoot .ft-overflow-generation {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.96);
+    border: 1px solid #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+#ftApp #treeRoot .ft-overflow-item .box-person {
+    margin-bottom: 0;
 }
 #ftApp #treeRoot .box-person {
     --node-width: 152px;
@@ -818,6 +888,24 @@
     }
     #ftApp #treeRoot .box-person.has-spouse {
         min-width: calc((var(--node-width) * 2) + var(--spouse-gap));
+    }
+    #ftApp #treeRoot .ft-depth-cap-row {
+        gap: 18px;
+        align-items: center;
+    }
+    #ftApp #treeRoot .ft-overflow-lane {
+        padding-left: 18px;
+    }
+    #ftApp #treeRoot .ft-overflow-lane::before {
+        top: 78px;
+        width: 14px;
+    }
+    #ftApp #treeRoot .ft-overflow-items {
+        gap: 14px;
+    }
+    #ftApp #treeRoot .ft-overflow-item::before {
+        left: -14px;
+        width: 14px;
     }
     #ftApp #treeRoot .box-person {
         --node-width: 136px;

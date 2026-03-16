@@ -1,5 +1,7 @@
 package com.javaweb.api.admin;
 
+import com.javaweb.familytree.dto.FamilyTreeAuditReport;
+import com.javaweb.familytree.service.FamilyTreeReadService;
 import com.javaweb.model.dto.PersonDTO;
 import com.javaweb.service.IPersonService;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +22,11 @@ import java.time.LocalDate;
 @RequestMapping("/api/person")
 public class PersonAPI {
     private final IPersonService iPersonService;
+    private final FamilyTreeReadService familyTreeReadService;
 
-    public PersonAPI(IPersonService iPersonService) {
+    public PersonAPI(IPersonService iPersonService, FamilyTreeReadService familyTreeReadService) {
         this.iPersonService = iPersonService;
+        this.familyTreeReadService = familyTreeReadService;
     }
     @PostMapping
     public ResponseEntity<?> createPerson(@RequestBody PersonDTO personDTO) {
@@ -42,7 +46,7 @@ public class PersonAPI {
     @GetMapping("/{id}")
     public ResponseEntity<?> getPersonById(@PathVariable("id") Long personId) {
         try {
-            return ResponseEntity.ok(iPersonService.findPersonById(personId));
+            return ResponseEntity.ok(familyTreeReadService.findPersonById(personId));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
@@ -70,7 +74,7 @@ public class PersonAPI {
     public ResponseEntity<List<PersonDTO>> getRootPersons(
             @RequestParam(value = "branchId", defaultValue = "1") Long branchId
     ) {
-        return ResponseEntity.ok(iPersonService.findRootPersonsByBranchId(branchId));
+        return ResponseEntity.ok(familyTreeReadService.findRootPersonsByBranchId(branchId));
     }
 
     @GetMapping("/members")
@@ -80,13 +84,29 @@ public class PersonAPI {
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "gender", required = false) String gender,
             @RequestParam(value = "lifeStatus", required = false) String lifeStatus,
+            @RequestParam(value = "dob", required = false) String dob,
             @RequestParam(value = "birthYearFrom", required = false) Integer birthYearFrom,
             @RequestParam(value = "birthYearTo", required = false) Integer birthYearTo,
             @RequestParam(value = "focusPersonId", required = false) Long focusPersonId
     ) {
-        return ResponseEntity.ok(iPersonService.findMembersByBranchWithFilters(
-                branchId, generation, name, gender, lifeStatus, birthYearFrom, birthYearTo, focusPersonId
+        LocalDate dobValue = null;
+        try {
+            if (dob != null && !dob.trim().isEmpty()) {
+                dobValue = LocalDate.parse(dob.trim());
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(familyTreeReadService.findMembersByBranchWithFilters(
+                branchId, generation, name, gender, lifeStatus, dobValue, birthYearFrom, birthYearTo, focusPersonId
         ));
+    }
+
+    @GetMapping("/audit")
+    public ResponseEntity<FamilyTreeAuditReport> auditFamilyTree(
+            @RequestParam(value = "branchId", defaultValue = "0") Long branchId
+    ) {
+        return ResponseEntity.ok(familyTreeReadService.audit(branchId));
     }
 
     @PostMapping("/{id}/spouse")

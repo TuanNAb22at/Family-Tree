@@ -222,7 +222,7 @@ public class PersonService implements IPersonService {
                 () -> new IllegalArgumentException("Parent not found: " + personId)
         );
         if (!isAllowedChildBranch(parent.getBranch())) {
-            throw new IllegalArgumentException("Chi duoc phep them con trong chi 1 hoac chi 2");
+            throw new IllegalArgumentException("Chi duoc phep them con cho thanh vien o chi goc hoac chi 1, 2");
         }
 
         PersonEntity child;
@@ -1313,7 +1313,15 @@ public class PersonService implements IPersonService {
             return false;
         }
         String name = branch.getName().trim();
-        return "1".equals(name) || "2".equals(name);
+        return isMainBranch(branch) || "1".equals(name) || "2".equals(name);
+    }
+
+    private boolean isMainBranch(BranchEntity branch) {
+        if (branch == null || branch.getName() == null) {
+            return false;
+        }
+        String normalized = branch.getName().trim().toLowerCase();
+        return "chinh".equals(normalized) || "main".equals(normalized);
     }
 
     private BranchEntity createNextNumberedBranch() {
