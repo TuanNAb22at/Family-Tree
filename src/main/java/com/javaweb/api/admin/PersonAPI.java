@@ -31,8 +31,7 @@ public class PersonAPI {
     @PostMapping
     public ResponseEntity<?> createPerson(@RequestBody PersonDTO personDTO) {
         try {
-            iPersonService.createPerson(personDTO);
-            return ResponseEntity.ok(personDTO);
+            return ResponseEntity.ok(iPersonService.createPerson(personDTO));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
@@ -72,14 +71,14 @@ public class PersonAPI {
 
     @GetMapping("/roots")
     public ResponseEntity<List<PersonDTO>> getRootPersons(
-            @RequestParam(value = "branchId", defaultValue = "1") Long branchId
+            @RequestParam(value = "branchId", defaultValue = "0") Long branchId
     ) {
         return ResponseEntity.ok(familyTreeReadService.findRootPersonsByBranchId(branchId));
     }
 
     @GetMapping("/members")
     public ResponseEntity<List<PersonDTO>> getMembersByFilters(
-            @RequestParam(value = "branchId", defaultValue = "1") Long branchId,
+            @RequestParam(value = "branchId", defaultValue = "0") Long branchId,
             @RequestParam(value = "generation", required = false) Integer generation,
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "gender", required = false) String gender,

@@ -1,6 +1,7 @@
 package com.javaweb.familytree.service;
 
 import com.javaweb.entity.PersonEntity;
+import com.javaweb.entity.SpouseRelationEntity;
 import com.javaweb.familytree.domain.FamilyMember;
 import com.javaweb.familytree.domain.FamilyTreeNode;
 import com.javaweb.familytree.domain.ParentChildRelation;
@@ -10,6 +11,8 @@ import com.javaweb.familytree.dto.FamilyTreeAuditIssue;
 import com.javaweb.familytree.dto.FamilyTreeAuditReport;
 import com.javaweb.model.dto.PersonDTO;
 import com.javaweb.repository.PersonRepository;
+import com.javaweb.repository.SpouseRelationRepository;
+import com.javaweb.utils.FamilyTreeBranchUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,9 +38,17 @@ import java.util.stream.Collectors;
 @Service
 public class FamilyTreeReadService {
     private final PersonRepository personRepository;
+    private final SpouseRelationRepository spouseRelationRepository;
+    private volatile Dataset cachedDataset;
 
-    public FamilyTreeReadService(PersonRepository personRepository) {
+    public FamilyTreeReadService(PersonRepository personRepository,
+                                 SpouseRelationRepository spouseRelationRepository) {
         this.personRepository = personRepository;
+        this.spouseRelationRepository = spouseRelationRepository;
+    }
+
+    public void evictCache() {
+        cachedDataset = null;
     }
 
     @Transactional(readOnly = true)
@@ -53,7 +64,7 @@ public class FamilyTreeReadService {
         }
 
         PersonDTO dto = toBasePersonDto(member);
-        bindSpouse(dto, resolveNormalizedSpouse(member, dataset));
+        bindSpouses(dto, resolveNormalizedSpouses(member, dataset));
 
         List<PersonDTO> children = dataset.childIdsByParentId
                 .getOrDefault(personId, Collections.emptyList())
@@ -182,7 +193,23 @@ public class FamilyTreeReadService {
     }
 
     private Dataset loadDataset() {
+        Dataset snapshot = cachedDataset;
+        if (snapshot != null) {
+            return snapshot;
+        }
+        synchronized (this) {
+            if (cachedDataset != null) {
+                return cachedDataset;
+            }
+            Dataset built = buildDataset();
+            cachedDataset = built;
+            return built;
+        }
+    }
+
+    private Dataset buildDataset() {
         List<PersonEntity> entities = personRepository.findAllWithRelations();
+        List<SpouseRelationEntity> spouseRelationEntities = spouseRelationRepository.findAllByOrderByRelationOrderAscIdAsc();
         Map<Long, FamilyMember> membersById = new LinkedHashMap<>();
         for (PersonEntity entity : entities) {
             if (entity == null || entity.getId() == null) {
@@ -216,7 +243,11 @@ public class FamilyTreeReadService {
 
         detectDuplicateMembers(membersById, issueCollector);
         buildParentChildRelations(membersById, parentChildRelations, childrenByParentId, issueCollector);
-        SpouseNormalization spouseNormalization = normalizeSpouseRelations(membersById, issueCollector);
+        SpouseNormalization spouseNormalization = normalizeSpouseRelations(
+                membersById,
+                spouseRelationEntities,
+                issueCollector
+        );
         detectLineageCycles(childrenByParentId, issueCollector);
 
         Map<Long, List<Long>> childIdsByParentId = new LinkedHashMap<>();
@@ -229,7 +260,8 @@ public class FamilyTreeReadService {
         return new Dataset(
                 membersById,
                 childIdsByParentId,
-                spouseNormalization.spouseByPersonId,
+                spouseNormalization.spouseIdsByPersonId,
+                spouseNormalization.relationsByPersonId,
                 parentChildRelations,
                 spouseNormalization.relations,
                 issueCollector.toList()
@@ -331,9 +363,32 @@ public class FamilyTreeReadService {
     }
 
     private SpouseNormalization normalizeSpouseRelations(Map<Long, FamilyMember> membersById,
+                                                         List<SpouseRelationEntity> spouseRelationEntities,
                                                          IssueCollector issueCollector) {
+        Map<String, SpouseRelation> relationsByPairKey = new LinkedHashMap<>();
+        List<FamilyMember> orderedMembers = new ArrayList<>(membersById.values());
+        orderedMembers.sort(memberComparator());
+
+        for (SpouseRelationEntity entity : spouseRelationEntities) {
+            if (entity == null) {
+                continue;
+            }
+            Long leftId = entity.getLeftPerson() != null ? entity.getLeftPerson().getId() : null;
+            Long rightId = entity.getRightPerson() != null ? entity.getRightPerson().getId() : null;
+            addResolvedSpouseRelation(
+                    leftId,
+                    rightId,
+                    entity.getRelationOrder(),
+                    normalizeOptionalText(entity.getRelationLabel()),
+                    false,
+                    relationsByPairKey,
+                    membersById,
+                    issueCollector
+            );
+        }
+
         Map<Long, List<Long>> claimantsByTargetId = new LinkedHashMap<>();
-        for (FamilyMember member : membersById.values()) {
+        for (FamilyMember member : orderedMembers) {
             if (member == null || member.getId() == null || member.getSpouseId() == null) {
                 continue;
             }
@@ -358,20 +413,11 @@ public class FamilyTreeReadService {
             claimantsByTargetId.computeIfAbsent(member.getSpouseId(), ignored -> new ArrayList<>()).add(member.getId());
         }
 
-        Map<Long, Long> spouseByPersonId = new LinkedHashMap<>();
-        List<SpouseRelation> relations = new ArrayList<>();
-        Set<Long> consumed = new LinkedHashSet<>();
-
-        List<FamilyMember> orderedMembers = new ArrayList<>(membersById.values());
-        orderedMembers.sort(memberComparator());
         for (FamilyMember member : orderedMembers) {
-            if (member == null || member.getId() == null || consumed.contains(member.getId())) {
+            if (member == null || member.getId() == null || member.getSpouseId() == null) {
                 continue;
             }
             Long spouseId = member.getSpouseId();
-            if (spouseId == null) {
-                continue;
-            }
             FamilyMember spouse = membersById.get(spouseId);
             if (spouse == null) {
                 continue;
@@ -392,21 +438,36 @@ public class FamilyTreeReadService {
                 continue;
             }
 
-            spouseByPersonId.put(member.getId(), spouseId);
-            spouseByPersonId.put(spouseId, member.getId());
-            consumed.add(member.getId());
-            consumed.add(spouseId);
-
-            Long leftId = Math.min(member.getId(), spouseId);
-            Long rightId = Math.max(member.getId(), spouseId);
-            relations.add(new SpouseRelation(leftId, rightId, inferred));
+            addResolvedSpouseRelation(
+                    member.getId(),
+                    spouseId,
+                    null,
+                    null,
+                    inferred,
+                    relationsByPairKey,
+                    membersById,
+                    issueCollector
+            );
         }
 
+        List<SpouseRelation> relations = new ArrayList<>(relationsByPairKey.values());
         relations.sort(Comparator
-                .comparing(SpouseRelation::getLeftPersonId, Comparator.nullsLast(Long::compareTo))
+                .comparing(SpouseRelation::getRelationOrder, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(SpouseRelation::getLeftPersonId, Comparator.nullsLast(Long::compareTo))
                 .thenComparing(SpouseRelation::getRightPersonId, Comparator.nullsLast(Long::compareTo)));
 
-        return new SpouseNormalization(spouseByPersonId, relations);
+        Map<Long, List<Long>> spouseIdsByPersonId = new LinkedHashMap<>();
+        Map<Long, List<SpouseRelation>> relationsByPersonId = new LinkedHashMap<>();
+        for (SpouseRelation relation : relations) {
+            addRelationToPersonIndex(relation.getLeftPersonId(), relation, spouseIdsByPersonId, relationsByPersonId);
+            addRelationToPersonIndex(relation.getRightPersonId(), relation, spouseIdsByPersonId, relationsByPersonId);
+        }
+
+        for (Map.Entry<Long, List<Long>> entry : spouseIdsByPersonId.entrySet()) {
+            entry.getValue().sort(spouseIdComparator(entry.getKey(), relationsByPersonId, membersById));
+        }
+
+        return new SpouseNormalization(spouseIdsByPersonId, relationsByPersonId, relations);
     }
 
     private void detectDuplicateMembers(Map<Long, FamilyMember> membersById, IssueCollector issueCollector) {
@@ -519,19 +580,18 @@ public class FamilyTreeReadService {
                 continue;
             }
 
-            Long spouseId = dataset.spouseByPersonId.get(member.getId());
-            FamilyMember spouse = spouseId == null ? null : dataset.membersById.get(spouseId);
-            boolean spouseInScope = spouse != null && scopedMemberIds.contains(spouse.getId());
+            List<FamilyMember> componentMembers = collectSpouseComponent(member, dataset, scopedMemberIds);
+            FamilyMember primary = choosePrimaryMember(componentMembers, scopedMemberIds);
+            List<FamilyMember> spouseMembers = componentMembers.stream()
+                    .filter(candidate -> candidate != null && !Objects.equals(candidate.getId(), primary.getId()))
+                    .sorted(spouseMemberComparator(primary, dataset))
+                    .collect(Collectors.toList());
 
-            if (spouseInScope) {
-                FamilyMember primary = choosePrimaryMember(member, spouse, scopedMemberIds);
-                FamilyMember secondary = Objects.equals(primary.getId(), member.getId()) ? spouse : member;
-                nodesByAnchorId.put(primary.getId(), new FamilyTreeNode(primary.getId(), primary, secondary));
-                anchorIdByMemberId.put(primary.getId(), primary.getId());
-                anchorIdByMemberId.put(secondary.getId(), primary.getId());
-            } else {
-                nodesByAnchorId.put(member.getId(), new FamilyTreeNode(member.getId(), member, spouse));
-                anchorIdByMemberId.put(member.getId(), member.getId());
+            nodesByAnchorId.put(primary.getId(), new FamilyTreeNode(primary.getId(), primary, spouseMembers));
+            for (FamilyMember componentMember : componentMembers) {
+                if (componentMember != null && componentMember.getId() != null) {
+                    anchorIdByMemberId.put(componentMember.getId(), primary.getId());
+                }
             }
         }
 
@@ -570,34 +630,16 @@ public class FamilyTreeReadService {
         return new BranchView(nodesByAnchorId, anchorIdByMemberId, rootAnchorIds, scopedMemberIds);
     }
 
-    private FamilyMember choosePrimaryMember(FamilyMember left,
-                                             FamilyMember right,
+    private FamilyMember choosePrimaryMember(List<FamilyMember> members,
                                              Set<Long> scopedMemberIds) {
-        int leftLineageScore = lineageScore(left, scopedMemberIds);
-        int rightLineageScore = lineageScore(right, scopedMemberIds);
-        if (leftLineageScore != rightLineageScore) {
-            return leftLineageScore > rightLineageScore ? left : right;
-        }
-
-        boolean leftMale = "male".equals(left.getGender());
-        boolean rightMale = "male".equals(right.getGender());
-        if (leftMale != rightMale) {
-            return leftMale ? left : right;
-        }
-
-        Integer leftGeneration = left.getGeneration();
-        Integer rightGeneration = right.getGeneration();
-        if (!Objects.equals(leftGeneration, rightGeneration)) {
-            if (leftGeneration == null) {
-                return right;
-            }
-            if (rightGeneration == null) {
-                return left;
-            }
-            return leftGeneration <= rightGeneration ? left : right;
-        }
-
-        return left.getId() <= right.getId() ? left : right;
+        return members.stream()
+                .filter(Objects::nonNull)
+                .min(Comparator
+                        .comparingInt((FamilyMember member) -> -lineageScore(member, scopedMemberIds))
+                        .thenComparing(member -> !"male".equals(member.getGender()))
+                        .thenComparing(member -> member.getGeneration() == null ? Integer.MAX_VALUE : member.getGeneration())
+                        .thenComparing(member -> member.getId() == null ? Long.MAX_VALUE : member.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Unable to resolve tree node primary member"));
     }
 
     private int lineageScore(FamilyMember member, Set<Long> scopedMemberIds) {
@@ -619,8 +661,10 @@ public class FamilyTreeReadService {
                                        Set<Long> scopedMemberIds) {
         LinkedHashSet<Long> candidateAnchorIds = new LinkedHashSet<>();
         collectParentAnchorIds(node.getPrimaryMember(), anchorIdByMemberId, candidateAnchorIds);
-        if (node.getSpouseMember() != null && scopedMemberIds.contains(node.getSpouseMember().getId())) {
-            collectParentAnchorIds(node.getSpouseMember(), anchorIdByMemberId, candidateAnchorIds);
+        for (FamilyMember spouseMember : node.getSpouseMembers()) {
+            if (spouseMember != null && scopedMemberIds.contains(spouseMember.getId())) {
+                collectParentAnchorIds(spouseMember, anchorIdByMemberId, candidateAnchorIds);
+            }
         }
         candidateAnchorIds.remove(node.getAnchorPersonId());
         return candidateAnchorIds.isEmpty() ? null : candidateAnchorIds.iterator().next();
@@ -695,7 +739,7 @@ public class FamilyTreeReadService {
             }
 
             PersonDTO dto = toBasePersonDto(node.getPrimaryMember());
-            bindSpouse(dto, node.getSpouseMember());
+            bindSpouses(dto, node.getSpouseMembers());
 
             List<PersonDTO> children = new ArrayList<>();
             for (Long childAnchorId : node.getChildAnchorIds()) {
@@ -781,7 +825,7 @@ public class FamilyTreeReadService {
 
         if (generation != null) {
             boolean generationMatched = Objects.equals(member.getGeneration(), generation)
-                    || Objects.equals(member.getSpouseGeneration(), generation);
+                    || member.getSpouses().stream().anyMatch(spouse -> Objects.equals(spouse.getGeneration(), generation));
             if (!generationMatched) {
                 return false;
             }
@@ -789,14 +833,12 @@ public class FamilyTreeReadService {
 
         List<CandidateSnapshot> candidates = new ArrayList<>();
         candidates.add(new CandidateSnapshot(member.getFullName(), member.getGender(), member.getDob(), member.getDod()));
-        if (member.getSpouseId() != null) {
-            candidates.add(new CandidateSnapshot(
-                    member.getSpouseFullName(),
-                    member.getSpouseGender(),
-                    member.getSpouseDob(),
-                    member.getSpouseDod()
-            ));
-        }
+        member.getSpouses().forEach(spouse -> candidates.add(new CandidateSnapshot(
+                spouse.getFullName(),
+                spouse.getGender(),
+                spouse.getDob(),
+                spouse.getDod()
+        )));
 
         if (normalizedName != null && !normalizedName.isEmpty()) {
             boolean nameMatched = candidates.stream()
@@ -887,51 +929,251 @@ public class FamilyTreeReadService {
         dto.setMotherId(member.getMotherId());
         dto.setBranch(member.getBranchId() == null ? null : String.valueOf(member.getBranchId()));
         dto.setBranchName(member.getBranchName());
+        dto.setSpouses(new ArrayList<PersonDTO>());
         dto.setChildren(new ArrayList<PersonDTO>());
         dto.setChildrenIds(new ArrayList<Long>());
         return dto;
     }
 
-    private void bindSpouse(PersonDTO dto, FamilyMember spouse) {
+    private void bindSpouses(PersonDTO dto, List<FamilyMember> spouses) {
         if (dto == null) {
             return;
         }
-        if (spouse == null || spouse.getId() == null) {
-            dto.setSpouseId(null);
-            dto.setSpouseFullName(null);
-            dto.setSpouseGender(null);
-            dto.setSpouseGeneration(null);
-            dto.setSpouseBranchName(null);
-            dto.setSpouseAvatar(null);
-            dto.setSpouseDob(null);
-            dto.setSpouseDod(null);
-            dto.setSpouseHometown(null);
-            dto.setSpouseCurrentResidence(null);
-            dto.setSpouseOccupation(null);
-            dto.setSpouseOtherNote(null);
+        dto.setSpouses(new ArrayList<PersonDTO>());
+        if (spouses == null || spouses.isEmpty()) {
+            clearPrimarySpouseFields(dto);
             return;
         }
 
-        dto.setSpouseId(spouse.getId());
-        dto.setSpouseFullName(spouse.getFullName());
-        dto.setSpouseGender(spouse.getGender());
-        dto.setSpouseGeneration(spouse.getGeneration());
-        dto.setSpouseBranchName(spouse.getBranchName());
-        dto.setSpouseAvatar(spouse.getAvatar());
-        dto.setSpouseDob(spouse.getDob());
-        dto.setSpouseDod(spouse.getDod());
-        dto.setSpouseHometown(spouse.getHometown());
-        dto.setSpouseCurrentResidence(spouse.getCurrentResidence());
-        dto.setSpouseOccupation(spouse.getOccupation());
-        dto.setSpouseOtherNote(spouse.getOtherNote());
+        List<PersonDTO> spouseDtos = spouses.stream()
+                .filter(spouse -> spouse != null && spouse.getId() != null)
+                .map(spouse -> toSpouseDto(spouse, dto))
+                .collect(Collectors.toList());
+        dto.setSpouses(spouseDtos);
+
+        PersonDTO primarySpouse = spouseDtos.isEmpty() ? null : spouseDtos.get(0);
+        if (primarySpouse == null || primarySpouse.getId() == null) {
+            clearPrimarySpouseFields(dto);
+            return;
+        }
+
+        dto.setSpouseId(primarySpouse.getId());
+        dto.setSpouseFullName(primarySpouse.getFullName());
+        dto.setSpouseGender(primarySpouse.getGender());
+        dto.setSpouseGeneration(primarySpouse.getGeneration());
+        dto.setSpouseBranchName(primarySpouse.getBranchName());
+        dto.setSpouseAvatar(primarySpouse.getAvatar());
+        dto.setSpouseDob(primarySpouse.getDob());
+        dto.setSpouseDod(primarySpouse.getDod());
+        dto.setSpouseHometown(primarySpouse.getHometown());
+        dto.setSpouseCurrentResidence(primarySpouse.getCurrentResidence());
+        dto.setSpouseOccupation(primarySpouse.getOccupation());
+        dto.setSpouseOtherNote(primarySpouse.getOtherNote());
     }
 
-    private FamilyMember resolveNormalizedSpouse(FamilyMember member, Dataset dataset) {
+    private void clearPrimarySpouseFields(PersonDTO dto) {
+        if (dto == null) {
+            return;
+        }
+        dto.setSpouseId(null);
+        dto.setSpouseFullName(null);
+        dto.setSpouseGender(null);
+        dto.setSpouseGeneration(null);
+        dto.setSpouseBranchName(null);
+        dto.setSpouseAvatar(null);
+        dto.setSpouseDob(null);
+        dto.setSpouseDod(null);
+        dto.setSpouseHometown(null);
+        dto.setSpouseCurrentResidence(null);
+        dto.setSpouseOccupation(null);
+        dto.setSpouseOtherNote(null);
+    }
+
+    private PersonDTO toSpouseDto(FamilyMember spouse, PersonDTO anchor) {
+        PersonDTO dto = toBasePersonDto(spouse);
+        dto.setChildren(new ArrayList<PersonDTO>());
+        dto.setChildrenIds(new ArrayList<Long>());
+        dto.setSpouses(new ArrayList<PersonDTO>());
+        if (anchor != null && anchor.getId() != null) {
+            dto.setSpouseId(anchor.getId());
+            dto.setSpouseFullName(anchor.getFullName());
+            dto.setSpouseGender(anchor.getGender());
+            dto.setSpouseGeneration(anchor.getGeneration());
+            dto.setSpouseBranchName(anchor.getBranchName());
+            dto.setSpouseAvatar(anchor.getAvatar());
+            dto.setSpouseDob(anchor.getDob());
+            dto.setSpouseDod(anchor.getDod());
+            dto.setSpouseHometown(anchor.getHometown());
+            dto.setSpouseCurrentResidence(anchor.getCurrentResidence());
+            dto.setSpouseOccupation(anchor.getOccupation());
+            dto.setSpouseOtherNote(anchor.getOtherNote());
+        } else {
+            clearPrimarySpouseFields(dto);
+        }
+        return dto;
+    }
+
+    private List<FamilyMember> resolveNormalizedSpouses(FamilyMember member, Dataset dataset) {
         if (member == null || member.getId() == null) {
+            return new ArrayList<>();
+        }
+        return dataset.spouseIdsByPersonId.getOrDefault(member.getId(), Collections.emptyList())
+                .stream()
+                .map(dataset.membersById::get)
+                .filter(Objects::nonNull)
+                .sorted(spouseMemberComparator(member, dataset))
+                .collect(Collectors.toList());
+    }
+
+    private List<FamilyMember> collectSpouseComponent(FamilyMember seed,
+                                                      Dataset dataset,
+                                                      Set<Long> scopedMemberIds) {
+        if (seed == null || seed.getId() == null) {
+            return new ArrayList<>();
+        }
+        LinkedHashSet<Long> componentIds = new LinkedHashSet<>();
+        Deque<Long> queue = new ArrayDeque<>();
+        queue.add(seed.getId());
+
+        while (!queue.isEmpty()) {
+            Long currentId = queue.removeFirst();
+            if (currentId == null || !scopedMemberIds.contains(currentId) || !componentIds.add(currentId)) {
+                continue;
+            }
+            for (Long spouseId : dataset.spouseIdsByPersonId.getOrDefault(currentId, Collections.emptyList())) {
+                if (spouseId != null && scopedMemberIds.contains(spouseId) && !componentIds.contains(spouseId)) {
+                    queue.addLast(spouseId);
+                }
+            }
+        }
+
+        if (componentIds.isEmpty()) {
+            componentIds.add(seed.getId());
+        }
+
+        return componentIds.stream()
+                .map(dataset.membersById::get)
+                .filter(Objects::nonNull)
+                .sorted(memberComparator())
+                .collect(Collectors.toList());
+    }
+
+    private void addResolvedSpouseRelation(Long rawLeftId,
+                                           Long rawRightId,
+                                           Integer relationOrder,
+                                           String relationLabel,
+                                           boolean inferred,
+                                           Map<String, SpouseRelation> relationsByPairKey,
+                                           Map<Long, FamilyMember> membersById,
+                                           IssueCollector issueCollector) {
+        if (rawLeftId == null || rawRightId == null) {
+            return;
+        }
+        if (Objects.equals(rawLeftId, rawRightId)) {
+            issueCollector.add(
+                    "ERROR",
+                    "self_spouse_reference",
+                    "Member cannot reference itself as spouse",
+                    Arrays.asList(rawLeftId)
+            );
+            return;
+        }
+        if (!membersById.containsKey(rawLeftId) || !membersById.containsKey(rawRightId)) {
+            issueCollector.add(
+                    "ERROR",
+                    "orphan_spouse_reference",
+                    "Spouse reference does not exist in person dataset",
+                    Arrays.asList(rawLeftId, rawRightId)
+            );
+            return;
+        }
+
+        Long leftId = Math.min(rawLeftId, rawRightId);
+        Long rightId = Math.max(rawLeftId, rawRightId);
+        String pairKey = spousePairKey(leftId, rightId);
+        SpouseRelation existing = relationsByPairKey.get(pairKey);
+        if (existing == null) {
+            relationsByPairKey.put(pairKey, new SpouseRelation(leftId, rightId, relationOrder, relationLabel, inferred));
+            return;
+        }
+
+        Integer mergedOrder = existing.getRelationOrder() != null ? existing.getRelationOrder() : relationOrder;
+        String mergedLabel = existing.getRelationLabel() != null ? existing.getRelationLabel() : relationLabel;
+        relationsByPairKey.put(pairKey, new SpouseRelation(
+                leftId,
+                rightId,
+                mergedOrder,
+                mergedLabel,
+                existing.isInferred() && inferred
+        ));
+    }
+
+    private void addRelationToPersonIndex(Long personId,
+                                          SpouseRelation relation,
+                                          Map<Long, List<Long>> spouseIdsByPersonId,
+                                          Map<Long, List<SpouseRelation>> relationsByPersonId) {
+        if (personId == null || relation == null) {
+            return;
+        }
+        Long spouseId = Objects.equals(personId, relation.getLeftPersonId())
+                ? relation.getRightPersonId()
+                : relation.getLeftPersonId();
+        if (spouseId == null) {
+            return;
+        }
+        spouseIdsByPersonId.computeIfAbsent(personId, ignored -> new ArrayList<>());
+        if (!spouseIdsByPersonId.get(personId).contains(spouseId)) {
+            spouseIdsByPersonId.get(personId).add(spouseId);
+        }
+        relationsByPersonId.computeIfAbsent(personId, ignored -> new ArrayList<>()).add(relation);
+    }
+
+    private Comparator<FamilyMember> spouseMemberComparator(FamilyMember anchor, Dataset dataset) {
+        return Comparator
+                .comparing((FamilyMember spouse) -> spouseRelationOrder(anchor, spouse, dataset), Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(memberComparator());
+    }
+
+    private Comparator<Long> spouseIdComparator(Long anchorId,
+                                                Map<Long, List<SpouseRelation>> relationsByPersonId,
+                                                Map<Long, FamilyMember> membersById) {
+        FamilyMember anchor = membersById.get(anchorId);
+        return Comparator
+                .comparing((Long spouseId) -> spouseRelationOrder(anchorId, spouseId, relationsByPersonId), Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(spouseId -> membersById.get(spouseId), Comparator.nullsLast(memberComparator()));
+    }
+
+    private Integer spouseRelationOrder(FamilyMember anchor, FamilyMember spouse, Dataset dataset) {
+        if (anchor == null || spouse == null) {
             return null;
         }
-        Long spouseId = dataset.spouseByPersonId.get(member.getId());
-        return spouseId == null ? null : dataset.membersById.get(spouseId);
+        return spouseRelationOrder(anchor.getId(), spouse.getId(), dataset.spouseRelationsByPersonId);
+    }
+
+    private Integer spouseRelationOrder(Long anchorId,
+                                        Long spouseId,
+                                        Map<Long, List<SpouseRelation>> relationsByPersonId) {
+        if (anchorId == null || spouseId == null) {
+            return null;
+        }
+        return relationsByPersonId.getOrDefault(anchorId, Collections.emptyList()).stream()
+                .filter(relation -> spousePairContains(relation, anchorId, spouseId))
+                .map(SpouseRelation::getRelationOrder)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean spousePairContains(SpouseRelation relation, Long leftId, Long rightId) {
+        if (relation == null || leftId == null || rightId == null) {
+            return false;
+        }
+        return (Objects.equals(relation.getLeftPersonId(), leftId) && Objects.equals(relation.getRightPersonId(), rightId))
+                || (Objects.equals(relation.getLeftPersonId(), rightId) && Objects.equals(relation.getRightPersonId(), leftId));
+    }
+
+    private String spousePairKey(Long leftId, Long rightId) {
+        return String.valueOf(leftId) + ":" + String.valueOf(rightId);
     }
 
     private boolean appliesToScope(FamilyTreeAuditIssue issue, Set<Long> scopedMemberIds) {
@@ -1045,18 +1287,7 @@ public class FamilyTreeReadService {
     }
 
     private int branchOrder(String branchName) {
-        String normalized = normalizeSimpleText(branchName);
-        if (normalized == null || normalized.isEmpty()) {
-            return Integer.MAX_VALUE;
-        }
-        if ("chinh".equals(normalized) || "main".equals(normalized)) {
-            return 0;
-        }
-        try {
-            return Integer.parseInt(normalized);
-        } catch (NumberFormatException ignored) {
-            return Integer.MAX_VALUE - 1;
-        }
+        return FamilyTreeBranchUtils.branchOrder(branchName);
     }
 
     private String normalizeOptionalText(String value) {
@@ -1129,20 +1360,23 @@ public class FamilyTreeReadService {
     private static final class Dataset {
         private final Map<Long, FamilyMember> membersById;
         private final Map<Long, List<Long>> childIdsByParentId;
-        private final Map<Long, Long> spouseByPersonId;
+        private final Map<Long, List<Long>> spouseIdsByPersonId;
+        private final Map<Long, List<SpouseRelation>> spouseRelationsByPersonId;
         private final List<ParentChildRelation> parentChildRelations;
         private final List<SpouseRelation> spouseRelations;
         private final List<FamilyTreeAuditIssue> issues;
 
         private Dataset(Map<Long, FamilyMember> membersById,
                         Map<Long, List<Long>> childIdsByParentId,
-                        Map<Long, Long> spouseByPersonId,
+                        Map<Long, List<Long>> spouseIdsByPersonId,
+                        Map<Long, List<SpouseRelation>> spouseRelationsByPersonId,
                         List<ParentChildRelation> parentChildRelations,
                         List<SpouseRelation> spouseRelations,
                         List<FamilyTreeAuditIssue> issues) {
             this.membersById = membersById;
             this.childIdsByParentId = childIdsByParentId;
-            this.spouseByPersonId = spouseByPersonId;
+            this.spouseIdsByPersonId = spouseIdsByPersonId;
+            this.spouseRelationsByPersonId = spouseRelationsByPersonId;
             this.parentChildRelations = parentChildRelations;
             this.spouseRelations = spouseRelations;
             this.issues = issues;
@@ -1167,11 +1401,15 @@ public class FamilyTreeReadService {
     }
 
     private static final class SpouseNormalization {
-        private final Map<Long, Long> spouseByPersonId;
+        private final Map<Long, List<Long>> spouseIdsByPersonId;
+        private final Map<Long, List<SpouseRelation>> relationsByPersonId;
         private final List<SpouseRelation> relations;
 
-        private SpouseNormalization(Map<Long, Long> spouseByPersonId, List<SpouseRelation> relations) {
-            this.spouseByPersonId = spouseByPersonId;
+        private SpouseNormalization(Map<Long, List<Long>> spouseIdsByPersonId,
+                                    Map<Long, List<SpouseRelation>> relationsByPersonId,
+                                    List<SpouseRelation> relations) {
+            this.spouseIdsByPersonId = spouseIdsByPersonId;
+            this.relationsByPersonId = relationsByPersonId;
             this.relations = relations;
         }
     }

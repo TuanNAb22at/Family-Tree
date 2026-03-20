@@ -7,13 +7,15 @@ import java.util.List;
 public final class FamilyTreeNode {
     private final Long anchorPersonId;
     private final FamilyMember primaryMember;
-    private final FamilyMember spouseMember;
+    private final List<FamilyMember> spouseMembers = new ArrayList<>();
     private final List<Long> childAnchorIds = new ArrayList<>();
 
-    public FamilyTreeNode(Long anchorPersonId, FamilyMember primaryMember, FamilyMember spouseMember) {
+    public FamilyTreeNode(Long anchorPersonId, FamilyMember primaryMember, List<FamilyMember> spouseMembers) {
         this.anchorPersonId = anchorPersonId;
         this.primaryMember = primaryMember;
-        this.spouseMember = spouseMember;
+        if (spouseMembers != null) {
+            this.spouseMembers.addAll(spouseMembers);
+        }
     }
 
     public Long getAnchorPersonId() {
@@ -24,8 +26,8 @@ public final class FamilyTreeNode {
         return primaryMember;
     }
 
-    public FamilyMember getSpouseMember() {
-        return spouseMember;
+    public List<FamilyMember> getSpouseMembers() {
+        return Collections.unmodifiableList(spouseMembers);
     }
 
     public List<Long> getChildAnchorIds() {
