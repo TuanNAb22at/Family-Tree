@@ -33,6 +33,7 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
     private String spouseCurrentResidence;
     private String spouseOccupation;
     private String spouseOtherNote;
+    private List<PersonDTO> spouses = new ArrayList<>();
     private List<PersonDTO> children = new ArrayList<>();
     private List<Long> mediaIds;
     private List<Long> childrenIds;
@@ -259,6 +260,14 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
 
     public void setSpouseOtherNote(String spouseOtherNote) {
         this.spouseOtherNote = spouseOtherNote;
+    }
+
+    public List<PersonDTO> getSpouses() {
+        return spouses;
+    }
+
+    public void setSpouses(List<PersonDTO> spouses) {
+        this.spouses = spouses == null ? new ArrayList<>() : spouses;
     }
 
     public List<PersonDTO> getChildren() {

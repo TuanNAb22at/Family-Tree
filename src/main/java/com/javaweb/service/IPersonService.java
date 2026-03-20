@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface IPersonService {
-    void createPerson(PersonDTO personDTO);
+    PersonDTO createPerson(PersonDTO personDTO);
     long countPersons();
     PersonDTO findPersonById(Long personId);
     List<PersonDTO> findRootPersonsByBranchId(Long branchId);

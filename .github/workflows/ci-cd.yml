@@ -38,7 +38,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "deploy/stack/docker-compose.ec2.yml,database/family_tree_db.sql"
+          source: "deploy/stack/docker-compose.ec2.yml"
           target: "~/family-tree"
 
       - name: SSH into EC2 and deploy full stack
@@ -83,8 +83,9 @@ jobs:
 
             cat > .env <<EOF
             APP_IMAGE=$IMAGE_NAME
-            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            MYSQL_DATABASE=family_tree_db
+            DB_URL=${{ secrets.DB_URL }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             LIVESTREAM_ICE_SERVERS_JSON=${{ secrets.LIVESTREAM_ICE_SERVERS_JSON }}
             EOF
 

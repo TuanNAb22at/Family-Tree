@@ -2,10 +2,12 @@ package com.javaweb.service.impl;
 
 import com.javaweb.entity.BranchEntity;
 import com.javaweb.entity.PersonEntity;
+import com.javaweb.familytree.service.FamilyTreeReadService;
 import com.javaweb.model.dto.PersonDTO;
 import com.javaweb.repository.BranchRepository;
 import com.javaweb.repository.PersonRepository;
 import com.javaweb.service.IPersonService;
+import com.javaweb.utils.FamilyTreeBranchUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,14 +41,18 @@ public class PersonService implements IPersonService {
 
     private final PersonRepository personRepository;
     private final BranchRepository branchRepository;
+    private final FamilyTreeReadService familyTreeReadService;
 
-    public PersonService(PersonRepository personRepository, BranchRepository branchRepository) {
+    public PersonService(PersonRepository personRepository,
+                         BranchRepository branchRepository,
+                         FamilyTreeReadService familyTreeReadService) {
         this.personRepository = personRepository;
         this.branchRepository = branchRepository;
+        this.familyTreeReadService = familyTreeReadService;
     }
 
     @Override
-    public void createPerson(PersonDTO personDTO) {
+    public PersonDTO createPerson(PersonDTO personDTO) {
         if (personDTO == null) {
             throw new IllegalArgumentException("Du lieu thanh vien khong hop le");
         }
@@ -71,8 +77,9 @@ public class PersonService implements IPersonService {
                 existing.setAvatar(personDTO.getAvatar().trim());
             }
             applyAdditionalFields(existing, personDTO, false);
-            personRepository.save(existing);
-            return;
+            PersonEntity saved = personRepository.save(existing);
+            evictFamilyTreeCache();
+            return refreshPersonSnapshot(saved.getId());
         }
         String normalizedFullName = normalizeRequiredFullName(personDTO.getFullName());
         Integer normalizedGeneration = normalizeGeneration(personDTO.getGeneration(), true);
@@ -88,7 +95,9 @@ public class PersonService implements IPersonService {
         personEntity.setAvatar(personDTO.getAvatar());
         applyAdditionalFields(personEntity, personDTO, true);
         personEntity.setBranch(resolveMainBranch());
-        personRepository.save(personEntity);
+        PersonEntity saved = personRepository.save(personEntity);
+        evictFamilyTreeCache();
+        return refreshPersonSnapshot(saved.getId());
     }
 
     @Override
@@ -99,10 +108,7 @@ public class PersonService implements IPersonService {
     @Override
     @Transactional(readOnly = true)
     public PersonDTO findPersonById(Long personId) {
-        PersonEntity person = personRepository.findById(personId).orElseThrow(
-                () -> new IllegalArgumentException("Person not found: " + personId)
-        );
-        return buildPersonDetailDto(person);
+        return familyTreeReadService.findPersonById(personId);
     }
 
     @Override
@@ -144,9 +150,7 @@ public class PersonService implements IPersonService {
                 () -> new IllegalArgumentException("Person not found or already has spouse: " + personId)
         );
         String normalizedPersonGender = normalizeGender(person.getGender(), true);
-        if (!"male".equals(normalizedPersonGender)) {
-            throw new IllegalArgumentException("Chi cho phep them vo cho thanh vien nam");
-        }
+        String expectedSpouseGender = expectedSpouseGender(normalizedPersonGender);
 
         PersonEntity spouse;
         if (spouseDTO.getExistingPersonId() != null) {
@@ -155,20 +159,14 @@ public class PersonService implements IPersonService {
             if (Objects.equals(spouse.getId(), person.getId())) {
                 throw new IllegalArgumentException("Person cannot be spouse of itself");
             }
-            String spouseGender = spouse.getGender() == null ? "" : spouse.getGender().trim().toLowerCase();
-            if (!"female".equals(spouseGender)) {
-                throw new IllegalArgumentException("Chi duoc phep them vo co gioi tinh nu");
-            }
+            validateExistingSpouseGender(spouse, expectedSpouseGender);
             validateBirthAndDeathDates(toLocalDate(spouse.getDob()), toLocalDate(spouse.getDod()));
             spouse.setGeneration(person.getGeneration());
             spouse.setBranch(resolveBranchOrDefault(null, person.getBranch()));
             if (spouseDTO.getGender() != null && !spouseDTO.getGender().trim().isEmpty()) {
-                String inputGender = spouseDTO.getGender().trim().toLowerCase();
-                if (!"female".equals(inputGender)) {
-                    throw new IllegalArgumentException("Chi duoc phep them vo co gioi tinh nu");
-                }
+                validateRequestedSpouseGender(spouseDTO.getGender(), expectedSpouseGender);
             }
-            spouse.setGender("female");
+            spouse.setGender(expectedSpouseGender);
             if (spouseDTO.getAvatar() != null && !spouseDTO.getAvatar().trim().isEmpty()) {
                 spouse.setAvatar(spouseDTO.getAvatar());
             }
@@ -183,13 +181,10 @@ public class PersonService implements IPersonService {
         } else {
             String normalizedSpouseFullName = normalizeRequiredFullName(spouseDTO.getFullName());
             validateBirthAndDeathDates(spouseDTO.getDob(), spouseDTO.getDod());
-            String spouseGender = spouseDTO.getGender() == null ? "" : spouseDTO.getGender().trim().toLowerCase();
-            if (!spouseGender.isEmpty() && !"female".equals(spouseGender)) {
-                throw new IllegalArgumentException("Chi duoc phep them vo co gioi tinh nu");
-            }
+            validateRequestedSpouseGender(spouseDTO.getGender(), expectedSpouseGender);
             spouse = new PersonEntity();
             spouse.setFullName(normalizedSpouseFullName);
-            spouse.setGender("female");
+            spouse.setGender(expectedSpouseGender);
             spouse.setDob(spouseDTO.getDob() == null ? null : java.sql.Date.valueOf(spouseDTO.getDob()));
             spouse.setDod(spouseDTO.getDod() == null ? null : java.sql.Date.valueOf(spouseDTO.getDod()));
             spouse.setGeneration(person.getGeneration());
@@ -204,7 +199,8 @@ public class PersonService implements IPersonService {
         personRepository.save(person);
         personRepository.save(spouse);
 
-        return toPersonDTO(person);
+        evictFamilyTreeCache();
+        return refreshPersonSnapshot(person.getId());
     }
 
     @Override
@@ -275,7 +271,8 @@ public class PersonService implements IPersonService {
 
         personRepository.save(child);
         syncNumberedBranchesAfterTreeChange();
-        return toPersonDTO(parent);
+        evictFamilyTreeCache();
+        return refreshPersonSnapshot(parent.getId());
     }
 
     @Override
@@ -309,7 +306,8 @@ public class PersonService implements IPersonService {
         validateChildDatesWithParents(person);
 
         personRepository.save(person);
-        return toPersonDTO(person);
+        evictFamilyTreeCache();
+        return refreshPersonSnapshot(person.getId());
     }
 
     @Override
@@ -321,6 +319,7 @@ public class PersonService implements IPersonService {
         if (person.getUserId() != null) {
             detachPersonFromTreeAndBranch(person);
             syncNumberedBranchesAfterTreeChange();
+            evictFamilyTreeCache();
             return;
         }
 
@@ -341,6 +340,11 @@ public class PersonService implements IPersonService {
 
         personRepository.delete(person);
         syncNumberedBranchesAfterTreeChange();
+        evictFamilyTreeCache();
+    }
+
+    private void evictFamilyTreeCache() {
+        familyTreeReadService.evictCache();
     }
 
     private void detachPersonFromTreeAndBranch(PersonEntity person) {
@@ -375,8 +379,7 @@ public class PersonService implements IPersonService {
     @Override
     @Transactional(readOnly = true)
     public List<PersonDTO> findRootPersonsByBranchId(Long branchId) {
-        if (branchId == null) return new ArrayList<>();
-        return buildTreeRoots(branchId, true);
+        return familyTreeReadService.findRootPersonsByBranchId(branchId);
     }
 
     @Override
@@ -389,44 +392,17 @@ public class PersonService implements IPersonService {
                                                            Integer birthYearFrom,
                                                            Integer birthYearTo,
                                                            Long focusPersonId) {
-        if (branchId == null) {
-            return new ArrayList<>();
-        }
-        List<PersonDTO> roots = buildTreeRoots(branchId, false);
-        if (roots.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<PersonDTO> sourceRoots = roots;
-        if (focusPersonId != null && focusPersonId > 0) {
-            PersonDTO focusNode = findNodeInTree(roots, focusPersonId);
-            if (focusNode != null) {
-                sourceRoots = Collections.singletonList(focusNode);
-            }
-        }
-
-        List<PersonDTO> members = new ArrayList<>();
-        flattenTree(sourceRoots, members, new LinkedHashSet<>());
-
-        String normalizedName = normalizeTextFilter(fullName);
-        String normalizedGender = normalizeTextFilter(gender);
-        String normalizedLifeStatus = normalizeTextFilter(lifeStatus);
-        Integer normalizedGeneration = normalizeGenerationFilter(generation);
-        Integer fromYear = normalizeYearFilter(birthYearFrom);
-        Integer toYear = normalizeYearFilter(birthYearTo);
-
-        List<PersonDTO> filtered = members.stream()
-                .filter(member -> memberMatchesFilters(
-                        member,
-                        normalizedGeneration,
-                        normalizedName,
-                        normalizedGender,
-                        normalizedLifeStatus,
-                        fromYear,
-                        toYear
-                ))
-                .collect(Collectors.toList());
-        return dedupeAndSortMembersForList(filtered);
+        return familyTreeReadService.findMembersByBranchWithFilters(
+                branchId,
+                generation,
+                fullName,
+                gender,
+                lifeStatus,
+                null,
+                birthYearFrom,
+                birthYearTo,
+                focusPersonId
+        );
     }
 
     private List<PersonDTO> buildTreeRoots(Long branchId, boolean strictMainScope) {
@@ -831,7 +807,8 @@ public class PersonService implements IPersonService {
     private String normalizeTextFilter(String raw) {
         if (raw == null) return null;
         String value = Normalizer.normalize(raw.trim().toLowerCase(), Normalizer.Form.NFD)
-                .replaceAll("\\p{M}+", "");
+                .replaceAll("\\p{M}+", "")
+                .replace('\u0111', 'd');
         return value.isEmpty() ? null : value;
     }
 
@@ -1309,19 +1286,15 @@ public class PersonService implements IPersonService {
     }
 
     private boolean isAllowedChildBranch(BranchEntity branch) {
-        if (branch == null || branch.getName() == null) {
+        if (branch == null) {
             return false;
         }
-        String name = branch.getName().trim();
-        return isMainBranch(branch) || "1".equals(name) || "2".equals(name);
+        String branchKey = FamilyTreeBranchUtils.normalizeBranchKey(branch.getName());
+        return "main".equals(branchKey) || "1".equals(branchKey) || "2".equals(branchKey);
     }
 
     private boolean isMainBranch(BranchEntity branch) {
-        if (branch == null || branch.getName() == null) {
-            return false;
-        }
-        String normalized = branch.getName().trim().toLowerCase();
-        return "chinh".equals(normalized) || "main".equals(normalized);
+        return branch != null && FamilyTreeBranchUtils.isMainBranchName(branch.getName());
     }
 
     private BranchEntity createNextNumberedBranch() {
@@ -1446,15 +1419,60 @@ public class PersonService implements IPersonService {
     }
 
     private BranchEntity resolveMainBranch() {
-        Optional<BranchEntity> firstBranch = branchRepository.findFirstByOrderByIdAsc();
-        if (firstBranch.isPresent()) {
-            return firstBranch.get();
+        List<BranchEntity> branches = branchRepository.findAll();
+        if (!branches.isEmpty()) {
+            branches.sort(Comparator
+                    .comparing((BranchEntity branch) -> FamilyTreeBranchUtils.branchOrder(branch.getName()))
+                    .thenComparing(branch -> branch.getId() == null ? Long.MAX_VALUE : branch.getId()));
+            for (BranchEntity branch : branches) {
+                if (isMainBranch(branch)) {
+                    return branch;
+                }
+            }
+            return branches.get(0);
         }
 
         BranchEntity defaultBranch = new BranchEntity();
         defaultBranch.setName("Chinh");
         defaultBranch.setDescription("Chi goc duoc tao tu dong");
         return branchRepository.save(defaultBranch);
+    }
+
+    private PersonDTO refreshPersonSnapshot(Long personId) {
+        if (personId == null) {
+            throw new IllegalArgumentException("Person not found: null");
+        }
+        return familyTreeReadService.findPersonById(personId);
+    }
+
+    private String expectedSpouseGender(String normalizedPersonGender) {
+        if ("male".equals(normalizedPersonGender)) {
+            return "female";
+        }
+        if ("female".equals(normalizedPersonGender)) {
+            return "male";
+        }
+        throw new IllegalArgumentException("Chi ho tro them vo/chong cho thanh vien co gioi tinh nam hoac nu");
+    }
+
+    private void validateExistingSpouseGender(PersonEntity spouse, String expectedSpouseGender) {
+        String spouseGender = spouse.getGender();
+        if (spouseGender != null && !spouseGender.trim().isEmpty()) {
+            spouseGender = normalizeGender(spouseGender, false);
+        }
+        if (spouseGender != null && !expectedSpouseGender.equals(spouseGender)) {
+            throw new IllegalArgumentException("Gioi tinh vo/chong khong phu hop");
+        }
+    }
+
+    private void validateRequestedSpouseGender(String requestedGender, String expectedSpouseGender) {
+        if (requestedGender == null || requestedGender.trim().isEmpty()) {
+            return;
+        }
+        String normalized = normalizeGender(requestedGender, false);
+        if (!expectedSpouseGender.equals(normalized)) {
+            throw new IllegalArgumentException("Gioi tinh vo/chong khong phu hop");
+        }
     }
 }
 
