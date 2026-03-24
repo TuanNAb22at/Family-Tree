@@ -132,6 +132,19 @@ jobs:
               fi
             }
 
+            compose_with_timeout() {
+              TIMEOUT_SECONDS="$1"
+              shift
+              if docker compose version >/dev/null 2>&1; then
+                timeout "${TIMEOUT_SECONDS}" docker compose "$@"
+              elif command -v docker-compose >/dev/null 2>&1; then
+                timeout "${TIMEOUT_SECONDS}" docker-compose "$@"
+              else
+                echo "Docker Compose not found."
+                exit 1
+              fi
+            }
+
             log "Docker login"
             echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
 
@@ -149,13 +162,13 @@ jobs:
             docker rm -f family-tree-app family-tree-mysql family-tree-nginx family-tree-coturn || true
 
             log "Pull app image"
-            timeout 1200 compose -f deploy/stack/docker-compose.ec2.yml --env-file .env pull app
+            compose_with_timeout 1200 -f deploy/stack/docker-compose.ec2.yml --env-file .env pull app
 
             log "Deploy app (and mysql if missing)"
             if compose -f deploy/stack/docker-compose.ec2.yml --env-file .env ps mysql >/dev/null 2>&1; then
-              timeout 1200 compose -f deploy/stack/docker-compose.ec2.yml --env-file .env up -d --remove-orphans app
+              compose_with_timeout 1200 -f deploy/stack/docker-compose.ec2.yml --env-file .env up -d --remove-orphans app
             else
-              timeout 1200 compose -f deploy/stack/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
+              compose_with_timeout 1200 -f deploy/stack/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
             fi
 
             log "Post-deploy status"
