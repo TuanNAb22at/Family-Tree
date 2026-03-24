@@ -32,15 +32,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Upload deploy files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "deploy/stack/docker-compose.ec2.yml,database/family_tree_db.sql"
-          target: "~/family-tree"
-
       - name: SSH into EC2 and deploy full stack
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -52,12 +43,34 @@ jobs:
             set -e
             IMAGE_NAME="${{ env.IMAGE_NAME }}"
             DEPLOY_DIR="$HOME/family-tree"
+            REPO_NAME="${{ github.repository }}"
+            BRANCH_NAME="${{ github.ref_name }}"
+            GITHUB_TOKEN="${{ github.token }}"
             EXISTING_MYSQL_DATABASE=""
             EXISTING_MYSQL_ROOT_PASSWORD=""
             EXISTING_MEDIA_UPLOAD_DIR=""
 
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
+            mkdir -p deploy/stack database
+
+            download_file() {
+              SRC_PATH="$1"
+              DEST_PATH="$2"
+              RAW_URL="https://raw.githubusercontent.com/${REPO_NAME}/${BRANCH_NAME}/${SRC_PATH}"
+              API_URL="https://api.github.com/repos/${REPO_NAME}/contents/${SRC_PATH}?ref=${BRANCH_NAME}"
+              curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 120 "${RAW_URL}" -o "${DEST_PATH}" \
+                || curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 120 \
+                  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                  -H "Accept: application/vnd.github.raw" \
+                  "${API_URL}" -o "${DEST_PATH}"
+            }
+
+            # Pull deployment manifests directly from repository to avoid SCP timeout.
+            download_file "deploy/stack/docker-compose.ec2.yml" "deploy/stack/docker-compose.ec2.yml"
+            if [ ! -f database/family_tree_db.sql ]; then
+              download_file "database/family_tree_db.sql" "database/family_tree_db.sql"
+            fi
 
             if [ -f .env ]; then
               EXISTING_MYSQL_DATABASE="$(grep '^MYSQL_DATABASE=' .env | cut -d '=' -f 2- || true)"
