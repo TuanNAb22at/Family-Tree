@@ -4,6 +4,8 @@
 <html>
 <head>
 	<meta charset="UTF-8">
+	<meta name="_csrf" content="${_csrf.token}" />
+	<meta name="_csrf_header" content="${_csrf.headerName}" />
 	<title><dec:title default="Trang ch&#7911;" /></title>
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="shortcut icon" href="/favicon.svg" />
@@ -19,8 +21,49 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 		  integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
 		  crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<!-- jquery -->
-	<script type='text/javascript' src="js/2.1.4/jquery.min.js"></script>
+		<!-- jquery -->
+		<script type='text/javascript' src="js/2.1.4/jquery.min.js"></script>
+		<script type="text/javascript">
+            (function () {
+                function csrfMeta(name) {
+                    var el = document.querySelector('meta[name="' + name + '"]');
+                    return el ? el.getAttribute('content') : '';
+                }
+
+                var csrfToken = csrfMeta('_csrf');
+                var csrfHeader = csrfMeta('_csrf_header');
+                if (!csrfToken || !csrfHeader) {
+                    return;
+                }
+
+                if (window.jQuery && window.jQuery.ajaxPrefilter) {
+                    window.jQuery.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+                        var method = (options.type || originalOptions.type || 'GET').toUpperCase();
+                        if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'TRACE') {
+                            return;
+                        }
+                        jqXHR.setRequestHeader(csrfHeader, csrfToken);
+                    });
+                }
+
+                if (window.fetch) {
+                    var originalFetch = window.fetch;
+                    window.fetch = function (input, init) {
+                        var requestInit = init ? Object.assign({}, init) : {};
+                        var method = ((requestInit.method || 'GET') + '').toUpperCase();
+                        if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'TRACE') {
+                            return originalFetch(input, requestInit);
+                        }
+                        var headers = new Headers(requestInit.headers || {});
+                        if (!headers.has(csrfHeader)) {
+                            headers.set(csrfHeader, csrfToken);
+                        }
+                        requestInit.headers = headers;
+                        return originalFetch(input, requestInit);
+                    };
+                }
+            })();
+		</script>
 
 	<%--sweetalert--%>
 	<script type='text/javascript' src="assets/sweetalert2/sweetalert2.min.js"></script>
@@ -54,7 +97,6 @@
 
 	<%--common javascript file--%>
 	<script type="text/javascript" src="js/global_admin_script.js"></script>
-
 	<script src="assets/js/bootstrap.min.js"></script>
 	<script src="assets/js/jquery-ui.custom.min.js"></script>
 	<script src="assets/js/jquery.ui.touch-punch.min.js"></script>

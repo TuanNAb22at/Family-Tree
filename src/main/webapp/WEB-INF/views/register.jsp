@@ -52,6 +52,7 @@
                     </c:if>
 
                     <form action="<c:url value='/register' />" id="formRegister" method="post" class="gpo-auth-form">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="gpo-field">

@@ -5,6 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" content="${_csrf.token}" />
+    <meta name="_csrf_header" content="${_csrf.headerName}" />
     <meta name="theme-color" content="#7b1e1e">
     <title><dec:title default="Đăng nhập" /> | Gia phả Họ Trần Đức</title>
     <link rel="icon" type="image/svg+xml" href="<c:url value='/favicon.svg' />" />
