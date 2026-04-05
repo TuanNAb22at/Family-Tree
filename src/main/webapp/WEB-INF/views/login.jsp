@@ -67,6 +67,7 @@
                     </c:if>
 
                     <form action="j_spring_security_check" id="formLogin" method="post" class="gpo-auth-form">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <div class="gpo-field">
                             <label class="gpo-form-label" for="userName">Tên đăng nhập</label>
                             <input type="text" class="form-control gpo-form-control"

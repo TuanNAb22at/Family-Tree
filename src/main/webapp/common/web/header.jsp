@@ -41,9 +41,12 @@
                             <i class="fa-solid fa-user me-1"></i>
                             <%=SecurityUtils.getPrincipal().getUsername()%>
                         </a>
-                        <a href="<c:url value='/logout'/>" class="btn btn-gpo btn-sm">
-                            <i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất
-                        </a>
+                        <form action="<c:url value='/logout'/>" method="post" style="display:inline-block;margin:0;">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-gpo btn-sm">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất
+                            </button>
+                        </form>
                     </security:authorize>
                 </div>
             </div>

@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -52,7 +53,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
                 http
                         .csrf()
-                        .disable()
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .and()
                         .authorizeRequests()
 
                         .antMatchers
@@ -94,9 +96,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(HttpMethod.DELETE, "/api/media/**").hasAnyRole("MANAGER", "EDITOR")
                         .antMatchers(HttpMethod.GET, "/api/media/**").hasAnyRole("MANAGER", "EDITOR", "USER")
                         .antMatchers("/api/livestream/**").authenticated()
+                        .antMatchers("/api/**").authenticated()
                         .antMatchers("/watch").authenticated()
                         .antMatchers("/ws/**").authenticated()
-                        .antMatchers("/login", "/dang-ky", "/register", "/resource/**", "/trang-chu", "/api/**").permitAll()
+                        .antMatchers("/login", "/dang-ky", "/register", "/resource/**", "/trang-chu").permitAll()
                         .and()
                         .formLogin().loginPage("/login").usernameParameter("j_username").passwordParameter("j_password").permitAll()
                         .loginProcessingUrl("/j_spring_security_check")

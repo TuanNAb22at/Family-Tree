@@ -12,6 +12,10 @@ RUN mvn clean package -Dmaven.test.skip=true
 
 FROM tomcat:9-jdk8-temurin AS runtime
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN rm -rf /usr/local/tomcat/webapps/*
 
 COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war

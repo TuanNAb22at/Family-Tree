@@ -41,10 +41,13 @@
                 </li>
                 <li class="divider"></li>
                 <li>
-                    <a href="<c:url value='/logout'/>">
-                        <i class="ace-icon fa fa-power-off"></i>
-                        Thoát
-                    </a>
+                    <form action="<c:url value='/logout'/>" method="post" style="margin:0;">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <button type="submit" style="background:none;border:none;width:100%;text-align:left;padding:6px 14px;">
+                            <i class="ace-icon fa fa-power-off"></i>
+                            Thoát
+                        </button>
+                    </form>
                 </li>
             </ul>
         </div>
