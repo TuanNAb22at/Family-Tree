@@ -1,19 +1,31 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.entity.BranchEntity;
+import com.javaweb.entity.FamilyTreeEntity;
+import com.javaweb.entity.AcademicProfileEntity;
+import com.javaweb.entity.AwardRecordEntity;
 import com.javaweb.entity.PersonEntity;
+import com.javaweb.entity.UserEntity;
 import com.javaweb.familytree.service.FamilyTreeReadService;
+import com.javaweb.model.dto.FamilyTreeMemberListItemDTO;
 import com.javaweb.model.dto.PersonDTO;
+import com.javaweb.repository.AcademicProfileRepository;
+import com.javaweb.repository.AwardRecordRepository;
 import com.javaweb.repository.BranchRepository;
+import com.javaweb.repository.FamilyTreeRepository;
 import com.javaweb.repository.PersonRepository;
+import com.javaweb.repository.UserRepository;
 import com.javaweb.service.IPersonService;
 import com.javaweb.utils.FamilyTreeBranchUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
+import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.MonthDay;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,33 +48,54 @@ public class PersonService implements IPersonService {
     private static final int MAX_GENERATION = 50;
     private static final int MAX_SHORT_TEXT_LENGTH = 255;
     private static final int MAX_NOTE_LENGTH = 5000;
+    private static final DateTimeFormatter DIRECTORY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final Pattern DOD_DISPLAY_MARKER = Pattern.compile("\\[\\[DOD_DISPLAY=([^\\]]*)\\]\\]");
+    private static final Pattern PARTIAL_DOD_DISPLAY_PATTERN = Pattern.compile("^(\\d{2}/\\d{2}|\\d{4})$");
     private static final Set<String> ALLOWED_GENDERS =
             Collections.unmodifiableSet(new HashSet<>(Arrays.asList("male", "female", "other")));
 
     private final PersonRepository personRepository;
     private final BranchRepository branchRepository;
+    private final FamilyTreeRepository familyTreeRepository;
     private final FamilyTreeReadService familyTreeReadService;
+    private final FamilyTreeContextService familyTreeContextService;
+    private final AcademicProfileRepository academicProfileRepository;
+    private final AwardRecordRepository awardRecordRepository;
+    private final UserRepository userRepository;
 
     public PersonService(PersonRepository personRepository,
                          BranchRepository branchRepository,
-                         FamilyTreeReadService familyTreeReadService) {
+                         FamilyTreeRepository familyTreeRepository,
+                         FamilyTreeReadService familyTreeReadService,
+                         FamilyTreeContextService familyTreeContextService,
+                         AcademicProfileRepository academicProfileRepository,
+                         AwardRecordRepository awardRecordRepository,
+                         UserRepository userRepository) {
         this.personRepository = personRepository;
         this.branchRepository = branchRepository;
+        this.familyTreeRepository = familyTreeRepository;
         this.familyTreeReadService = familyTreeReadService;
+        this.familyTreeContextService = familyTreeContextService;
+        this.academicProfileRepository = academicProfileRepository;
+        this.awardRecordRepository = awardRecordRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public PersonDTO createPerson(PersonDTO personDTO) {
         if (personDTO == null) {
-            throw new IllegalArgumentException("Du lieu thanh vien khong hop le");
+            throw new IllegalArgumentException("Dữ liệu thành viên không hợp lệ");
         }
         if (personDTO.getExistingPersonId() != null) {
             PersonEntity existing = personRepository.findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(personDTO.getExistingPersonId())
-                    .orElseThrow(() -> new IllegalArgumentException("Person available not found: " + personDTO.getExistingPersonId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thành viên có sẵn: " + personDTO.getExistingPersonId()));
+            FamilyTreeEntity familyTree = resolveEffectiveFamilyTree(personDTO.getFamilyTreeId(), existing.getFamilyTree());
+            assertSameFamilyTree(existing, familyTree, "Thành viên");
             Integer normalizedGeneration = normalizeGeneration(personDTO.getGeneration(), true);
             String normalizedGender = normalizeGender(personDTO.getGender(), false);
             validateBirthAndDeathDates(personDTO.getDob(), personDTO.getDod());
-            existing.setBranch(resolveBranchOrDefault(null, existing.getBranch()));
+            existing.setFamilyTree(familyTree);
+            existing.setBranch(resolveBranchOrDefault(null, existing.getBranch(), familyTree));
             existing.setGeneration(normalizedGeneration);
             if (normalizedGender != null) {
                 existing.setGender(normalizedGender);
@@ -82,6 +115,7 @@ public class PersonService implements IPersonService {
             return refreshPersonSnapshot(saved.getId());
         }
         String normalizedFullName = normalizeRequiredFullName(personDTO.getFullName());
+        FamilyTreeEntity familyTree = resolveEffectiveFamilyTree(personDTO.getFamilyTreeId(), null);
         Integer normalizedGeneration = normalizeGeneration(personDTO.getGeneration(), true);
         String normalizedGender = normalizeGender(personDTO.getGender(), false);
         validateBirthAndDeathDates(personDTO.getDob(), personDTO.getDod());
@@ -93,8 +127,9 @@ public class PersonService implements IPersonService {
         personEntity.setGeneration(normalizedGeneration);
         personEntity.setGender(normalizedGender);
         personEntity.setAvatar(personDTO.getAvatar());
+        personEntity.setFamilyTree(familyTree);
         applyAdditionalFields(personEntity, personDTO, true);
-        personEntity.setBranch(resolveMainBranch());
+        personEntity.setBranch(resolveMainBranch(familyTree));
         PersonEntity saved = personRepository.save(personEntity);
         evictFamilyTreeCache();
         return refreshPersonSnapshot(saved.getId());
@@ -102,7 +137,8 @@ public class PersonService implements IPersonService {
 
     @Override
     public long countPersons() {
-        return personRepository.count();
+        Long familyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        return familyTreeId == null ? 0 : personRepository.countByFamilyTree_Id(familyTreeId);
     }
 
     @Override
@@ -139,30 +175,34 @@ public class PersonService implements IPersonService {
     @Transactional
     public PersonDTO addSpouse(Long personId, PersonDTO spouseDTO) {
         if (spouseDTO == null) {
-            throw new IllegalArgumentException("Du lieu vo/chong khong hop le");
+            throw new IllegalArgumentException("Dữ liệu vợ/chồng không hợp lệ");
         }
         if (spouseDTO.getFullName() == null || spouseDTO.getFullName().trim().isEmpty()) {
             if (spouseDTO.getExistingPersonId() == null) {
-                throw new IllegalArgumentException("Spouse full name is required");
+                throw new IllegalArgumentException("Họ tên vợ/chồng không được để trống");
             }
         }
         PersonEntity person = personRepository.findByIdAndSpouseIsNull(personId).orElseThrow(
-                () -> new IllegalArgumentException("Person not found or already has spouse: " + personId)
+                () -> new IllegalArgumentException("Không tìm thấy thành viên hoặc thành viên đã có vợ/chồng: " + personId)
         );
+        FamilyTreeEntity familyTree = resolveEffectiveFamilyTree(spouseDTO.getFamilyTreeId(), person.getFamilyTree());
+        ensurePersonInCurrentFamilyTree(person);
         String normalizedPersonGender = normalizeGender(person.getGender(), true);
         String expectedSpouseGender = expectedSpouseGender(normalizedPersonGender);
 
         PersonEntity spouse;
         if (spouseDTO.getExistingPersonId() != null) {
             spouse = personRepository.findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(spouseDTO.getExistingPersonId())
-                    .orElseThrow(() -> new IllegalArgumentException("Spouse person is not available"));
+                    .orElseThrow(() -> new IllegalArgumentException("Thành viên được chọn làm vợ/chồng không khả dụng"));
             if (Objects.equals(spouse.getId(), person.getId())) {
-                throw new IllegalArgumentException("Person cannot be spouse of itself");
+                throw new IllegalArgumentException("Không thể tự ghép một thành viên làm vợ/chồng của chính mình");
             }
+            assertSameFamilyTree(spouse, familyTree, "Vợ/chồng");
             validateExistingSpouseGender(spouse, expectedSpouseGender);
             validateBirthAndDeathDates(toLocalDate(spouse.getDob()), toLocalDate(spouse.getDod()));
             spouse.setGeneration(person.getGeneration());
-            spouse.setBranch(resolveBranchOrDefault(null, person.getBranch()));
+            spouse.setFamilyTree(familyTree);
+            spouse.setBranch(resolveBranchOrDefault(null, person.getBranch(), familyTree));
             if (spouseDTO.getGender() != null && !spouseDTO.getGender().trim().isEmpty()) {
                 validateRequestedSpouseGender(spouseDTO.getGender(), expectedSpouseGender);
             }
@@ -188,7 +228,8 @@ public class PersonService implements IPersonService {
             spouse.setDob(spouseDTO.getDob() == null ? null : java.sql.Date.valueOf(spouseDTO.getDob()));
             spouse.setDod(spouseDTO.getDod() == null ? null : java.sql.Date.valueOf(spouseDTO.getDod()));
             spouse.setGeneration(person.getGeneration());
-            spouse.setBranch(resolveBranchOrDefault(null, person.getBranch()));
+            spouse.setFamilyTree(familyTree);
+            spouse.setBranch(resolveBranchOrDefault(null, person.getBranch(), familyTree));
             spouse.setAvatar(spouseDTO.getAvatar());
             applyAdditionalFields(spouse, spouseDTO, true);
         }
@@ -207,30 +248,34 @@ public class PersonService implements IPersonService {
     @Transactional
     public PersonDTO addChild(Long personId, PersonDTO childDTO) {
         if (childDTO == null) {
-            throw new IllegalArgumentException("Du lieu con khong hop le");
+            throw new IllegalArgumentException("Dữ liệu con không hợp lệ");
         }
         if (childDTO.getFullName() == null || childDTO.getFullName().trim().isEmpty()) {
             if (childDTO.getExistingPersonId() == null) {
-                throw new IllegalArgumentException("Child full name is required");
+                throw new IllegalArgumentException("Họ tên người con không được để trống");
             }
         }
         PersonEntity parent = personRepository.findById(personId).orElseThrow(
-                () -> new IllegalArgumentException("Parent not found: " + personId)
+                () -> new IllegalArgumentException("Không tìm thấy cha/mẹ: " + personId)
         );
+        FamilyTreeEntity familyTree = resolveEffectiveFamilyTree(childDTO.getFamilyTreeId(), parent.getFamilyTree());
+        ensurePersonInCurrentFamilyTree(parent);
         if (!isAllowedChildBranch(parent.getBranch())) {
-            throw new IllegalArgumentException("Chi duoc phep them con cho thanh vien o chi goc hoac chi 1, 2");
+            throw new IllegalArgumentException("Chỉ được phép thêm con cho thành viên ở chi gốc hoặc chi 1, 2");
         }
 
         PersonEntity child;
         if (childDTO.getExistingPersonId() != null) {
             child = personRepository.findByIdAndFatherIsNullAndMotherIsNullAndSpouseIsNull(childDTO.getExistingPersonId())
-                    .orElseThrow(() -> new IllegalArgumentException("Child person is not available"));
+                    .orElseThrow(() -> new IllegalArgumentException("Thành viên được chọn làm con không khả dụng"));
             if (Objects.equals(child.getId(), parent.getId())) {
-                throw new IllegalArgumentException("Parent cannot be child of itself");
+                throw new IllegalArgumentException("Không thể tự gán một thành viên làm con của chính mình");
             }
+            assertSameFamilyTree(child, familyTree, "Thành viên");
             Integer expectedGeneration = parent.getGeneration() == null ? 1 : parent.getGeneration() + 1;
             child.setGeneration(expectedGeneration);
-            child.setBranch(resolveChildBranch(parent));
+            child.setFamilyTree(familyTree);
+            child.setBranch(resolveChildBranch(parent, familyTree));
             if (childDTO.getGender() != null && !childDTO.getGender().trim().isEmpty()) {
                 child.setGender(normalizeGender(childDTO.getGender(), false));
             }
@@ -255,7 +300,8 @@ public class PersonService implements IPersonService {
             child.setDob(childDTO.getDob() == null ? null : java.sql.Date.valueOf(childDTO.getDob()));
             child.setDod(childDTO.getDod() == null ? null : java.sql.Date.valueOf(childDTO.getDod()));
             child.setGeneration(parent.getGeneration() == null ? 1 : parent.getGeneration() + 1);
-            child.setBranch(resolveChildBranch(parent));
+            child.setFamilyTree(familyTree);
+            child.setBranch(resolveChildBranch(parent, familyTree));
             child.setAvatar(childDTO.getAvatar());
             applyAdditionalFields(child, childDTO, true);
         }
@@ -270,7 +316,7 @@ public class PersonService implements IPersonService {
         validateChildDatesWithParents(child);
 
         personRepository.save(child);
-        syncNumberedBranchesAfterTreeChange();
+        syncNumberedBranchesAfterTreeChange(familyTree);
         evictFamilyTreeCache();
         return refreshPersonSnapshot(parent.getId());
     }
@@ -279,11 +325,13 @@ public class PersonService implements IPersonService {
     @Transactional
     public PersonDTO updatePerson(Long personId, PersonDTO personDTO) {
         if (personDTO == null) {
-            throw new IllegalArgumentException("Du lieu cap nhat khong hop le");
+            throw new IllegalArgumentException("Dữ liệu cập nhật không hợp lệ");
         }
         PersonEntity person = personRepository.findById(personId).orElseThrow(
-                () -> new IllegalArgumentException("Person not found: " + personId)
+                () -> new IllegalArgumentException("Không tìm thấy thành viên: " + personId)
         );
+        FamilyTreeEntity familyTree = resolveEffectiveFamilyTree(personDTO.getFamilyTreeId(), person.getFamilyTree());
+        ensurePersonInCurrentFamilyTree(person);
 
         if (personDTO.getFullName() != null && !personDTO.getFullName().trim().isEmpty()) {
             person.setFullName(normalizeRequiredFullName(personDTO.getFullName()));
@@ -301,8 +349,9 @@ public class PersonService implements IPersonService {
         applyAdditionalFields(person, personDTO, true);
 
         if (personDTO.getBranch() != null && !personDTO.getBranch().trim().isEmpty()) {
-            person.setBranch(resolveBranch(personDTO.getBranch()));
+            person.setBranch(resolveBranch(personDTO.getBranch(), familyTree));
         }
+        person.setFamilyTree(familyTree);
         validateChildDatesWithParents(person);
 
         personRepository.save(person);
@@ -314,11 +363,12 @@ public class PersonService implements IPersonService {
     @Transactional
     public void deletePerson(Long personId) {
         PersonEntity person = personRepository.findById(personId).orElseThrow(
-                () -> new IllegalArgumentException("Person not found: " + personId)
+                () -> new IllegalArgumentException("Không tìm thấy thành viên: " + personId)
         );
+        ensurePersonInCurrentFamilyTree(person);
         if (person.getUserId() != null) {
             detachPersonFromTreeAndBranch(person);
-            syncNumberedBranchesAfterTreeChange();
+            syncNumberedBranchesAfterTreeChange(person.getFamilyTree());
             evictFamilyTreeCache();
             return;
         }
@@ -326,7 +376,7 @@ public class PersonService implements IPersonService {
         long childrenCount = personRepository.countChildrenByParentId(personId);
         if (childrenCount > 0) {
             throw new IllegalArgumentException(
-                    "Khong the xoa thanh vien nay vi van con. Vui long xoa con truoc, sau do moi xoa cha/me."
+                    "Không thể xóa thành viên này vì vẫn còn con. Vui lòng xóa con trước, sau đó mới xóa cha/mẹ."
             );
         }
 
@@ -339,7 +389,7 @@ public class PersonService implements IPersonService {
         }
 
         personRepository.delete(person);
-        syncNumberedBranchesAfterTreeChange();
+        syncNumberedBranchesAfterTreeChange(person.getFamilyTree());
         evictFamilyTreeCache();
     }
 
@@ -370,6 +420,7 @@ public class PersonService implements IPersonService {
         person.setFather(null);
         person.setMother(null);
         person.setBranch(null);
+        person.setFamilyTree(null);
         person.setGeneration(null);
         personRepository.save(person);
     }
@@ -403,6 +454,39 @@ public class PersonService implements IPersonService {
                 birthYearTo,
                 focusPersonId
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FamilyTreeMemberListItemDTO> findMemberDirectory(Long familyTreeId) {
+        if (familyTreeId == null || familyTreeId <= 0) {
+            return new ArrayList<>();
+        }
+
+        List<PersonEntity> persons = personRepository.findAllByFamilyTreeIdWithRelations(familyTreeId);
+        if (persons.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Long> userIds = persons.stream()
+                .map(PersonEntity::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, UserEntity> usersById = userIds.isEmpty()
+                ? new LinkedHashMap<Long, UserEntity>()
+                : userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(UserEntity::getId, user -> user, (left, right) -> left, LinkedHashMap::new));
+
+        Map<String, String> educationByExactKey = buildEducationByExactKey(familyTreeId);
+        Map<String, String> educationByUniqueName = buildEducationByUniqueName(familyTreeId, persons);
+
+        return persons.stream()
+                .sorted(Comparator
+                        .comparing((PersonEntity person) -> person.getGeneration() == null ? Integer.MAX_VALUE : person.getGeneration())
+                        .thenComparing(PersonEntity::getId, Comparator.nullsLast(Long::compareTo)))
+                .map(person -> toDirectoryItem(person, usersById, educationByExactKey, educationByUniqueName))
+                .collect(Collectors.toList());
     }
 
     private List<PersonDTO> buildTreeRoots(Long branchId, boolean strictMainScope) {
@@ -470,7 +554,7 @@ public class PersonService implements IPersonService {
             }
         }
         for (List<PersonEntity> children : childrenByParentId.values()) {
-            children.sort(personTreeComparator());
+            children.sort(childCreationComparator());
         }
 
         List<PersonEntity> candidates = membersById.values().stream()
@@ -502,7 +586,7 @@ public class PersonService implements IPersonService {
                     List<PersonEntity> filtered = entry.getValue().stream()
                             .filter(Objects::nonNull)
                             .filter(child -> child.getId() != null && allowedIds.contains(child.getId()))
-                            .sorted(personTreeComparator())
+                            .sorted(childCreationComparator())
                             .collect(Collectors.toList());
                     if (!filtered.isEmpty()) {
                         strictChildrenByParentId.put(parentId, filtered);
@@ -659,6 +743,10 @@ public class PersonService implements IPersonService {
             long idB = b.getId() == null ? Long.MAX_VALUE : b.getId();
             return Long.compare(idA, idB);
         };
+    }
+
+    private Comparator<PersonEntity> childCreationComparator() {
+        return Comparator.comparing(person -> person.getId() == null ? Long.MAX_VALUE : person.getId());
     }
 
     private PersonDTO toPersonDTO(PersonEntity entity) {
@@ -1029,6 +1117,159 @@ public class PersonService implements IPersonService {
         }
     }
 
+    private FamilyTreeMemberListItemDTO toDirectoryItem(PersonEntity person,
+                                                        Map<Long, UserEntity> usersById,
+                                                        Map<String, String> educationByExactKey,
+                                                        Map<String, String> educationByUniqueName) {
+        FamilyTreeMemberListItemDTO item = new FamilyTreeMemberListItemDTO();
+        item.setId(person.getId());
+        item.setFullName(trimToEmpty(person.getFullName()));
+        item.setGeneration(person.getGeneration());
+        item.setGender(toVietnameseGender(person.getGender()));
+        item.setDateOfBirth(formatDirectoryDate(toLocalDate(person.getDob())));
+        item.setDateOfDeath(resolveDodDisplay(toLocalDate(person.getDod()), person.getOtherNote()));
+        item.setFatherFullName(person.getFather() != null ? trimToEmpty(person.getFather().getFullName()) : "");
+        item.setMotherFullName(person.getMother() != null ? trimToEmpty(person.getMother().getFullName()) : "");
+        item.setSpouseFullName(person.getSpouse() != null ? trimToEmpty(person.getSpouse().getFullName()) : "");
+        item.setMaritalStatus(person.getSpouse() != null ? "\u0110\u00e3 k\u1ebft h\u00f4n" : "");
+        item.setEducation(resolveEducation(person, educationByExactKey, educationByUniqueName));
+        item.setBloodType("");
+        item.setPhoneNumber(resolvePhoneNumber(person, usersById));
+        item.setAddress(resolveAddress(person));
+        return item;
+    }
+
+    private String resolveEducation(PersonEntity person,
+                                    Map<String, String> educationByExactKey,
+                                    Map<String, String> educationByUniqueName) {
+        String exactKey = buildPersonEducationKey(person);
+        String exactValue = exactKey == null ? "" : trimToEmpty(educationByExactKey.get(exactKey));
+        if (!exactValue.isEmpty()) {
+            return exactValue;
+        }
+        return trimToEmpty(educationByUniqueName.get(normalizeTextFilter(person.getFullName())));
+    }
+
+    private Map<String, String> buildEducationByExactKey(Long familyTreeId) {
+        Map<String, LinkedHashSet<String>> valuesByKey = new LinkedHashMap<>();
+        for (AcademicProfileEntity profile : academicProfileRepository.findAllByFamilyTreeIdOrderByDegreeNameAscBirthYearAsc(familyTreeId)) {
+            String key = buildEducationKey(profile.getFullName(), profile.getBirthYear());
+            if (key == null) {
+                continue;
+            }
+            appendEducation(valuesByKey, key, profile.getDegreeName(), profile.getAcademicRank(), profile.getSpecialty());
+        }
+        return valuesByKey.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.join("; ", entry.getValue()),
+                        (left, right) -> left, LinkedHashMap::new));
+    }
+
+    private Map<String, String> buildEducationByUniqueName(Long familyTreeId, List<PersonEntity> persons) {
+        Map<String, Integer> nameCounts = new LinkedHashMap<>();
+        for (PersonEntity person : persons) {
+            String normalizedName = normalizeTextFilter(person.getFullName());
+            if (normalizedName == null) {
+                continue;
+            }
+            nameCounts.put(normalizedName, nameCounts.getOrDefault(normalizedName, 0) + 1);
+        }
+
+        Map<String, LinkedHashSet<String>> valuesByName = new LinkedHashMap<>();
+        for (AcademicProfileEntity profile : academicProfileRepository.findAllByFamilyTreeIdOrderByDegreeNameAscBirthYearAsc(familyTreeId)) {
+            String normalizedName = normalizeTextFilter(profile.getFullName());
+            if (normalizedName == null || nameCounts.getOrDefault(normalizedName, 0) != 1) {
+                continue;
+            }
+            appendEducation(valuesByName, normalizedName, profile.getDegreeName(), profile.getAcademicRank(), profile.getSpecialty());
+        }
+        for (AwardRecordEntity award : awardRecordRepository.findAllByFamilyTreeIdOrderByAwardYearDescIdDesc(familyTreeId)) {
+            String normalizedName = normalizeTextFilter(award.getFullName());
+            if (normalizedName == null || nameCounts.getOrDefault(normalizedName, 0) != 1) {
+                continue;
+            }
+            appendEducation(valuesByName, normalizedName, award.getEducationLevel(), null, award.getSchoolName());
+        }
+        return valuesByName.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.join("; ", entry.getValue()),
+                        (left, right) -> left, LinkedHashMap::new));
+    }
+
+    private void appendEducation(Map<String, LinkedHashSet<String>> valuesByKey,
+                                 String key,
+                                 String first,
+                                 String second,
+                                 String third) {
+        if (key == null) {
+            return;
+        }
+        LinkedHashSet<String> values = valuesByKey.computeIfAbsent(key, ignored -> new LinkedHashSet<>());
+        appendIfHasText(values, first);
+        appendIfHasText(values, second);
+        appendIfHasText(values, third);
+    }
+
+    private void appendIfHasText(LinkedHashSet<String> values, String value) {
+        String normalized = trimToEmpty(value);
+        if (!normalized.isEmpty()) {
+            values.add(normalized);
+        }
+    }
+
+    private String buildPersonEducationKey(PersonEntity person) {
+        if (person == null) {
+            return null;
+        }
+        LocalDate birthDate = toLocalDate(person.getDob());
+        Integer birthYear = birthDate == null ? null : birthDate.getYear();
+        return buildEducationKey(person.getFullName(), birthYear);
+    }
+
+    private String buildEducationKey(String fullName, Integer birthYear) {
+        String normalizedName = normalizeTextFilter(fullName);
+        if (normalizedName == null || birthYear == null || birthYear <= 0) {
+            return null;
+        }
+        return normalizedName + "|" + birthYear;
+    }
+
+    private String toVietnameseGender(String gender) {
+        String normalized = trimToEmpty(gender).toLowerCase();
+        if ("male".equals(normalized)) {
+            return "Nam";
+        }
+        if ("female".equals(normalized)) {
+            return "N\u1eef";
+        }
+        if ("other".equals(normalized)) {
+            return "Kh\u00e1c";
+        }
+        return "";
+    }
+
+    private String formatDirectoryDate(LocalDate date) {
+        return date == null ? "" : DIRECTORY_DATE_FORMAT.format(date);
+    }
+
+    private String resolvePhoneNumber(PersonEntity person, Map<Long, UserEntity> usersById) {
+        if (person == null || person.getUserId() == null) {
+            return "";
+        }
+        UserEntity user = usersById.get(person.getUserId());
+        return user == null ? "" : trimToEmpty(user.getPhone());
+    }
+
+    private String resolveAddress(PersonEntity person) {
+        String currentResidence = person == null ? "" : trimToEmpty(person.getCurrentResidence());
+        if (!currentResidence.isEmpty()) {
+            return currentResidence;
+        }
+        return person == null ? "" : trimToEmpty(person.getHometown());
+    }
+
+    private String trimToEmpty(String value) {
+        return value == null ? "" : value.trim();
+    }
+
     private void bindSpouseFields(PersonDTO person, PersonDTO spouse) {
         if (person == null || spouse == null || spouse.getId() == null) {
             return;
@@ -1045,6 +1286,7 @@ public class PersonService implements IPersonService {
         person.setSpouseCurrentResidence(spouse.getCurrentResidence());
         person.setSpouseOccupation(spouse.getOccupation());
         person.setSpouseOtherNote(spouse.getOtherNote());
+        person.setSpouseDodDisplay(spouse.getDodDisplay());
     }
 
     private void clearSpouseFields(PersonDTO person) {
@@ -1061,6 +1303,7 @@ public class PersonService implements IPersonService {
         person.setSpouseCurrentResidence(null);
         person.setSpouseOccupation(null);
         person.setSpouseOtherNote(null);
+        person.setSpouseDodDisplay(null);
     }
 
     private PersonDTO buildPersonDtoWithoutChildren(PersonEntity entity, Long branchId) {
@@ -1072,7 +1315,7 @@ public class PersonService implements IPersonService {
         dto.setHometown(entity.getHometown());
         dto.setCurrentResidence(entity.getCurrentResidence());
         dto.setOccupation(entity.getOccupation());
-        dto.setOtherNote(entity.getOtherNote());
+        dto.setOtherNote(stripDodDisplayMarker(entity.getOtherNote()));
         dto.setUserId(entity.getUserId());
         dto.setGeneration(entity.getGeneration());
         if (entity.getFather() != null) {
@@ -1087,6 +1330,7 @@ public class PersonService implements IPersonService {
         }
         dto.setDob(toLocalDate(entity.getDob()));
         dto.setDod(toLocalDate(entity.getDod()));
+        dto.setDodDisplay(resolveDodDisplay(dto.getDod(), entity.getOtherNote()));
         if (entity.getSpouse() != null) {
             dto.setSpouseId(entity.getSpouse().getId());
             dto.setSpouseFullName(entity.getSpouse().getFullName());
@@ -1098,10 +1342,11 @@ public class PersonService implements IPersonService {
             dto.setSpouseAvatar(entity.getSpouse().getAvatar());
             dto.setSpouseDob(toLocalDate(entity.getSpouse().getDob()));
             dto.setSpouseDod(toLocalDate(entity.getSpouse().getDod()));
+            dto.setSpouseDodDisplay(resolveDodDisplay(dto.getSpouseDod(), entity.getSpouse().getOtherNote()));
             dto.setSpouseHometown(entity.getSpouse().getHometown());
             dto.setSpouseCurrentResidence(entity.getSpouse().getCurrentResidence());
             dto.setSpouseOccupation(entity.getSpouse().getOccupation());
-            dto.setSpouseOtherNote(entity.getSpouse().getOtherNote());
+            dto.setSpouseOtherNote(stripDodDisplayMarker(entity.getSpouse().getOtherNote()));
         }
         dto.setChildren(new ArrayList<>());
         return dto;
@@ -1123,6 +1368,7 @@ public class PersonService implements IPersonService {
                     childDto.setGeneration(child.getGeneration());
                     childDto.setDob(toLocalDate(child.getDob()));
                     childDto.setDod(toLocalDate(child.getDod()));
+                    childDto.setDodDisplay(resolveDodDisplay(childDto.getDod(), child.getOtherNote()));
                     return childDto;
                 })
                 .collect(Collectors.toList()));
@@ -1148,7 +1394,9 @@ public class PersonService implements IPersonService {
         String hometown = normalizeOptionalText(dto.getHometown(), MAX_SHORT_TEXT_LENGTH);
         String currentResidence = normalizeOptionalText(dto.getCurrentResidence(), MAX_SHORT_TEXT_LENGTH);
         String occupation = normalizeOptionalText(dto.getOccupation(), MAX_SHORT_TEXT_LENGTH);
-        String otherNote = normalizeOptionalText(dto.getOtherNote(), MAX_NOTE_LENGTH);
+        String otherNote = normalizeOptionalText(stripDodDisplayMarker(dto.getOtherNote()), MAX_NOTE_LENGTH);
+        String dodDisplay = normalizeDodDisplay(dto.getDodDisplay(), dto.getDod());
+        String storedOtherNote = mergeOtherNoteAndDodDisplay(otherNote, dto.getDod() == null ? dodDisplay : null);
         if (overwriteNull || hometown != null) {
             person.setHometown(hometown);
         }
@@ -1158,8 +1406,8 @@ public class PersonService implements IPersonService {
         if (overwriteNull || occupation != null) {
             person.setOccupation(occupation);
         }
-        if (overwriteNull || otherNote != null) {
-            person.setOtherNote(otherNote);
+        if (overwriteNull || storedOtherNote != null) {
+            person.setOtherNote(storedOtherNote);
         }
     }
 
@@ -1169,18 +1417,89 @@ public class PersonService implements IPersonService {
         }
         String trimmed = value.trim().replaceAll("\\s+", " ");
         if (trimmed.length() > maxLen) {
-            throw new IllegalArgumentException("Noi dung vuot qua do dai cho phep");
+            throw new IllegalArgumentException("Nội dung vượt quá độ dài cho phép");
         }
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String normalizeDodDisplay(String dodDisplay, LocalDate dod) {
+        if (dod != null) {
+            return null;
+        }
+        String normalized = normalizeOptionalText(dodDisplay, 20);
+        if (normalized == null) {
+            return null;
+        }
+        if (!isValidPartialDodDisplay(normalized)) {
+            throw new IllegalArgumentException("Ngay mat chi nhap theo dang dd/MM hoac yyyy khi chua ro du ngay thang nam");
+        }
+        return normalized;
+    }
+
+    private boolean isValidPartialDodDisplay(String value) {
+        if (!PARTIAL_DOD_DISPLAY_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+        if (value.indexOf('/') < 0) {
+            return true;
+        }
+        String[] parts = value.split("/");
+        try {
+            int day = Integer.parseInt(parts[0]);
+            int month = Integer.parseInt(parts[1]);
+            MonthDay.of(month, day);
+            return true;
+        } catch (DateTimeException | NumberFormatException ex) {
+            return false;
+        }
+    }
+
+    private String mergeOtherNoteAndDodDisplay(String otherNote, String dodDisplay) {
+        String normalizedNote = normalizeOptionalText(stripDodDisplayMarker(otherNote), MAX_NOTE_LENGTH);
+        String normalizedDodDisplay = dodDisplay == null ? null : dodDisplay.trim();
+        if (normalizedDodDisplay == null || normalizedDodDisplay.isEmpty()) {
+            return normalizedNote;
+        }
+        String marker = "[[DOD_DISPLAY=" + normalizedDodDisplay + "]]";
+        return normalizedNote == null ? marker : normalizedNote + "\n" + marker;
+    }
+
+    private String stripDodDisplayMarker(String value) {
+        if (value == null) {
+            return null;
+        }
+        String stripped = DOD_DISPLAY_MARKER.matcher(value).replaceAll("");
+        stripped = stripped.replaceAll("\\n{3,}", "\n\n").trim();
+        return stripped.isEmpty() ? null : stripped;
+    }
+
+    private String extractDodDisplay(String value) {
+        if (value == null) {
+            return null;
+        }
+        Matcher matcher = DOD_DISPLAY_MARKER.matcher(value);
+        if (!matcher.find()) {
+            return null;
+        }
+        String extracted = matcher.group(1);
+        return extracted == null ? null : extracted.trim();
+    }
+
+    private String resolveDodDisplay(LocalDate dod, String otherNote) {
+        if (dod != null) {
+            return DIRECTORY_DATE_FORMAT.format(dod);
+        }
+        String extracted = extractDodDisplay(otherNote);
+        return extracted == null ? "" : extracted;
     }
 
     private String normalizeRequiredFullName(String fullName) {
         String normalized = normalizeOptionalText(fullName, 100);
         if (normalized == null) {
-            throw new IllegalArgumentException("Ho ten khong duoc de trong");
+            throw new IllegalArgumentException("Họ tên không được để trống");
         }
         if (normalized.contains("<") || normalized.contains(">")) {
-            throw new IllegalArgumentException("Ho ten chua ky tu khong hop le");
+            throw new IllegalArgumentException("Họ tên chứa ký tự không hợp lệ");
         }
         return normalized;
     }
@@ -1189,13 +1508,13 @@ public class PersonService implements IPersonService {
         String normalized = normalizeOptionalText(gender, 16);
         if (normalized == null) {
             if (required) {
-                throw new IllegalArgumentException("Gioi tinh khong hop le");
+                throw new IllegalArgumentException("Giới tính không hợp lệ");
             }
             return null;
         }
         normalized = normalized.toLowerCase();
         if (!ALLOWED_GENDERS.contains(normalized)) {
-            throw new IllegalArgumentException("Gioi tinh khong hop le");
+            throw new IllegalArgumentException("Giới tính không hợp lệ");
         }
         return normalized;
     }
@@ -1209,7 +1528,7 @@ public class PersonService implements IPersonService {
             return null;
         }
         if (value < 1 || value > MAX_GENERATION) {
-            throw new IllegalArgumentException("Doi phai nam trong khoang 1-" + MAX_GENERATION);
+            throw new IllegalArgumentException("Đời phải nằm trong khoảng 1-" + MAX_GENERATION);
         }
         return value;
     }
@@ -1217,13 +1536,13 @@ public class PersonService implements IPersonService {
     private void validateBirthAndDeathDates(LocalDate dob, LocalDate dod) {
         LocalDate today = LocalDate.now();
         if (dob != null && dob.isAfter(today)) {
-            throw new IllegalArgumentException("Ngay sinh khong duoc lon hon ngay hien tai");
+            throw new IllegalArgumentException("Ngày sinh không được lớn hơn ngày hiện tại");
         }
         if (dod != null && dod.isAfter(today)) {
-            throw new IllegalArgumentException("Ngay mat khong duoc lon hon ngay hien tai");
+            throw new IllegalArgumentException("Ngày mất không được lớn hơn ngày hiện tại");
         }
         if (dob != null && dod != null && dod.isBefore(dob)) {
-            throw new IllegalArgumentException("Ngay mat khong duoc nho hon ngay sinh");
+            throw new IllegalArgumentException("Ngày mất không được nhỏ hơn ngày sinh");
         }
     }
 
@@ -1234,7 +1553,7 @@ public class PersonService implements IPersonService {
         LocalDate childDob = toLocalDate(child.getDob());
         validateBirthAndDeathDates(childDob, toLocalDate(child.getDod()));
         validateChildAgainstParentDates(childDob, child.getFather(), "Cha");
-        validateChildAgainstParentDates(childDob, child.getMother(), "Me");
+        validateChildAgainstParentDates(childDob, child.getMother(), "Mẹ");
     }
 
     private void validateChildAgainstParentDates(LocalDate childDob, PersonEntity parent, String parentLabel) {
@@ -1243,19 +1562,21 @@ public class PersonService implements IPersonService {
         }
         LocalDate parentDob = toLocalDate(parent.getDob());
         if (parentDob != null && childDob.isBefore(parentDob)) {
-            throw new IllegalArgumentException("Ngay sinh cua con khong hop le voi ngay sinh cua " + parentLabel.toLowerCase());
+            throw new IllegalArgumentException("Ngày sinh của con không hợp lệ với ngày sinh của " + parentLabel.toLowerCase());
         }
         LocalDate parentDod = toLocalDate(parent.getDod());
         if (parentDod != null && childDob.isAfter(parentDod)) {
-            throw new IllegalArgumentException("Ngay sinh cua con khong hop le voi ngay mat cua " + parentLabel.toLowerCase());
+            throw new IllegalArgumentException("Ngày sinh của con không hợp lệ với ngày mất của " + parentLabel.toLowerCase());
         }
     }
 
-    private BranchEntity resolveBranch(String branchValue) {
+    private BranchEntity resolveBranch(String branchValue, FamilyTreeEntity familyTree) {
         if (branchValue != null && !branchValue.trim().isEmpty()) {
             try {
                 Long branchId = Long.parseLong(branchValue.trim());
-                Optional<BranchEntity> exact = branchRepository.findById(branchId);
+                Optional<BranchEntity> exact = familyTree != null
+                        ? branchRepository.findByIdAndFamilyTree_Id(branchId, familyTree.getId())
+                        : Optional.empty();
                 if (exact.isPresent()) {
                     return exact.get();
                 }
@@ -1263,26 +1584,28 @@ public class PersonService implements IPersonService {
             }
         }
 
-        return resolveMainBranch();
+        return resolveMainBranch(familyTree);
     }
 
-    private BranchEntity resolveBranchOrDefault(String branchValue, BranchEntity defaultBranch) {
+    private BranchEntity resolveBranchOrDefault(String branchValue, BranchEntity defaultBranch, FamilyTreeEntity familyTree) {
         if (branchValue != null && !branchValue.trim().isEmpty()) {
             try {
                 Long branchId = Long.parseLong(branchValue.trim());
-                Optional<BranchEntity> exact = branchRepository.findById(branchId);
+                Optional<BranchEntity> exact = familyTree != null
+                        ? branchRepository.findByIdAndFamilyTree_Id(branchId, familyTree.getId())
+                        : Optional.empty();
                 if (exact.isPresent()) {
                     return exact.get();
                 }
             } catch (NumberFormatException ignored) {
             }
         }
-        return defaultBranch != null ? defaultBranch : resolveBranch(null);
+        return defaultBranch != null ? defaultBranch : resolveBranch(null, familyTree);
     }
 
-    private BranchEntity resolveChildBranch(PersonEntity parent) {
+    private BranchEntity resolveChildBranch(PersonEntity parent, FamilyTreeEntity familyTree) {
         // New child stays in the same branch as parent.
-        return resolveBranchOrDefault(null, parent != null ? parent.getBranch() : null);
+        return resolveBranchOrDefault(null, parent != null ? parent.getBranch() : null, familyTree);
     }
 
     private boolean isAllowedChildBranch(BranchEntity branch) {
@@ -1297,8 +1620,10 @@ public class PersonService implements IPersonService {
         return branch != null && FamilyTreeBranchUtils.isMainBranchName(branch.getName());
     }
 
-    private BranchEntity createNextNumberedBranch() {
-        List<BranchEntity> branches = branchRepository.findAll();
+    private BranchEntity createNextNumberedBranch(FamilyTreeEntity familyTree) {
+        List<BranchEntity> branches = familyTree == null
+                ? new ArrayList<BranchEntity>()
+                : branchRepository.findAllByFamilyTree_IdOrderByIdAsc(familyTree.getId());
         int maxIndex = 0;
         Pattern trailingNumber = Pattern.compile("(\\d+)$");
         for (BranchEntity branch : branches) {
@@ -1318,8 +1643,9 @@ public class PersonService implements IPersonService {
             }
         }
         BranchEntity newBranch = new BranchEntity();
+        newBranch.setFamilyTree(familyTree);
         newBranch.setName(String.valueOf(maxIndex + 1));
-        newBranch.setDescription("Tao tu dong khi them con cua thanh vien goc");
+        newBranch.setDescription("Tạo tự động khi thêm con của thành viên gốc");
         return branchRepository.save(newBranch);
     }
 
@@ -1334,12 +1660,16 @@ public class PersonService implements IPersonService {
                 && childCount == 0;
         if (orphan) {
             candidate.setBranch(null);
+            candidate.setFamilyTree(null);
             candidate.setGeneration(null);
         }
     }
 
-    private void syncNumberedBranchesAfterTreeChange() {
-        BranchEntity mainBranch = resolveMainBranch();
+    private void syncNumberedBranchesAfterTreeChange(FamilyTreeEntity familyTree) {
+        if (familyTree == null) {
+            return;
+        }
+        BranchEntity mainBranch = resolveMainBranch(familyTree);
         Long mainBranchId = mainBranch.getId();
         Optional<PersonEntity> rootOpt = personRepository
                 .findFirstByBranch_IdAndGenerationOrderByIdAsc(mainBranchId, 1);
@@ -1356,7 +1686,7 @@ public class PersonService implements IPersonService {
                         || Objects.equals(childBranch.getId(), mainBranchId)
                         || usedBranchIds.contains(childBranch.getId());
                 if (invalidBranch) {
-                    childBranch = createNextNumberedBranch();
+                    childBranch = createNextNumberedBranch(familyTree);
                     child.setBranch(childBranch);
                     personRepository.save(child);
                 }
@@ -1364,7 +1694,7 @@ public class PersonService implements IPersonService {
             }
         }
 
-        List<BranchEntity> allBranches = branchRepository.findAll();
+        List<BranchEntity> allBranches = branchRepository.findAllByFamilyTree_IdOrderByIdAsc(familyTree.getId());
         for (BranchEntity branch : allBranches) {
             if (branch == null || branch.getId() == null) {
                 continue;
@@ -1418,8 +1748,11 @@ public class PersonService implements IPersonService {
         }
     }
 
-    private BranchEntity resolveMainBranch() {
-        List<BranchEntity> branches = branchRepository.findAll();
+    private BranchEntity resolveMainBranch(FamilyTreeEntity familyTree) {
+        if (familyTree == null) {
+            throw new IllegalArgumentException("Không tìm thấy cây gia phả đang chọn");
+        }
+        List<BranchEntity> branches = branchRepository.findAllByFamilyTree_IdOrderByIdAsc(familyTree.getId());
         if (!branches.isEmpty()) {
             branches.sort(Comparator
                     .comparing((BranchEntity branch) -> FamilyTreeBranchUtils.branchOrder(branch.getName()))
@@ -1433,14 +1766,15 @@ public class PersonService implements IPersonService {
         }
 
         BranchEntity defaultBranch = new BranchEntity();
-        defaultBranch.setName("Chinh");
-        defaultBranch.setDescription("Chi goc duoc tao tu dong");
+        defaultBranch.setFamilyTree(familyTree);
+        defaultBranch.setName("Chính");
+        defaultBranch.setDescription("Chi gốc được tạo tự động");
         return branchRepository.save(defaultBranch);
     }
 
     private PersonDTO refreshPersonSnapshot(Long personId) {
         if (personId == null) {
-            throw new IllegalArgumentException("Person not found: null");
+            throw new IllegalArgumentException("Không tìm thấy thành viên: null");
         }
         return familyTreeReadService.findPersonById(personId);
     }
@@ -1452,7 +1786,7 @@ public class PersonService implements IPersonService {
         if ("female".equals(normalizedPersonGender)) {
             return "male";
         }
-        throw new IllegalArgumentException("Chi ho tro them vo/chong cho thanh vien co gioi tinh nam hoac nu");
+        throw new IllegalArgumentException("Chỉ hỗ trợ thêm vợ/chồng cho thành viên có giới tính nam hoặc nữ");
     }
 
     private void validateExistingSpouseGender(PersonEntity spouse, String expectedSpouseGender) {
@@ -1461,7 +1795,7 @@ public class PersonService implements IPersonService {
             spouseGender = normalizeGender(spouseGender, false);
         }
         if (spouseGender != null && !expectedSpouseGender.equals(spouseGender)) {
-            throw new IllegalArgumentException("Gioi tinh vo/chong khong phu hop");
+            throw new IllegalArgumentException("Giới tính vợ/chồng không phù hợp");
         }
     }
 
@@ -1471,7 +1805,44 @@ public class PersonService implements IPersonService {
         }
         String normalized = normalizeGender(requestedGender, false);
         if (!expectedSpouseGender.equals(normalized)) {
-            throw new IllegalArgumentException("Gioi tinh vo/chong khong phu hop");
+            throw new IllegalArgumentException("Giới tính vợ/chồng không phù hợp");
+        }
+    }
+
+    private FamilyTreeEntity resolveEffectiveFamilyTree(Long requestedFamilyTreeId, FamilyTreeEntity defaultFamilyTree) {
+        if (requestedFamilyTreeId != null && requestedFamilyTreeId > 0) {
+            familyTreeContextService.resolveCurrentFamilyTreeId(requestedFamilyTreeId);
+            return familyTreeRepository.findById(requestedFamilyTreeId)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cây gia phả đang chọn"));
+        }
+        if (defaultFamilyTree != null) {
+            return defaultFamilyTree;
+        }
+        Long currentFamilyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        if (currentFamilyTreeId == null) {
+            throw new IllegalArgumentException("Không tìm thấy cây gia phả đang chọn");
+        }
+        return familyTreeRepository.findById(currentFamilyTreeId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cây gia phả đang chọn"));
+    }
+
+    private void ensurePersonInCurrentFamilyTree(PersonEntity person) {
+        if (person == null) {
+            return;
+        }
+        Long currentFamilyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        Long personFamilyTreeId = person.getFamilyTree() != null ? person.getFamilyTree().getId() : null;
+        if (currentFamilyTreeId != null && personFamilyTreeId != null && !Objects.equals(currentFamilyTreeId, personFamilyTreeId)) {
+            throw new IllegalArgumentException("Thành viên không thuộc cây gia phả đang chọn");
+        }
+    }
+
+    private void assertSameFamilyTree(PersonEntity person, FamilyTreeEntity familyTree, String label) {
+        if (person == null || familyTree == null || person.getFamilyTree() == null) {
+            return;
+        }
+        if (!Objects.equals(person.getFamilyTree().getId(), familyTree.getId())) {
+            throw new IllegalArgumentException(label + " đã thuộc một cây gia phả khác");
         }
     }
 }

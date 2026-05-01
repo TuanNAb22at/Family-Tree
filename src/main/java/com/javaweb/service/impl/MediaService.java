@@ -1,6 +1,7 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.entity.BranchEntity;
+import com.javaweb.entity.FamilyTreeEntity;
 import com.javaweb.entity.MediaAlbumEntity;
 import com.javaweb.entity.MediaEntity;
 import com.javaweb.entity.PersonEntity;
@@ -8,12 +9,14 @@ import com.javaweb.entity.UserEntity;
 import com.javaweb.model.dto.MediaAlbumDTO;
 import com.javaweb.model.dto.MediaDTO;
 import com.javaweb.repository.BranchRepository;
+import com.javaweb.repository.FamilyTreeRepository;
 import com.javaweb.repository.MediaAlbumRepository;
 import com.javaweb.repository.MediaRepository;
 import com.javaweb.repository.PersonRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.security.utils.SecurityUtils;
 import com.javaweb.service.IMediaService;
+import com.javaweb.utils.InputSanitizationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +36,14 @@ import java.nio.file.StandardCopyOption;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -50,6 +56,10 @@ public class MediaService implements IMediaService {
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final String MEDIA_FILE_API_PREFIX = "/api/media/file/";
+    private static final long MAX_UPLOAD_SIZE_BYTES = 50L * 1024L * 1024L;
+    private static final Set<String> IMAGE_EXTENSIONS = new HashSet<>(Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"));
+    private static final Set<String> VIDEO_EXTENSIONS = new HashSet<>(Arrays.asList(".mp4", ".mov", ".webm", ".mkv", ".avi"));
+    private static final Set<String> AUDIO_EXTENSIONS = new HashSet<>(Arrays.asList(".mp3", ".wav", ".m4a", ".ogg", ".flac"));
 
     @Autowired
     private MediaRepository mediaRepository;
@@ -66,6 +76,12 @@ public class MediaService implements IMediaService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private FamilyTreeRepository familyTreeRepository;
+
+    @Autowired
+    private FamilyTreeContextService familyTreeContextService;
+
     @Value("${media.upload.dir:uploads/media}")
     private String mediaUploadDir;
 
@@ -73,7 +89,11 @@ public class MediaService implements IMediaService {
     @Transactional(readOnly = true)
     public List<MediaDTO> findAllMediaForAdminView() {
         boolean privileged = hasMediaAdminPermission();
-        return mediaRepository.findAllForAdminView()
+        Long familyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        if (familyTreeId == null) {
+            return java.util.Collections.emptyList();
+        }
+        return mediaRepository.findAllForAdminViewByFamilyTreeId(familyTreeId)
                 .stream()
                 .filter(entity -> privileged || ACCESS_SCOPE_PUBLIC.equals(resolveAccessScope(entity.getFileUrl())))
                 .map(this::toDto)
@@ -84,7 +104,11 @@ public class MediaService implements IMediaService {
     @Transactional(readOnly = true)
     public List<MediaAlbumDTO> findAllAlbumsForAdminView() {
         boolean privileged = hasMediaAdminPermission();
-        return mediaAlbumRepository.findAllForAdminView()
+        Long familyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        if (familyTreeId == null) {
+            return java.util.Collections.emptyList();
+        }
+        return mediaAlbumRepository.findAllForAdminViewByFamilyTreeId(familyTreeId)
                 .stream()
                 .filter(album -> privileged || ACCESS_SCOPE_PUBLIC.equals(resolveAlbumAccessScope(album.getAccessScope())))
                 .map(this::toAlbumDto)
@@ -95,17 +119,16 @@ public class MediaService implements IMediaService {
     @Transactional
     public MediaAlbumDTO createAlbum(String name, String description, String accessScope, Long personId, Long branchId) {
         assertCanManageMedia();
-        if (StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Ten album khong duoc de trong");
-        }
         UserEntity uploader = resolveCurrentUser();
         PersonEntity person = resolvePerson(personId);
-        BranchEntity branch = resolveBranch(branchId, person);
+        FamilyTreeEntity familyTree = resolveFamilyTree(person, null);
+        BranchEntity branch = resolveBranch(branchId, person, familyTree);
 
         MediaAlbumEntity entity = new MediaAlbumEntity();
-        entity.setName(name.trim());
-        entity.setDescription(StringUtils.defaultString(description, "").trim());
+        entity.setName(InputSanitizationUtils.requirePlainText(name, 150, "Ten album khong duoc de trong"));
+        entity.setDescription(InputSanitizationUtils.normalizeMultilineText(description, 1000));
         entity.setCoverUrl(null);
+        entity.setFamilyTree(familyTree);
         entity.setPerson(person);
         entity.setBranch(branch);
         entity.setUploader(uploader);
@@ -117,8 +140,7 @@ public class MediaService implements IMediaService {
     @Transactional
     public void deleteAlbum(Long albumId) {
         assertCanManageMedia();
-        MediaAlbumEntity entity = mediaAlbumRepository.findById(albumId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay album id=" + albumId));
+        MediaAlbumEntity entity = resolveAlbum(albumId);
         List<MediaEntity> items = mediaRepository.findByAlbumId(albumId);
         items.forEach(item -> deletePhysicalFile(item.getFileUrl()));
         if (!items.isEmpty()) {
@@ -146,7 +168,8 @@ public class MediaService implements IMediaService {
         if (person == null && album != null) {
             person = album.getPerson();
         }
-        BranchEntity branch = resolveBranch(branchId, person);
+        FamilyTreeEntity familyTree = resolveFamilyTree(person, album != null ? album.getFamilyTree() : null);
+        BranchEntity branch = resolveBranch(branchId, person, familyTree);
         if (branch == null && album != null) {
             branch = album.getBranch();
         }
@@ -168,6 +191,7 @@ public class MediaService implements IMediaService {
                         resolveAccessScopeValue(file, files, visibilityScopes),
                         uploadRoot,
                         uploader,
+                        familyTree,
                         finalPerson,
                         finalBranch,
                         finalAlbum))
@@ -193,6 +217,9 @@ public class MediaService implements IMediaService {
         assertCanManageMedia();
         MediaEntity entity = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay media id=" + mediaId));
+        if (!canCurrentUserAccess(entity)) {
+            throw new AccessDeniedException("Media khong thuoc cay gia pha dang chon");
+        }
         deletePhysicalFile(entity.getFileUrl());
         mediaRepository.delete(entity);
     }
@@ -214,7 +241,11 @@ public class MediaService implements IMediaService {
     @Override
     @Transactional(readOnly = true)
     public Map<Long, String> getBranchMap() {
-        return branchRepository.findAll()
+        Long familyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        if (familyTreeId == null) {
+            return new LinkedHashMap<>();
+        }
+        return branchRepository.findAllByFamilyTree_IdOrderByIdAsc(familyTreeId)
                 .stream()
                 .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
                 .collect(Collectors.toMap(
@@ -241,7 +272,11 @@ public class MediaService implements IMediaService {
     @Override
     @Transactional(readOnly = true)
     public Map<Long, String> getPersonMap() {
-        return personRepository.findAll()
+        Long familyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        if (familyTreeId == null) {
+            return new LinkedHashMap<>();
+        }
+        return personRepository.findAllByFamilyTreeIdWithRelations(familyTreeId)
                 .stream()
                 .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
                 .collect(Collectors.toMap(
@@ -255,6 +290,7 @@ public class MediaService implements IMediaService {
     private MediaDTO toDto(MediaEntity entity) {
         MediaDTO dto = new MediaDTO();
         dto.setId(entity.getId());
+        dto.setFamilyTreeId(entity.getFamilyTree() != null ? entity.getFamilyTree().getId() : null);
         dto.setFileUrl(entity.getFileUrl());
         dto.setMediaType(resolveMediaType(entity.getMediaType(), entity.getFileUrl()));
         dto.setAlbumId(entity.getAlbum() != null ? entity.getAlbum().getId() : null);
@@ -272,6 +308,7 @@ public class MediaService implements IMediaService {
     private MediaAlbumDTO toAlbumDto(MediaAlbumEntity entity) {
         MediaAlbumDTO dto = new MediaAlbumDTO();
         dto.setId(entity.getId());
+        dto.setFamilyTreeId(entity.getFamilyTree() != null ? entity.getFamilyTree().getId() : null);
         dto.setName(entity.getName());
         dto.setDescription(entity.getDescription());
         dto.setCoverUrl(entity.getCoverUrl());
@@ -369,6 +406,11 @@ public class MediaService implements IMediaService {
         }
         MediaAlbumEntity album = mediaAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay album id=" + albumId));
+        Long currentFamilyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        Long albumFamilyTreeId = album.getFamilyTree() != null ? album.getFamilyTree().getId() : null;
+        if (currentFamilyTreeId != null && albumFamilyTreeId != null && !currentFamilyTreeId.equals(albumFamilyTreeId)) {
+            throw new AccessDeniedException("Album khong thuoc cay gia pha dang chon");
+        }
         if (!hasMediaAdminPermission() && ACCESS_SCOPE_PRIVATE.equals(resolveAlbumAccessScope(album.getAccessScope()))) {
             throw new AccessDeniedException("Ban khong co quyen upload vao album nay");
         }
@@ -379,12 +421,20 @@ public class MediaService implements IMediaService {
         if (personId == null) {
             return null;
         }
-        return personRepository.findById(personId).orElse(null);
+        PersonEntity person = personRepository.findById(personId).orElse(null);
+        Long currentFamilyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        Long personFamilyTreeId = person != null && person.getFamilyTree() != null ? person.getFamilyTree().getId() : null;
+        if (person != null && currentFamilyTreeId != null && personFamilyTreeId != null && !currentFamilyTreeId.equals(personFamilyTreeId)) {
+            throw new AccessDeniedException("Thanh vien khong thuoc cay gia pha dang chon");
+        }
+        return person;
     }
 
-    private BranchEntity resolveBranch(Long branchId, PersonEntity person) {
+    private BranchEntity resolveBranch(Long branchId, PersonEntity person, FamilyTreeEntity familyTree) {
         if (branchId != null) {
-            Optional<BranchEntity> branchEntity = branchRepository.findById(branchId);
+            Optional<BranchEntity> branchEntity = familyTree != null
+                    ? branchRepository.findByIdAndFamilyTree_Id(branchId, familyTree.getId())
+                    : Optional.empty();
             if (branchEntity.isPresent()) {
                 return branchEntity.get();
             }
@@ -400,9 +450,11 @@ public class MediaService implements IMediaService {
                                         String accessScope,
                                         Path uploadRoot,
                                         UserEntity uploader,
+                                        FamilyTreeEntity familyTree,
                                         PersonEntity person,
                                         BranchEntity branch,
                                         MediaAlbumEntity album) {
+        validateUploadFile(file);
         String originalName = file.getOriginalFilename();
         String extension = "";
         if (StringUtils.isNotBlank(originalName) && originalName.lastIndexOf('.') >= 0) {
@@ -426,6 +478,7 @@ public class MediaService implements IMediaService {
         }
 
         MediaEntity mediaEntity = new MediaEntity();
+        mediaEntity.setFamilyTree(familyTree);
         mediaEntity.setFileUrl(MEDIA_FILE_API_PREFIX + storedFileName + "?name=" + encodeUtf8(displayFileName) + "&scope=" + accessScope);
         mediaEntity.setMediaType(resolveMediaTypeByMime(file.getContentType(), extension));
         mediaEntity.setUploader(uploader);
@@ -535,10 +588,38 @@ public class MediaService implements IMediaService {
         if (StringUtils.isBlank(input)) {
             return "";
         }
-        String sanitized = input.trim().replaceAll("[\\\\/:*?\"<>|]", "_");
+        String sanitized = InputSanitizationUtils.normalizePlainText(input, 120).replaceAll("[\\\\/:*?\"<>|]", "_");
         sanitized = sanitized.replaceAll("\\s+", "_");
         sanitized = sanitized.replaceAll("_+", "_");
         return sanitized;
+    }
+
+    private void validateUploadFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Danh sach file upload dang rong");
+        }
+        if (file.getSize() <= 0 || file.getSize() > MAX_UPLOAD_SIZE_BYTES) {
+            throw new IllegalArgumentException("Kich thuoc file khong hop le");
+        }
+        String extension = "";
+        String originalName = StringUtils.defaultString(file.getOriginalFilename());
+        if (originalName.lastIndexOf('.') >= 0) {
+            extension = originalName.substring(originalName.lastIndexOf('.')).toLowerCase(Locale.ROOT);
+        }
+        if (!IMAGE_EXTENSIONS.contains(extension) && !VIDEO_EXTENSIONS.contains(extension) && !AUDIO_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("Dinh dang file khong duoc ho tro");
+        }
+        String contentType = StringUtils.defaultString(file.getContentType()).toLowerCase(Locale.ROOT);
+        boolean hasSpecificContentType = StringUtils.isNotBlank(contentType) && !"application/octet-stream".equals(contentType);
+        if (IMAGE_EXTENSIONS.contains(extension) && hasSpecificContentType && !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Noi dung file khong hop le");
+        }
+        if (VIDEO_EXTENSIONS.contains(extension) && hasSpecificContentType && !contentType.startsWith("video/")) {
+            throw new IllegalArgumentException("Noi dung file khong hop le");
+        }
+        if (AUDIO_EXTENSIONS.contains(extension) && hasSpecificContentType && !contentType.startsWith("audio/")) {
+            throw new IllegalArgumentException("Noi dung file khong hop le");
+        }
     }
 
     private String extractStoredFileName(String fileUrl) {
@@ -607,6 +688,11 @@ public class MediaService implements IMediaService {
         if (entity == null) {
             return false;
         }
+        Long currentFamilyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        Long mediaFamilyTreeId = entity.getFamilyTree() != null ? entity.getFamilyTree().getId() : null;
+        if (currentFamilyTreeId != null && mediaFamilyTreeId != null && !currentFamilyTreeId.equals(mediaFamilyTreeId)) {
+            return false;
+        }
         if (hasMediaAdminPermission()) {
             return true;
         }
@@ -614,6 +700,21 @@ public class MediaService implements IMediaService {
             return false;
         }
         return ACCESS_SCOPE_PUBLIC.equals(resolveAccessScope(entity.getFileUrl()));
+    }
+
+    private FamilyTreeEntity resolveFamilyTree(PersonEntity person, FamilyTreeEntity fallbackFamilyTree) {
+        if (person != null && person.getFamilyTree() != null) {
+            return person.getFamilyTree();
+        }
+        if (fallbackFamilyTree != null) {
+            return fallbackFamilyTree;
+        }
+        Long currentFamilyTreeId = familyTreeContextService.getCurrentFamilyTreeId();
+        if (currentFamilyTreeId == null) {
+            throw new IllegalArgumentException("Khong tim thay cay gia pha dang chon");
+        }
+        return familyTreeRepository.findById(currentFamilyTreeId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay cay gia pha dang chon"));
     }
 
     private String encodeUtf8(String value) {

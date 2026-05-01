@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PersonDTO extends AbstractDTO<PersonDTO> {
+    private Long familyTreeId;
     private String fullName;
     private LocalDate dob; // Ngày sinh
     private LocalDate dod; // Ngày mất
+    private String dodDisplay;
     private Integer generation;
     private String branch;
     private String branchName;
@@ -31,6 +33,7 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
     private String spouseAvatar;
     private LocalDate spouseDob;
     private LocalDate spouseDod;
+    private String spouseDodDisplay;
     private String spouseHometown;
     private String spouseCurrentResidence;
     private String spouseOccupation;
@@ -40,6 +43,14 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
     private List<Long> mediaIds;
     private List<String> mediaUrls = new ArrayList<>();
     private List<Long> childrenIds;
+
+    public Long getFamilyTreeId() {
+        return familyTreeId;
+    }
+
+    public void setFamilyTreeId(Long familyTreeId) {
+        this.familyTreeId = familyTreeId;
+    }
 
     public String getFullName() {
         return fullName;
@@ -63,6 +74,14 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
 
     public void setDod(LocalDate dod) {
         this.dod = dod;
+    }
+
+    public String getDodDisplay() {
+        return dodDisplay;
+    }
+
+    public void setDodDisplay(String dodDisplay) {
+        this.dodDisplay = dodDisplay;
     }
 
     public Integer getGeneration() {
@@ -247,6 +266,14 @@ public class PersonDTO extends AbstractDTO<PersonDTO> {
 
     public void setSpouseDod(LocalDate spouseDod) {
         this.spouseDod = spouseDod;
+    }
+
+    public String getSpouseDodDisplay() {
+        return spouseDodDisplay;
+    }
+
+    public void setSpouseDodDisplay(String spouseDodDisplay) {
+        this.spouseDodDisplay = spouseDodDisplay;
     }
 
     public String getSpouseHometown() {

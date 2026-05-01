@@ -16,6 +16,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 @Configuration
 @EnableWebSecurity
@@ -55,6 +57,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .csrf()
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .and()
+                        .headers()
+                        .contentTypeOptions()
+                        .and()
+                        .frameOptions().sameOrigin()
+                        .addHeaderWriter(new ReferrerPolicyHeaderWriter(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .addHeaderWriter(new StaticHeadersWriter("Content-Security-Policy",
+                                "default-src 'self'; "
+                                        + "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://ajax.googleapis.com https://code.jquery.com https://cdnjs.cloudflare.com; "
+                                        + "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://ajax.googleapis.com https://code.jquery.com https://cdnjs.cloudflare.com; "
+                                        + "img-src 'self' data: blob: https:; "
+                                        + "media-src 'self' blob: https:; "
+                                        + "font-src 'self' data: https://cdnjs.cloudflare.com; "
+                                        + "connect-src 'self' ws: wss:; "
+                                        + "frame-ancestors 'self'; object-src 'none'; base-uri 'self';"))
+                        .and()
                         .authorizeRequests()
 
                         .antMatchers
@@ -72,7 +89,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                 "/admin/sweetalert/**"
                         ).permitAll()
                         .antMatchers("/admin/home").hasAnyRole("MANAGER","EDITOR","USER")
+                        .antMatchers("/admin/family-trees", "/admin/family-trees/**").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/familytree", "/admin/familytree/**").hasAnyRole("MANAGER","EDITOR","USER")
+                        .antMatchers("/admin/family-content", "/admin/family-content/**").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/livestream", "/admin/livestream/**").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/media", "/admin/media/**").hasAnyRole("MANAGER","EDITOR","USER")
                         .antMatchers("/admin/profile-*", "/admin/profile-password").hasAnyRole("MANAGER","EDITOR","USER")
@@ -84,6 +103,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(HttpMethod.GET, "/api/person/**").hasAnyRole("MANAGER", "EDITOR", "USER")
                         .antMatchers(HttpMethod.POST, "/api/branch/**").hasRole("MANAGER")
                         .antMatchers(HttpMethod.GET, "/api/branch/**").hasAnyRole("MANAGER", "EDITOR", "USER")
+                        .antMatchers(HttpMethod.POST, "/api/family-trees/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.PUT, "/api/family-trees/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.DELETE, "/api/family-trees/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.GET, "/api/family-trees/**").hasAnyRole("MANAGER", "EDITOR", "USER")
+                        .antMatchers(HttpMethod.POST, "/api/family-content/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.PUT, "/api/family-content/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.DELETE, "/api/family-content/**").hasAnyRole("MANAGER", "EDITOR")
+                        .antMatchers(HttpMethod.GET, "/api/family-content/**").hasAnyRole("MANAGER", "EDITOR", "USER")
                         .antMatchers(HttpMethod.POST, "/api/user").hasRole("MANAGER")
                         .antMatchers(HttpMethod.PUT, "/api/user/*").hasRole("MANAGER")
                         .antMatchers(HttpMethod.PUT, "/api/user/password/*/reset").hasRole("MANAGER")

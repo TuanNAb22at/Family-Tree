@@ -3,6 +3,8 @@ package com.javaweb.api.admin;
 import com.javaweb.model.dto.MediaDTO;
 import com.javaweb.model.dto.MediaAlbumDTO;
 import com.javaweb.service.IMediaService;
+import com.javaweb.service.impl.FamilyTreeContextService;
+import com.javaweb.utils.InputSanitizationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,9 @@ public class MediaAPI {
     @Autowired
     private IMediaService mediaService;
 
+    @Autowired
+    private FamilyTreeContextService familyTreeContextService;
+
     @Value("${media.upload.dir:uploads/media}")
     private String mediaUploadDir;
 
@@ -44,10 +49,12 @@ public class MediaAPI {
     public ResponseEntity<?> uploadMedia(@RequestParam("files") List<MultipartFile> files,
                                          @RequestParam(value = "displayNames", required = false) List<String> displayNames,
                                          @RequestParam(value = "visibilityScopes", required = false) List<String> visibilityScopes,
+                                         @RequestParam(value = "familyTreeId", required = false) Long familyTreeId,
                                          @RequestParam(value = "personId", required = false) Long personId,
                                          @RequestParam(value = "branchId", required = false) Long branchId,
                                          @RequestParam(value = "albumId", required = false) Long albumId) {
         try {
+            familyTreeContextService.resolveCurrentFamilyTreeId(familyTreeId);
             List<MediaDTO> uploaded = mediaService.uploadMediaFiles(files, normalizeDisplayNames(displayNames), normalizeScopes(visibilityScopes), personId, branchId, albumId);
             return ResponseEntity.ok(uploaded);
         } catch (AccessDeniedException ex) {
@@ -58,7 +65,8 @@ public class MediaAPI {
     }
 
     @GetMapping("/albums")
-    public ResponseEntity<?> getAlbums() {
+    public ResponseEntity<?> getAlbums(@RequestParam(value = "familyTreeId", required = false) Long familyTreeId) {
+        familyTreeContextService.resolveCurrentFamilyTreeId(familyTreeId);
         List<MediaAlbumDTO> albums = mediaService.findAllAlbumsForAdminView();
         return ResponseEntity.ok(albums);
     }
@@ -67,9 +75,11 @@ public class MediaAPI {
     public ResponseEntity<?> createAlbum(@RequestParam("name") String name,
                                          @RequestParam(value = "description", required = false) String description,
                                          @RequestParam(value = "accessScope", required = false) String accessScope,
+                                         @RequestParam(value = "familyTreeId", required = false) Long familyTreeId,
                                          @RequestParam(value = "personId", required = false) Long personId,
                                          @RequestParam(value = "branchId", required = false) Long branchId) {
         try {
+            familyTreeContextService.resolveCurrentFamilyTreeId(familyTreeId);
             MediaAlbumDTO created = mediaService.createAlbum(name, description, accessScope, personId, branchId);
             return ResponseEntity.ok(created);
         } catch (AccessDeniedException ex) {
@@ -133,9 +143,12 @@ public class MediaAPI {
             if (contentType == null) {
                 contentType = resolveContentTypeByExtension(storedFileName);
             }
-            String downloadName = StringUtils.isNotBlank(media.getFileName()) ? media.getFileName() : storedFileName;
+            String downloadName = InputSanitizationUtils.sanitizeContentDispositionFilename(
+                    StringUtils.isNotBlank(media.getFileName()) ? media.getFileName() : storedFileName,
+                    storedFileName);
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
+                    .header("X-Content-Type-Options", "nosniff")
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadName + "\"")
                     .body(resource);
         } catch (IOException ex) {
@@ -176,8 +189,9 @@ public class MediaAPI {
             }
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
+                    .header("X-Content-Type-Options", "nosniff")
                     .header(HttpHeaders.CACHE_CONTROL, "public, max-age=604800")
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + InputSanitizationUtils.sanitizeContentDispositionFilename(fileName, fileName) + "\"")
                     .body(resource);
         } catch (IOException ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
